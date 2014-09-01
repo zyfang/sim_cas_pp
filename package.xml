@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>hand_sim_post-processing</name>
+  <name>hand_sim_pp</name>
   <version>0.0.0</version>
   <description>postprocessing logs from hand_sim</description>
 
