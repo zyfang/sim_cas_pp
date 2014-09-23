@@ -37,10 +37,10 @@
 #include "PostProcess.hh"
 //#include <boost/chrono.hpp>
 #include <boost/thread.hpp>
-#include <getopt.h>
 
 using namespace gazebo;
 using namespace mongo;
+using namespace beliefstate_client;
 
 // Register this plugin with the simulator
 GZ_REGISTER_SYSTEM_PLUGIN(PostProcess)
@@ -51,7 +51,14 @@ PostProcess::PostProcess()
 	// intialize ROS
 	int argc = 0;
 	char** argv = NULL;
-	ros::init(argc,argv,"post_process");
+	ros::init(argc, argv, "post_process");
+
+	// initialize the beliefstate
+	this->beliefStateClient = new BeliefstateClient("bs_client");
+
+	// register the OWL namespace
+	this->beliefStateClient->registerOWLNamespace("sim","http://some-namespace.org/#");
+
 }
 
 //////////////////////////////////////////////////
@@ -165,6 +172,10 @@ void PostProcess::InitOnWorldConnect()
 	// if no subscription is done to the contacts topic the contact manager does not run
     this->contactSub = this->gznode->Subscribe(
             "~/physics/contacts", &PostProcess::DummyContactsCallback, this);
+
+	// start the main simulation context
+	this->mainContext = new Context(
+			this->beliefStateClient, "PourFlipEpisode", "&sim;", "MainTimelineClass", 0);
 }
 
 //////////////////////////////////////////////////
@@ -240,10 +251,14 @@ void PostProcess::UpdateDB()
 	// group of threads for processing the data in parallel
 	boost::thread_group process_thread_group;
 
-	process_thread_group.create_thread(boost::bind(&PostProcess::WriteEventData, this));
-	process_thread_group.create_thread(boost::bind(&PostProcess::WriteRawData, this));
-	process_thread_group.create_thread(boost::bind(&PostProcess::WriteParticleEventData, this));
+//	process_thread_group.create_thread(boost::bind(&PostProcess::WriteEventData, this));
+//	process_thread_group.create_thread(boost::bind(&PostProcess::WriteRawData, this));
+//	process_thread_group.create_thread(boost::bind(&PostProcess::WriteParticleEventData, this));
+	// TODO separate this two? add flag in the method to publish or not
 	process_thread_group.create_thread(boost::bind(&PostProcess::PublishAndWriteTFData, this));
+//	process_thread_group.create_thread(boost::bind(&PostProcess::WriteSemanticData, this));
+
+	process_thread_group.create_thread(boost::bind(&PostProcess::DummyUpdate, this));
 
 	// wait for all the threads to finish work
 	process_thread_group.join_all();
@@ -254,6 +269,18 @@ void PostProcess::UpdateDB()
 
 //    boost::chrono::duration<double> parallel_dur = boost::chrono::system_clock::now() - parallel_start;
 //    std::cout << "Parallel TOTAL: " << parallel_dur.count() << " seconds\n";
+}
+
+//////////////////////////////////////////////////
+void PostProcess::DummyUpdate()
+{
+	std::cout << "raw" << this->world->GetSimTime() << std::endl;
+
+	std::cout << "double" << this->world->GetSimTime().Double() << std::endl;
+
+	std::cout << "ms" << this->world->GetSimTime().nsec / 1000000.0 + this->world->GetSimTime().sec * 1000.0 << std::endl;
+
+	std::cout << "**********************************" << std::endl;
 }
 
 //////////////////////////////////////////////////
@@ -1164,12 +1191,12 @@ void PostProcess::PublishAndWriteTFData()
 {
 	// TODO, static or class member?
 	// broadcaster to send the information
-	static tf::TransformBroadcaster br;
+	static tf::TransformBroadcaster transf_br;
 
 	// vector with all the transforms
 	std::vector<tf::StampedTransform> stamped_transforms;
 
-	// set ros time with the sumulation time
+	// set ros time with the simulation time
 	ros::Time tf_time = ros::Time(this->world->GetSimTime().sec, this->world->GetSimTime().nsec);
 
 	// create a local transformation
@@ -1234,7 +1261,7 @@ void PostProcess::PublishAndWriteTFData()
 	}
 
 	// broadcast the transforms
-	br.sendTransform(stamped_transforms);
+	transf_br.sendTransform(stamped_transforms);
 
 	// write the transformations to the data base
 	PostProcess::WriteTFData(stamped_transforms);
@@ -1254,31 +1281,36 @@ void PostProcess::WriteTFData(const std::vector<tf::StampedTransform>& _stamped_
 		// check if the transform should be written
 		if(PostProcess::ShouldWriteTransform(st_iter))
 		{
-
-			// TODO check why the first format was used
-			// get the timestamp
-			//		long long timestamp = st_iter->stamp_.sec * 1000.0 + st_iter->stamp_.nsec / 1000000.0;
-			long long int timestamp = st_iter->stamp_.sec * 1e9 + st_iter->stamp_.nsec;
-
+			// the tf transformation
 			BSONObjBuilder transform_stamped_bb;
+
+			// the translation and rotation
 			BSONObjBuilder transform_bb;
 
+			// get the timestamp im ms and date format
+			Date_t stamp_ms = this->world->GetSimTime().nsec / 1000000.0 + this->world->GetSimTime().sec * 1000.0;
+
 			transform_stamped_bb.append("header", BSON(   "seq" << this->tfSeq
-					<< "stamp" << timestamp
+					<< "stamp" << stamp_ms
 					<< "frame_id" << st_iter->frame_id_));
+
 			transform_stamped_bb.append("child_frame_id", st_iter->child_frame_id_);
+
 			transform_bb.append("translation", BSON(   "x" << st_iter->getOrigin().x()
 					<< "y" << st_iter->getOrigin().y()
 					<< "z" << st_iter->getOrigin().z()));
+
 			transform_bb.append("rotation", BSON(   "x" << st_iter->getRotation().x()
 					<< "y" << st_iter->getRotation().y()
 					<< "z" << st_iter->getRotation().z()
 					<< "w" << st_iter->getRotation().w()));
-			transform_stamped_bb.append("transform", transform_bb.obj());
-			transforms_bo.push_back(transform_stamped_bb.obj());
 
+			transform_stamped_bb.append("transform", transform_bb.obj());
+
+			transforms_bo.push_back(transform_stamped_bb.obj());
 		}
 	}
+
 
 	// increment the the message seq
 	this->tfSeq++;
@@ -1290,7 +1322,10 @@ void PostProcess::WriteTFData(const std::vector<tf::StampedTransform>& _stamped_
 	ScopedDbConnection scoped_connection("localhost");
 
 	// insert document object into the database
-	scoped_connection->insert(this->dbCollName + ".tf", BSON("transforms" << transforms_bo));
+	scoped_connection->insert(this->dbCollName + ".tf", BSON("transforms" << transforms_bo
+														<< "__recorded" << Date_t(time(NULL) * 1000)
+														<< "__topic" << "/tf_sim"));
+
 
 	// let the pool know the connection is done
 	scoped_connection.done();
@@ -1373,6 +1408,399 @@ bool PostProcess::ShouldWriteTransform(std::vector<tf::StampedTransform>::const_
 	}
 
 	return false;
+}
+
+//////////////////////////////////////////////////
+void PostProcess::WriteSemanticData()
+{
+    // compute simulation time in miliseconds
+    const int timestamp_ms = this->world->GetSimTime().nsec / 1000000.0 + this->world->GetSimTime().sec * 1000.0;
+
+
+//	this->contextIDs.push_back(this ->beliefStateClient->startContext("exp1", "&sim", "Contact", timestamp_ms));
+
+//	this->beliefStateClient->endContext(this->contextIDs.back(), true, timestamp_ms);
+//
+//	this->contextIDs.pop_back();
+
+//	this->eventCollisionThumb->co
+
+	// set diff detected flag to false
+	bool diff_detected = false;
+
+    // compute simulation time in nanoseconds
+    const long long int _timestamp = this->world->GetSimTime().nsec + this->world->GetSimTime().sec * 1e9;
+
+    // get all the contacts from the physics engine
+    const std::vector<physics::Contact*> _contacts = this->contactManagerPtr->GetContacts();
+
+    // current map of event collisions to set of models names
+    std::map< physics::Collision*, std::set<std::string> > event_coll_to_set_of_model_names_M;
+
+    // init current map with the supporting event collisions, and an empty set
+    for(std::set<physics::Collision*>::const_iterator s_iter = this->eventCollisions_S.begin();
+            s_iter != this->eventCollisions_S.end(); s_iter++)
+    {
+        event_coll_to_set_of_model_names_M[*s_iter] = std::set<std::string>();
+    }
+
+    // current map of event collisions to set of models names
+    std::map< physics::Collision*, std::set<std::string> > event_coll_to_set_of_particle_names_M;
+
+    // init current map with the supporting event collisions, and an empty set
+    for(std::set<physics::Collision*>::const_iterator s_iter = this->eventCollisions_S.begin();
+            s_iter != this->eventCollisions_S.end(); s_iter++)
+    {
+        event_coll_to_set_of_particle_names_M[*s_iter] = std::set<std::string>();
+    }
+
+    // TODO check until the pouring is finished
+    // curr poured particles
+    int prev_poured_particles_nr = this->pouredLiquidCollisions_S.size();
+
+    // current grasped model name
+    std::string grasped_model_name;
+
+    // set finger contacts flags to false
+    bool fore_finger_contact = false;
+    bool thumb_contact = false;
+
+    // grasp collisions
+    physics::Collision *grasp_coll1, *grasp_coll2;
+
+    ////////////// Loop through all the contacts
+    // set current states
+    for (unsigned int i = 0; i < _contacts.size(); i++)
+    {
+        // collision 1 and 2 of the contact
+        physics::Collision* coll1 = _contacts.at(i)->collision1;
+        physics::Collision* coll2 = _contacts.at(i)->collision2;
+
+
+        ////////////// Supporting Collisions
+        // check if collision 1 belongs to the event collision set
+        if (this->eventCollisions_S.find(coll1) != this->eventCollisions_S.end())
+        {
+            // insert contact model name into the set
+            event_coll_to_set_of_model_names_M[coll1].insert(coll2->GetParentModel()->GetName());
+        }
+        // check if collision 2 belongs to the event collision set
+        else if(this->eventCollisions_S.find(coll2) != this->eventCollisions_S.end())
+        {
+            // insert contact model name into the set
+            event_coll_to_set_of_model_names_M[coll2].insert(coll1->GetParentModel()->GetName());
+        }
+
+        // TODO use else if ?
+        /////////////// Grasping
+        // check grasping with both fingers, this might fail if the sensor is in contact with multiple models
+        if (coll1 == this->eventCollisionForeFinger || coll2 == this->eventCollisionForeFinger)
+        {
+            // if one of the collisions is the fore finger, set contact flag to true, and save both collisions
+            fore_finger_contact = true;
+            grasp_coll1 = coll1;
+            grasp_coll2 = coll2;
+        }
+        else if (coll1 == this->eventCollisionThumb || coll2 == this->eventCollisionThumb)
+        {
+            // if one of the collisions is the thumb, set contact flag to true, and save both collisions
+            thumb_contact = true;
+            grasp_coll1 = coll1;
+            grasp_coll2 = coll2;
+        }
+
+    // TODO Pour Pancake events
+        ////////////// Pouring Action
+        // look into pouring until the pancake is created
+        if(!this->pancakeCreated)
+        {
+            // check for the currently poured particles
+            if (coll1 == this->eventCollisionMug || coll2 == this->eventCollisionMug)
+            {
+                // check if coll1 or 2 belongs to the liquid
+                if (coll1->GetModel()->GetName() == "liquid_spheres")
+                {
+                    // add to poured set, which also checks for duplicates
+                    this->pouredLiquidCollisions_S.insert(coll1);
+                }
+                else if (coll2->GetModel()->GetName() == "liquid_spheres")
+                {
+                    // add to poured set, which also checks for duplicates
+                    this->pouredLiquidCollisions_S.insert(coll2);
+                }
+            }
+
+            ////////////// Poured Particles Collisions
+            // check if one collision is a poured particle and the other belongs to the eventCollisions
+            if(this->pouredLiquidCollisions_S.find(coll1) != this->pouredLiquidCollisions_S.end() &&
+                    this->eventCollisions_S.find(coll2) != this->eventCollisions_S.end())
+            {
+                // add the model name to the set coll2's set
+                event_coll_to_set_of_model_names_M[coll2].insert(coll1->GetModel()->GetName());
+
+                // add the particle collision name to the coll2's set
+                event_coll_to_set_of_particle_names_M[coll2].insert(coll1->GetName());
+            }
+            else if(this->pouredLiquidCollisions_S.find(coll2) != this->pouredLiquidCollisions_S.end() &&
+                    this->eventCollisions_S.find(coll1) != this->eventCollisions_S.end())
+            {
+                // add the model name to the set coll1's set
+                event_coll_to_set_of_model_names_M[coll1].insert(coll2->GetModel()->GetName());
+
+                // add the particle collision name to the coll1's set
+                event_coll_to_set_of_particle_names_M[coll1].insert(coll2->GetName());
+            }
+        }
+
+        ////////////// Flipping Action
+        // create pancake when the spatula is grasped, save all particles belonging to the pancake
+        else if(this->pancakeCreated)
+        {
+            ////////////// Pancake Particles Collisions
+            // check if one collision is a poured particle and the other belongs to the eventCollisions
+            if(this->pancakeCollision_S.find(coll1) != this->pancakeCollision_S.end() &&
+                    this->eventCollisions_S.find(coll2) != this->eventCollisions_S.end())
+            {
+                // add the model name to the set coll2's set
+                event_coll_to_set_of_model_names_M[coll2].insert(coll1->GetModel()->GetName());
+
+                // add the particle collision name to the coll2's set
+                event_coll_to_set_of_particle_names_M[coll2].insert(coll1->GetName());
+            }
+            else if(this->pancakeCollision_S.find(coll2) != this->pancakeCollision_S.end() &&
+                    this->eventCollisions_S.find(coll1) != this->eventCollisions_S.end())
+            {
+                // add the model name to the set coll1's set
+                event_coll_to_set_of_model_names_M[coll1].insert(coll2->GetModel()->GetName());
+
+                // add the particle collision name to the coll1's set
+                event_coll_to_set_of_particle_names_M[coll1].insert(coll2->GetName());
+            }
+        }
+    }
+
+
+    ////////////// Compare states
+    // check for grasp
+    if (fore_finger_contact && thumb_contact)
+    {
+        // if coll1 belongs to the hand model, then coll2 is the grasped model
+        if (grasp_coll1->GetParentModel()->GetName() == "hit_hand")
+        {
+            grasped_model_name = grasp_coll2->GetParentModel()->GetName();
+        }
+        else
+        {
+            grasped_model_name = grasp_coll1->GetParentModel()->GetName();
+        }
+    }
+
+    // check for difference between current and past grasp
+    if (grasped_model_name != this->graspedModelName)
+    {
+       diff_detected = true;
+        this->graspedModelName = grasped_model_name;
+    }
+
+    // check current and past collision states difference
+    if (event_coll_to_set_of_model_names_M != this->eventCollToSetOfModelNames_M)
+    {
+        diff_detected = true;;
+        this->eventCollToSetOfModelNames_M = event_coll_to_set_of_model_names_M;
+    }
+
+    // TODO Pour Pancake events
+    // check if new particle has been poured
+    if (this->pouredLiquidCollisions_S.size() > prev_poured_particles_nr )
+    {
+        diff_detected = true;
+    }
+
+    // check if poured particle collision appeared/changed
+    if (event_coll_to_set_of_particle_names_M != this->eventCollToSetOfParticleNames_M)
+    {
+        diff_detected = true;;
+        this->eventCollToSetOfParticleNames_M = event_coll_to_set_of_particle_names_M;
+    }
+
+    // save the particles belonging to the pancake
+    if (!this->pancakeCreated && grasped_model_name == "spatula")
+    {
+        ////////////// Loop through all the contacts
+        for (unsigned int i = 0; i < _contacts.size(); i++)
+        {
+            // collision 1 and 2 of the contact
+            physics::Collision* coll1 = _contacts.at(i)->collision1;
+            physics::Collision* coll2 = _contacts.at(i)->collision2;
+
+            // save the particles belonging to the pancake
+            if ((coll1->GetName() == "pancake_maker_event_collision")
+                    && (coll2->GetModel()->GetName() == "liquid_spheres"))
+            {
+                this->pancakeCollision_S.insert(coll2);
+            }
+            else if((coll2->GetName() == "pancake_maker_event_collision")
+                    && (coll1->GetModel()->GetName() == "liquid_spheres"))
+            {
+                this->pancakeCollision_S.insert(coll1);
+            }
+        }
+
+        diff_detected = true;
+        this->pancakeCreated = true;
+    }
+
+
+    ////////////////////////////
+    // Output at detected difference
+    if (diff_detected)
+    {
+        diff_detected = false;
+//        this->world->SetPaused(true);
+
+        // document bson object builder
+        BSONObjBuilder doc_bo_builder;
+
+        ////////////////////////////
+        // Event info
+        for(std::map<physics::Collision*, std::set<std::string> >::const_iterator m_iter = event_coll_to_set_of_model_names_M.begin();
+            m_iter != event_coll_to_set_of_model_names_M.end(); m_iter++)
+        {
+            BSONArrayBuilder support_arr_builder;
+
+            std::cout << m_iter->first->GetParentModel()->GetName() << " --> ";
+            for(std::set<std::string>::const_iterator s_iter = m_iter->second.begin();
+                s_iter != m_iter->second.end(); s_iter++)
+            {
+                std::cout << *s_iter << "; ";
+
+                support_arr_builder.append(*s_iter);
+            }
+            std::cout << std::endl;
+
+            doc_bo_builder.append(m_iter->first->GetParentModel()->GetName(), support_arr_builder.arr());
+        }
+
+        ////////////////////////////
+        // Grasped model
+        std::cout << "grasp --> " << grasped_model_name<< ";" << std::endl;
+
+        doc_bo_builder.append("grasp", grasped_model_name);
+
+        ////////////////////////////
+        // Poured particles
+        std::cout << "poured --> " << this->pouredLiquidCollisions_S.size() <<
+                     "/" << this->allLiquidCollisions_S.size() << ";" << std::endl;
+
+        BSONObjBuilder pour_builder;
+
+        BSONObjBuilder pancake_builder;
+
+        pour_builder.append("total particles", (int) this->allLiquidCollisions_S.size());
+
+        pour_builder.append("poured particles", (int) this->pouredLiquidCollisions_S.size());
+
+        ////////////////////////////
+        // Pancake size
+        std::cout << "pancake size --> " << this->pancakeCollision_S.size() << " particles" << std::endl;
+
+        pancake_builder.append("nr pancake particles", (int) this->pancakeCollision_S.size());
+
+        BSONArrayBuilder pancake_arr_builder;
+
+        // TODO change all interators to const iterator?
+        for (std::set<physics::Collision*>::const_iterator c_iter = this->pancakeCollision_S.begin();
+             c_iter != this->pancakeCollision_S.end(); c_iter++)
+        {
+            //TODO why is the copy required?
+            physics::Collision* c = *c_iter;
+
+            pancake_arr_builder.append(c->GetName());
+        }
+
+        pancake_builder.append("particle names",pancake_arr_builder.arr());
+
+        ////////////////////////////
+        // Pouring Info before pancake created
+        if(!this->pancakeCreated)
+        {
+            BSONObjBuilder pour_support_builder;
+
+            // Poured particles supported by
+            for(std::map<physics::Collision*, std::set<std::string> >::const_iterator m_iter = event_coll_to_set_of_particle_names_M.begin();
+                m_iter != event_coll_to_set_of_particle_names_M.end(); m_iter++)
+            {
+                BSONArrayBuilder support_arr_builder;
+
+                std::cout << "\t" << m_iter->first->GetParentModel()->GetName() << " --> ";
+
+                // Write only nr of particles at the moment
+                std::cout << m_iter->second.size() << " particles;" <<std::endl;
+                for(std::set<std::string>::const_iterator s_iter = m_iter->second.begin();
+                    s_iter != m_iter->second.end(); s_iter++)
+                {
+                    //std::cout << *s_iter << "; ";
+                    support_arr_builder.append(*s_iter);
+                }
+                //std::cout << std::endl;
+
+                pour_support_builder.append(m_iter->first->GetParentModel()->GetName(), support_arr_builder.arr());
+            }
+
+            pour_builder.append("pour supports", pour_support_builder.obj());
+        }
+
+        ////////////////////////////
+        // Pancake Info
+        else if(this->pancakeCreated)
+        {
+            BSONObjBuilder pancake_support_builder;
+
+            // Pancake particles supported by
+            for(std::map<physics::Collision*, std::set<std::string> >::const_iterator m_iter = event_coll_to_set_of_particle_names_M.begin();
+                m_iter != event_coll_to_set_of_particle_names_M.end(); m_iter++)
+            {
+                BSONArrayBuilder pancake_arr_builder;
+
+                std::cout << "\t" << m_iter->first->GetParentModel()->GetName() << " --> ";
+
+                // Write only nr of particles at the moment
+                std::cout << m_iter->second.size() << " pancake particles;" <<std::endl;
+                for(std::set<std::string>::const_iterator s_iter = m_iter->second.begin();
+                    s_iter != m_iter->second.end(); s_iter++)
+                {
+                    pancake_arr_builder.append(*s_iter);
+                    //std::cout << *s_iter << "; ";
+                }
+                //std::cout << std::endl;
+
+                pancake_support_builder.append(m_iter->first->GetParentModel()->GetName(), pancake_arr_builder.arr());
+            }
+
+            pancake_builder.append("pancake supports", pancake_support_builder.obj());
+        }
+        std::cout <<"-------------------------------------------------------------------ts: "<< _timestamp << std::endl;
+
+    // TODO Pour Pancake events
+        doc_bo_builder.append("pour", pour_builder.obj());
+        doc_bo_builder.append("pancake", pancake_builder.obj());
+
+        // create the document object
+        doc_bo_builder.append("timestamp", _timestamp);
+
+        // insert document object into the database
+//            this->mongoDBClientConnection.insert(this->dbCollName + ".particles", doc_bo_builder.obj());
+
+    	// use scoped connection
+    	ScopedDbConnection scoped_connection("localhost");
+
+    	// insert document object into the database
+    	scoped_connection->insert(this->dbCollName + ".particles", doc_bo_builder.obj());
+
+    	// let the pool know the connection is done
+    	scoped_connection.done();
+    }
+
 }
 
 //////////////////////////////////////////////////

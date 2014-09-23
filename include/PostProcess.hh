@@ -49,6 +49,9 @@
 #include <ros/ros.h>
 #include <tf/transform_broadcaster.h>
 
+#include <beliefstate_client/BeliefstateClient.h>
+#include <beliefstate_client/Context.h>
+
 namespace gazebo
 {
 	/// \brief class PostProcess, saving world contacts by subscribing to a topic
@@ -92,6 +95,12 @@ namespace gazebo
 
         /// \brief check if the transform should be written to the db
         private: bool ShouldWriteTransform(std::vector<tf::StampedTransform>::const_iterator& _st_iter);
+
+        /// \brief write semantic events to OWL files
+        private: void WriteSemanticData();
+
+        /// \brief write semantic events to OWL files
+        private: void DummyUpdate();
 
         /// \brief create a contact bson object
 		private: mongo::BSONObj CreateBSONContactObject(const physics::Contact* _contact,
@@ -207,6 +216,16 @@ namespace gazebo
 
 	    /// \brief Current tf seq nr
 	    private: long long int tfSeq;
+
+	    /// \brief Beliefstate client
+	    private: beliefstate_client::BeliefstateClient* beliefStateClient;
+
+	    /// \brief main context
+	    // TODO use smart pointers
+	    private: beliefstate_client::Context* mainContext;
+
+	    /// \brief Context id stack
+	    private: std::vector<int> contextIDs;
 
 	    // DEBUG
 	    private: void DebugOutput(std::string _msg);

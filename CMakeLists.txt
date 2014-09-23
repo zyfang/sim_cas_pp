@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   message_generation
   tf
+  beliefstate_client
 )
 
 ## TODO manually added
@@ -34,6 +35,7 @@ include_directories(${OGRE-Terrain_INCLUDE_DIRS})
 
 catkin_package(
   INCLUDE_DIRS include 
+  LIBRARIES beliefstate_client
   CATKIN_DEPENDS message_runtime roscpp rospy std_msgs geometry_msgs tf
 )
 
@@ -49,6 +51,7 @@ include_directories(
 add_library(PostProcess src/PostProcess.cc)
 
 target_link_libraries(PostProcess ${catkin_LIBRARIES} ${MONGOCLIENT})# ${Boost_CHRONO_LIBRARY})
+
 
 
 
