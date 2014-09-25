@@ -352,7 +352,6 @@ void PostProcess::TerminateSimulation()
 //////////////////////////////////////////////////
 void PostProcess::WriteEventData()
 {
-//    boost::chrono::system_clock::time_point ev_start = boost::chrono::system_clock::now();
 
 	// set diff detected flag to false
 	bool diff_detected = false;
