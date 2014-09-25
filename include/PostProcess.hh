@@ -38,6 +38,8 @@
 #ifndef POST_PROCESS_PLUGIN_HH
 #define POST_PROCESS_PLUGIN_HH
 
+#include <map>
+
 #include "gazebo/gazebo.hh"
 #include "gazebo/msgs/MessageTypes.hh"
 #include "gazebo/physics/Contact.hh"
@@ -73,10 +75,13 @@ namespace gazebo
 		private: void InitOnWorldConnect();
 
 		/// \brief Check which models have face collision for events
-		private: void GetEventCollisions();
+		private: void FirstSimulationStepInit();
 
         /// \brief Called on every simulation timestamp, saves logs to mongodb
         private: void UpdateDB();
+
+        /// \brief Function having all the post processing
+        private: void ProcessCurrentData();
 
         /// \brief Write event data to mongodb
         private: void WriteEventData();
@@ -90,17 +95,17 @@ namespace gazebo
         /// \brief Publish tf
         private: void PublishAndWriteTFData();
 
-        /// \brief write tf transforms to the database
+        /// \brief Write tf transforms to the database
         private: void WriteTFData(const std::vector<tf::StampedTransform>& _stamped_transforms);
 
-        /// \brief check if the transform should be written to the db
+        /// \brief Check if the transform should be written to the db
         private: bool ShouldWriteTransform(std::vector<tf::StampedTransform>::const_iterator& _st_iter);
 
-        /// \brief write semantic events to OWL files
+        /// \brief Write semantic events to OWL files
         private: void WriteSemanticData();
 
-        /// \brief write semantic events to OWL files
-        private: void DummyUpdate();
+        /// \brief Check if the log play has finished
+        private: void WorkerLogCheck();
 
         /// \brief create a contact bson object
 		private: mongo::BSONObj CreateBSONContactObject(const physics::Contact* _contact,
@@ -120,6 +125,9 @@ namespace gazebo
 
 		/// \brief Contacts callback function, just to start the contacts in the physics engine
 		private: void DummyContactsCallback(ConstContactsPtr& _msg);
+
+		/// \brief Terminate simulation
+		private: void TerminateSimulation();
 
 		/// \brief World name
 		private: std::string worldName;
@@ -142,19 +150,25 @@ namespace gazebo
 		/// \brief Connection to the database
 		private: mongo::DBClientConnection mongoDBClientConnection;
 
+	    /// \brief Thread for checking the end of a log
+        private: boost::thread* checkLogEndThread;
+
+	    /// \brief Flag used to set that initially pause mode is set, used of detecting the end of a Log
+	    private: bool pauseMode;
+
 		/// \brief World Pointer
 		private: physics::WorldPtr world;
 
 		/// \brief Vector of the world models
 		private: physics::Model_V models;
 
-		/// \brief Pointer to the world created pointer;
+		/// \brief World created connection
 	    private: event::ConnectionPtr worldCreatedConnection;
 
-		/// \brief Pointer to the update event connection
-	    private: event::ConnectionPtr rawDBConnection;
+		/// \brief Pause event connection
+	    private: event::ConnectionPtr pauseConnection;
 
-		/// \brief Pointer to the update event connection
+		/// \brief World update connection
 	    private: event::ConnectionPtr eventConnection;
 
 	    /// \brief pointer of ContactManager, for getting contacts from physics engine
@@ -220,12 +234,14 @@ namespace gazebo
 	    /// \brief Beliefstate client
 	    private: beliefstate_client::BeliefstateClient* beliefStateClient;
 
-	    /// \brief main context
+	    /// \brief Main context
 	    // TODO use smart pointers
 	    private: beliefstate_client::Context* mainContext;
 
-	    /// \brief Context id stack
-	    private: std::vector<int> contextIDs;
+	    /// \brief Map of all the objects name from the simulation to beliefe state objects
+	    private: std::map<std::string, beliefstate_client::Object*> nameToBsObject_M;
+
+
 
 	    // DEBUG
 	    private: void DebugOutput(std::string _msg);

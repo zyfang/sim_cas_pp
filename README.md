@@ -4,6 +4,6 @@
 
 ### Run example:
 ~~~
-gazebo -u -s libPostProcess.so -p <path>/state.log --verbose -db db_name.col_name -w world_name
+gazebo -u --verbose -s libPostProcess.so -p <path>/state.log -db db_name.col_name -w world_name
 ~~~
 

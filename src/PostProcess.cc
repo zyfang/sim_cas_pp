@@ -37,10 +37,10 @@
 #include "PostProcess.hh"
 //#include <boost/chrono.hpp>
 #include <boost/thread.hpp>
+#include <gazebo/util/LogPlay.hh>
 
 using namespace gazebo;
 using namespace mongo;
-using namespace beliefstate_client;
 
 // Register this plugin with the simulator
 GZ_REGISTER_SYSTEM_PLUGIN(PostProcess)
@@ -54,7 +54,7 @@ PostProcess::PostProcess()
 	ros::init(argc, argv, "post_process");
 
 	// initialize the beliefstate
-	this->beliefStateClient = new BeliefstateClient("bs_client");
+	this->beliefStateClient = new beliefstate_client::BeliefstateClient("bs_client");
 
 	// register the OWL namespace
 	this->beliefStateClient->registerOWLNamespace("sim","http://some-namespace.org/#");
@@ -65,6 +65,12 @@ PostProcess::PostProcess()
 PostProcess::~PostProcess()
 {
 	delete this->contactManagerPtr;
+
+	delete this->beliefStateClient;
+
+	delete this->mainContext;
+
+	delete this->checkLogEndThread;
 }
 
 //////////////////////////////////////////////////
@@ -141,7 +147,13 @@ void PostProcess::Init()
 
     // get the event collisions, only called once, the connection is then changed
     this->eventConnection = event::Events::ConnectWorldUpdateBegin(
-        boost::bind(&PostProcess::GetEventCollisions, this));
+        boost::bind(&PostProcess::FirstSimulationStepInit, this));
+
+    // set the flag that the simulation starts in pause mode
+    this->pauseMode = true;
+
+    // thread for checking if the log has finished playing
+	this->checkLogEndThread = new boost::thread(&PostProcess::WorkerLogCheck, this);
 }
 
 //////////////////////////////////////////////////
@@ -173,18 +185,28 @@ void PostProcess::InitOnWorldConnect()
     this->contactSub = this->gznode->Subscribe(
             "~/physics/contacts", &PostProcess::DummyContactsCallback, this);
 
-	// start the main simulation context
-	this->mainContext = new Context(
-			this->beliefStateClient, "PourFlipEpisode", "&sim;", "MainTimelineClass", 0);
 }
 
 //////////////////////////////////////////////////
-void PostProcess::GetEventCollisions()
+void PostProcess::FirstSimulationStepInit()
 {
+    // set the flag to false, so the end of the log simulation can be detected
+    this->pauseMode = false;
+
+    std::cout << "!!! First recorded step: " << this->world->GetSimTime().Double() * 1000 << std::endl;
+
+	// open the main context
+	this->mainContext = new beliefstate_client::Context(
+			this->beliefStateClient, "PourFlipEpisode", "&sim;", "MainTimelineClass", this->world->GetSimTime().Double() * 1000);
+
 	// loop through all the models to see which have event collisions
 	for(physics::Model_V::const_iterator m_iter = this->models.begin();
 			m_iter != this->models.end(); m_iter++)
 	{
+
+		// map model name to the beliefstate object
+		this->nameToBsObject_M[m_iter->get()->GetName()] = new beliefstate_client::Object("&sim;", m_iter->get()->GetName());
+
 
 		// get the links vector from the current model
 		const physics::Link_V links = m_iter->get()->GetLinks();
@@ -227,7 +249,7 @@ void PostProcess::GetEventCollisions()
 						// insert collision into set
                         this->eventCollisions_S.insert(c_iter->get());
 
-                        // init the event coll to model names map with empty sets of strings
+                        // init the event collision with an empty set (models that are in collision with)
                         this->eventCollToSetOfModelNames_M[c_iter->get()] = std::set<std::string>();
 
                         // init the event coll to particle names map with empty sets of strings
@@ -238,7 +260,10 @@ void PostProcess::GetEventCollisions()
 		}
 	}
 
-    // Listen to the update event. This event is broadcast every simulation iteration.
+	// Run the post processing threads once so the first step is not skipped
+	PostProcess::ProcessCurrentData();
+
+    // From now on for every update event call the given function
     this->eventConnection = event::Events::ConnectWorldUpdateBegin(
         boost::bind(&PostProcess::UpdateDB, this));
 }
@@ -248,6 +273,16 @@ void PostProcess::UpdateDB()
 {
 //    boost::chrono::system_clock::time_point parallel_start = boost::chrono::system_clock::now();
 
+	// Run the post processing threads for every new simulation step
+	PostProcess::ProcessCurrentData();
+
+//    boost::chrono::duration<double> parallel_dur = boost::chrono::system_clock::now() - parallel_start;
+//    std::cout << "Parallel TOTAL: " << parallel_dur.count() << " seconds\n";
+}
+
+//////////////////////////////////////////////////
+void PostProcess::ProcessCurrentData()
+{
 	// group of threads for processing the data in parallel
 	boost::thread_group process_thread_group;
 
@@ -256,31 +291,62 @@ void PostProcess::UpdateDB()
 //	process_thread_group.create_thread(boost::bind(&PostProcess::WriteParticleEventData, this));
 	// TODO separate this two? add flag in the method to publish or not
 	process_thread_group.create_thread(boost::bind(&PostProcess::PublishAndWriteTFData, this));
-//	process_thread_group.create_thread(boost::bind(&PostProcess::WriteSemanticData, this));
+	process_thread_group.create_thread(boost::bind(&PostProcess::WriteSemanticData, this));
 
-	process_thread_group.create_thread(boost::bind(&PostProcess::DummyUpdate, this));
 
 	// wait for all the threads to finish work
 	process_thread_group.join_all();
 
-
-	// clear the contact manager, otherwise data from past contacts are still present
+	// clear/refresh the contact manager, otherwise data from past contacts are still present
     this->contactManagerPtr->Clear();
-
-//    boost::chrono::duration<double> parallel_dur = boost::chrono::system_clock::now() - parallel_start;
-//    std::cout << "Parallel TOTAL: " << parallel_dur.count() << " seconds\n";
 }
 
 //////////////////////////////////////////////////
-void PostProcess::DummyUpdate()
+void PostProcess::WorkerLogCheck()
 {
-	std::cout << "raw" << this->world->GetSimTime() << std::endl;
+	// flag to stop the while loop
+	bool log_play_finished = false;
 
-	std::cout << "double" << this->world->GetSimTime().Double() << std::endl;
+	// loop until the log has finished playing
+	while(!log_play_finished)
+	{
+		// if the world is paused
+		if(this->world && this->world->IsPaused() && !this->pauseMode)
+		{
+			// check that no manual pause happened!
+			std::string sdfString;
+			if(!util::LogPlay::Instance()->Step(sdfString))
+			{
+				log_play_finished = true;
+				std::cout << "!!! Last recorded step at " << this->world->GetSimTime().Double() << ", terminating simulation.."<< std::endl;
+			}
+			else
+			{
+				std::cout << "!!! Manual pause, every time this msg appears one step of the simulation is lost.. "  << std::endl;
+			}
+		}
+		// loop sleep
+		usleep(2000000);
+	}
 
-	std::cout << "ms" << this->world->GetSimTime().nsec / 1000000.0 + this->world->GetSimTime().sec * 1000.0 << std::endl;
+	// terminate simulation
+	PostProcess::TerminateSimulation();
+}
 
-	std::cout << "**********************************" << std::endl;
+//////////////////////////////////////////////////
+void PostProcess::TerminateSimulation()
+{
+	// Terminate main context
+	this->mainContext->end(true, this->world->GetSimTime().Double() * 1000);
+
+	// export beliefe state client
+	this->beliefStateClient->exportFiles("sim_data");
+
+	// shutting down ros
+	ros::shutdown();
+
+	// finish the simulation
+	gazebo::shutdown();
 }
 
 //////////////////////////////////////////////////
@@ -1274,6 +1340,9 @@ void PostProcess::WriteTFData(const std::vector<tf::StampedTransform>& _stamped_
 	// create bson transform object
 	std::vector<BSONObj> transforms_bo;
 
+	// get the timestamp im ms and date format
+	Date_t stamp_ms = this->world->GetSimTime().nsec / 1000000.0 + this->world->GetSimTime().sec * 1000.0;
+
 	// iterate through the stamped tranforms
 	for (std::vector<tf::StampedTransform>::const_iterator st_iter = _stamped_transforms.begin();
 			st_iter != _stamped_transforms.end(); ++st_iter)
@@ -1286,9 +1355,6 @@ void PostProcess::WriteTFData(const std::vector<tf::StampedTransform>& _stamped_
 
 			// the translation and rotation
 			BSONObjBuilder transform_bb;
-
-			// get the timestamp im ms and date format
-			Date_t stamp_ms = this->world->GetSimTime().nsec / 1000000.0 + this->world->GetSimTime().sec * 1000.0;
 
 			transform_stamped_bb.append("header", BSON(   "seq" << this->tfSeq
 					<< "stamp" << stamp_ms
@@ -1311,19 +1377,15 @@ void PostProcess::WriteTFData(const std::vector<tf::StampedTransform>& _stamped_
 		}
 	}
 
-
 	// increment the the message seq
 	this->tfSeq++;
 
-    // insert document object into the database
-//    this->mongoDBClientConnection.insert(this->dbCollName + ".tf", BSON("transforms" << transforms_bo));
-
-	// use scoped connection
+    // insert document object into the database, use scoped connection
 	ScopedDbConnection scoped_connection("localhost");
 
 	// insert document object into the database
 	scoped_connection->insert(this->dbCollName + ".tf", BSON("transforms" << transforms_bo
-														<< "__recorded" << Date_t(time(NULL) * 1000)
+														<< "__recorded" << stamp_ms
 														<< "__topic" << "/tf_sim"));
 
 
@@ -1413,17 +1475,8 @@ bool PostProcess::ShouldWriteTransform(std::vector<tf::StampedTransform>::const_
 //////////////////////////////////////////////////
 void PostProcess::WriteSemanticData()
 {
-    // compute simulation time in miliseconds
-    const int timestamp_ms = this->world->GetSimTime().nsec / 1000000.0 + this->world->GetSimTime().sec * 1000.0;
-
-
-//	this->contextIDs.push_back(this ->beliefStateClient->startContext("exp1", "&sim", "Contact", timestamp_ms));
-
-//	this->beliefStateClient->endContext(this->contextIDs.back(), true, timestamp_ms);
-//
-//	this->contextIDs.pop_back();
-
-//	this->eventCollisionThumb->co
+    // compute simulation time in milliseconds
+    const int timestamp_ms = this->world->GetSimTime().Double() * 1000;
 
 	// set diff detected flag to false
 	bool diff_detected = false;
