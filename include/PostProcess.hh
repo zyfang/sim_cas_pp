@@ -71,6 +71,9 @@ namespace gazebo
 		/// \brief Init plugin (Load called first, then Init)
 		protected: virtual void Init();
 
+        /// \brief Check if the log play has finished
+        private: void WorkerLogCheck();
+
 		/// \brief Call after the world connected event
 		private: void InitOnWorldConnect();
 
@@ -83,15 +86,6 @@ namespace gazebo
         /// \brief Function having all the post processing
         private: void ProcessCurrentData();
 
-        /// \brief Write event data to mongodb
-        private: void WriteEventData();
-
-        /// \brief Write particle events data to mongodb
-        private: void WriteParticleEventData();
-
-        /// \brief Write raw data to mongodb
-        private: void WriteRawData();
-
         /// \brief Publish tf
         private: void PublishAndWriteTFData();
 
@@ -103,25 +97,6 @@ namespace gazebo
 
         /// \brief Write semantic events to OWL files
         private: void WriteSemanticData();
-
-        /// \brief Check if the log play has finished
-        private: void WorkerLogCheck();
-
-        /// \brief create a contact bson object
-		private: mongo::BSONObj CreateBSONContactObject(const physics::Contact* _contact,
-						const physics::Collision* _collision);
-
-		/// \brief create a collision bson object
-		private: mongo::BSONObj CreateBSONCollisionObject(const physics::CollisionPtr _collision,
-														const mongo::BSONArray _contact_arr);
-
-		/// \brief create a link bson object
-		private: mongo::BSONObj CreateBSONLinkObject(const physics::LinkPtr _link,
-														const mongo::BSONArray _collision_arr);
-
-		/// \brief create a link bson object
-		private: mongo::BSONObj CreateBSONModelObject(const physics::ModelPtr _model,
-														const mongo::BSONArray _link_arr);
 
 		/// \brief Contacts callback function, just to start the contacts in the physics engine
 		private: void DummyContactsCallback(ConstContactsPtr& _msg);
@@ -190,7 +165,7 @@ namespace gazebo
         private: std::map< physics::Collision*, std::set<std::string> > eventCollToSetOfParticleNames_M;
 
 	    /// \brief name of the grasped model
-	    private: std::string graspedModelName;
+	    private: std::string prevGraspedModel;
 
 	    /// \brief liquid model
 	    private: physics::ModelPtr liquidSpheres;
@@ -237,6 +212,12 @@ namespace gazebo
 	    /// \brief Main context
 	    // TODO use smart pointers
 	    private: beliefstate_client::Context* mainContext;
+
+	    /// \brief Grasp context
+	    private: beliefstate_client::Context* graspContext;
+
+	    /// \brief Grasp flag
+	    private: bool graspContextOpen;
 
 	    /// \brief Map of all the objects name from the simulation to beliefe state objects
 	    private: std::map<std::string, beliefstate_client::Object*> nameToBsObject_M;
