@@ -38,8 +38,6 @@
 #ifndef POST_PROCESS_PLUGIN_HH
 #define POST_PROCESS_PLUGIN_HH
 
-#include <map>
-
 #include "gazebo/gazebo.hh"
 #include "gazebo/msgs/MessageTypes.hh"
 #include "gazebo/physics/Contact.hh"
@@ -71,19 +69,13 @@ namespace gazebo
 		/// \brief Init plugin (Load called first, then Init)
 		protected: virtual void Init();
 
-        /// \brief Check if the log play has finished
-        private: void WorkerLogCheck();
-
 		/// \brief Call after the world connected event
 		private: void InitOnWorldConnect();
 
 		/// \brief Check which models have face collision for events
 		private: void FirstSimulationStepInit();
 
-        /// \brief Called on every simulation timestamp, saves logs to mongodb
-        private: void UpdateDB();
-
-        /// \brief Function having all the post processing
+        /// \brief Function having all the post processing threads
         private: void ProcessCurrentData();
 
         /// \brief Publish tf
@@ -98,8 +90,24 @@ namespace gazebo
         /// \brief Write semantic events to OWL files
         private: void WriteSemanticData();
 
+        /// \brief Check current Grasp
+        private: bool CheckCurrentGrasp(
+        		const long int _timestamp_ms,
+        		bool _fore_finger_contact,
+        		bool _thumb_contact,
+        		physics::Collision *_grasp_coll1,
+        		physics::Collision *_grasp_coll2);
+
+        /// \brief Check current event collisions
+        private: bool CheckCurrentEventCollisions(
+        		const long int _timestamp_ms,
+        		std::set<std::pair<std::string, std::string> > &_curr_ev_contact_model_pair_S);
+
 		/// \brief Contacts callback function, just to start the contacts in the physics engine
 		private: void DummyContactsCallback(ConstContactsPtr& _msg);
+
+        /// \brief Check if the log play has finished
+        private: void WorkerLogCheck();
 
 		/// \brief Terminate simulation
 		private: void TerminateSimulation();
@@ -158,8 +166,13 @@ namespace gazebo
 	    /// \brief Event no contact collision vector
 	    private: std::set<physics::Collision*> eventCollisions_S;
 
+
+	    /// \brief Set with the event contact model names
+	    private: std::set<std::pair<std::string, std::string> > prevEvContactModelPair_S;
+
+	    // TODO remove maps
         /// \brief map of event collisions to a set of all its contacts model names
-        private: std::map< physics::Collision*, std::set<std::string> > eventCollToSetOfModelNames_M;
+        private: std::map< physics::Collision*, std::set<std::string> > prevEvCollToModelNames_S_M;
 
         /// \brief map of event collisions to a set of all its particle names
         private: std::map< physics::Collision*, std::set<std::string> > eventCollToSetOfParticleNames_M;
@@ -219,10 +232,14 @@ namespace gazebo
 	    /// \brief Grasp flag
 	    private: bool graspContextOpen;
 
-	    /// \brief Map of all the objects name from the simulation to beliefe state objects
+	    /// \brief Map of all the objects name from the simulation to beliefstate objects
 	    private: std::map<std::string, beliefstate_client::Object*> nameToBsObject_M;
 
+	    /// \brief Map of the event collisions, first model names concatenated, second the bs context
+	    private: std::map<std::string, beliefstate_client::Context*> evNamesToContext_M;
 
+	    /// \brief Map of the state of event collisions, first model names concatenated, second the bool isopen flag
+	    private: std::map<std::string, bool> evNamesToCtxOpen_M;
 
 	    // DEBUG
 	    private: void DebugOutput(std::string _msg);

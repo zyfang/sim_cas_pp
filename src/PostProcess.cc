@@ -159,38 +159,6 @@ void PostProcess::Init()
 }
 
 //////////////////////////////////////////////////
-void PostProcess::WorkerLogCheck()
-{
-	// flag to stop the while loop
-	bool log_play_finished = false;
-
-	// loop until the log has finished playing
-	while(!log_play_finished)
-	{
-		// if the world is paused
-		if(this->world && this->world->IsPaused() && !this->pauseMode)
-		{
-			// check that no manual pause happened!
-			std::string sdfString;
-			if(!util::LogPlay::Instance()->Step(sdfString))
-			{
-				log_play_finished = true;
-				std::cout << "!!! Last recorded step at " << this->world->GetSimTime().Double() << ", terminating simulation.."<< std::endl;
-			}
-			else
-			{
-				std::cout << "!!! Manual pause, every time this msg appears one step of the simulation is lost.. "  << std::endl;
-			}
-		}
-		// loop sleep
-		usleep(2000000);
-	}
-
-	// terminate simulation
-	PostProcess::TerminateSimulation();
-}
-
-//////////////////////////////////////////////////
 void PostProcess::InitOnWorldConnect()
 {
 	// connect to the database
@@ -283,7 +251,7 @@ void PostProcess::FirstSimulationStepInit()
                         this->eventCollisions_S.insert(c_iter->get());
 
                         // init the event collision with an empty set (models that are in collision with)
-                        this->eventCollToSetOfModelNames_M[c_iter->get()] = std::set<std::string>();
+//                        this->prevEvCollToModelNames_S_M[c_iter->get()] = std::set<std::string>();
 
                         // init the event coll to particle names map with empty sets of strings
                         this->eventCollToSetOfParticleNames_M[c_iter->get()] = std::set<std::string>();
@@ -298,14 +266,7 @@ void PostProcess::FirstSimulationStepInit()
 
     // From now on for every update event call the given function
     this->eventConnection = event::Events::ConnectWorldUpdateBegin(
-        boost::bind(&PostProcess::UpdateDB, this));
-}
-
-//////////////////////////////////////////////////
-void PostProcess::UpdateDB()
-{
-	// Run the post processing threads for every new simulation step
-	PostProcess::ProcessCurrentData();
+        boost::bind(&PostProcess::ProcessCurrentData, this));
 }
 
 //////////////////////////////////////////////////
@@ -547,7 +508,7 @@ bool PostProcess::ShouldWriteTransform(std::vector<tf::StampedTransform>::const_
 void PostProcess::WriteSemanticData()
 {
     // compute simulation time in milliseconds
-    const int timestamp_ms = this->world->GetSimTime().Double() * 1000;
+    const long int timestamp_ms = this->world->GetSimTime().Double() * 1000;
 
     // get all the contacts from the physics engine
     const std::vector<physics::Contact*> all_contacts = this->contactManagerPtr->GetContacts();
@@ -570,6 +531,9 @@ void PostProcess::WriteSemanticData()
     int prev_poured_particles_nr = this->pouredLiquidCollisions_S.size();
 
 
+    //TODO test to remove map
+    std::set<std::pair<std::string, std::string> > curr_ev_contact_model_pair_S;
+
     // current map of event collisions to set of models names in contact with
     std::map< physics::Collision*, std::set<std::string> > curr_ev_coll_to_model_names_S_M;
 
@@ -580,12 +544,12 @@ void PostProcess::WriteSemanticData()
     for(std::set<physics::Collision*>::const_iterator s_iter = this->eventCollisions_S.begin();
             s_iter != this->eventCollisions_S.end(); s_iter++)
     {
-        curr_ev_coll_to_model_names_S_M[*s_iter] = std::set<std::string>();
+//        curr_ev_coll_to_model_names_S_M[*s_iter] = std::set<std::string>();
         curr_ev_coll_to_particle_names_S_M[*s_iter] = std::set<std::string>();
     }
 
-    ////////////// Loop through all the contacts
-    // set current states
+    ////////////////////////////////////////////////////////////////
+    ////////////// Loop through all the contacts to set current state
     for (unsigned int i = 0; i < all_contacts.size(); i++)
     {
         // collision 1 and 2 of the contact
@@ -599,12 +563,18 @@ void PostProcess::WriteSemanticData()
         {
             // insert contact model name into the set
             curr_ev_coll_to_model_names_S_M[coll1].insert(coll2->GetParentModel()->GetName());
+
+            curr_ev_contact_model_pair_S.insert(std::pair<std::string, std::string>(
+            		coll1->GetParentModel()->GetName(), coll2->GetParentModel()->GetName()));
         }
         // check if collision 2 belongs to the event collision set
         else if(this->eventCollisions_S.find(coll2) != this->eventCollisions_S.end())
         {
             // insert contact model name into the set
             curr_ev_coll_to_model_names_S_M[coll2].insert(coll1->GetParentModel()->GetName());
+
+            curr_ev_contact_model_pair_S.insert(std::pair<std::string, std::string>(
+            		coll2->GetParentModel()->GetName(), coll1->GetParentModel()->GetName()));
         }
 
         // TODO use else if ?
@@ -696,59 +666,26 @@ void PostProcess::WriteSemanticData()
     }
 
 
-    ////////////// Compare states
-    // check for grasp
-    if (fore_finger_contact && thumb_contact)
-    {
-        // if coll1 belongs to the hand model, then coll2 is the grasped model
-        if (grasp_coll1->GetParentModel()->GetName() == "hit_hand")
-        {
-            curr_grasped_model = grasp_coll2->GetParentModel()->GetName();
-        }
-        else
-        {
-            curr_grasped_model = grasp_coll1->GetParentModel()->GetName();
-        }
-    }
 
-    // check for difference between current and past grasp
-    if (curr_grasped_model != this->prevGraspedModel)
-    {
-       diff_detected = true;
-       this->prevGraspedModel = curr_grasped_model;
+    ////////////////////////////////////////////////////////////////
+    ////////////// Compare current state with previous one
 
-       // check if the context is already opened
-       if(!this->graspContextOpen)
-       {
+    // Check if the current grasp has changed
+    diff_detected = PostProcess::CheckCurrentGrasp(
+    		timestamp_ms, fore_finger_contact, thumb_contact, grasp_coll1, grasp_coll2);
 
-    	   // open the grasp context
-    	   this->graspContext = this->mainContext->startContext(
-    			   "Grasp_"+curr_grasped_model, "&sim;", "GraspingSomething", timestamp_ms);
 
-    	   // add the grasped object
-    	   this->graspContext->addObject(
-    			   this->nameToBsObject_M[curr_grasped_model], "knowrob:GraspingSomething");
+    // Check if difference between the event collisions have appeared
+    diff_detected = PostProcess::CheckCurrentEventCollisions(timestamp_ms, curr_ev_contact_model_pair_S);
 
-    	   // set grasp context flag to true
-    	   this->graspContextOpen = true;
-       }
-       else
-       {
-    	   // close the grasp context
-    	   this->graspContext->end(true, timestamp_ms);
 
-    	   // set grasp context flag to false
-    	   this->graspContextOpen = false;
-       }
 
-    }
-
-    // check current and past collision states difference
-    if (curr_ev_coll_to_model_names_S_M != this->eventCollToSetOfModelNames_M)
-    {
-        diff_detected = true;;
-        this->eventCollToSetOfModelNames_M = curr_ev_coll_to_model_names_S_M;
-    }
+//    // check current and past collision states difference
+//    if (curr_ev_coll_to_model_names_S_M != this->eventCollToSetOfModelNames_M)
+//    {
+//        diff_detected = true;;
+//        this->eventCollToSetOfModelNames_M = curr_ev_coll_to_model_names_S_M;
+//    }
 
     // TODO Pour Pancake events
     // check if new particle has been poured
@@ -794,7 +731,7 @@ void PostProcess::WriteSemanticData()
 
     ////////////////////////////
     // Output at detected difference
-    if (diff_detected)
+    if(diff_detected)
     {
         diff_detected = false;
 
@@ -827,7 +764,6 @@ void PostProcess::WriteSemanticData()
         // Pancake size
         std::cout << "pancake size --> " << this->pancakeCollision_S.size() << " particles" << std::endl;
 
-        // TODO change all interators to const iterator?
         for (std::set<physics::Collision*>::const_iterator c_iter = this->pancakeCollision_S.begin();
              c_iter != this->pancakeCollision_S.end(); c_iter++)
         {
@@ -879,6 +815,194 @@ void PostProcess::WriteSemanticData()
         }
         std::cout <<"-------------------------------------------------------------------ts: "<< timestamp_ms << " ms"<< std::endl;
     }
+}
+
+//////////////////////////////////////////////////
+bool PostProcess::CheckCurrentGrasp(
+		const long int _timestamp_ms,
+		bool _fore_finger_contact,
+		bool _thumb_contact,
+		physics::Collision *_grasp_coll1,
+		physics::Collision *_grasp_coll2)
+{
+	// marks if there is a difference between the previous and current step
+	bool diff_detected = false;
+
+    // current grasped model name
+    std::string curr_grasped_model;
+
+    // check for grasp / both fingers are in contact
+    if (_fore_finger_contact && _thumb_contact)
+    {
+        // if coll1 belongs to the hand model, then coll2 is the grasped model
+        if (_grasp_coll1->GetParentModel()->GetName() == "hit_hand")
+        {
+            curr_grasped_model = _grasp_coll2->GetParentModel()->GetName();
+        }
+        else
+        {
+            curr_grasped_model = _grasp_coll1->GetParentModel()->GetName();
+        }
+    }
+
+    // check for difference between current and past grasp
+    if (curr_grasped_model != this->prevGraspedModel)
+    {
+		// set diff flag to true and the prev grasp value takes the current one
+       diff_detected = true;
+       this->prevGraspedModel = curr_grasped_model;
+
+       // check if the context is already opened
+       if(!this->graspContextOpen)
+       {
+    	   // open the grasp context
+    	   this->graspContext = this->mainContext->startContext(
+    			   "Grasp_"+curr_grasped_model, "&sim;", "GraspingSomething", _timestamp_ms);
+
+    	   // add the grasped object
+    	   this->graspContext->addObject(
+    			   this->nameToBsObject_M[curr_grasped_model], "knowrob:GraspingSomething");
+
+    	   // set grasp context flag to true
+    	   this->graspContextOpen = true;
+       }
+       else
+       {
+    	   // close the grasp context
+    	   this->graspContext->end(true, _timestamp_ms);
+
+    	   // set grasp context flag to false
+    	   this->graspContextOpen = false;
+       }
+    }
+
+    return diff_detected;
+}
+
+//////////////////////////////////////////////////
+bool PostProcess::CheckCurrentEventCollisions(
+		const long int _timestamp_ms,
+		std::set<std::pair<std::string, std::string> > &_curr_ev_contact_model_pair_S)
+{
+	// marks if there is a difference between the previous and current step
+	bool diff_detected = false;
+
+	// the symmetric difference will be added to this set
+	std::set<std::pair<std::string, std::string> > symmetric_diff_S;
+
+	// computing the symmetric diff between the curr and prev set
+	std::set_symmetric_difference(
+			_curr_ev_contact_model_pair_S.begin(),
+			_curr_ev_contact_model_pair_S.end(),
+			this->prevEvContactModelPair_S.begin(),
+			this->prevEvContactModelPair_S.end(),
+			std::inserter(symmetric_diff_S,symmetric_diff_S.end()));
+
+	// check if there are any differences
+	if (symmetric_diff_S.size() > 0)
+	{
+		// set diff flag to true and set the prev values to the current one
+		bool diff_detected = true;
+		this->prevEvContactModelPair_S = _curr_ev_contact_model_pair_S;
+
+		// iterate through all the collising event models
+		for(std::set<std::pair<std::string, std::string> >::const_iterator m_iter = symmetric_diff_S.begin();
+				m_iter != symmetric_diff_S.end(); m_iter++)
+		{
+			// set name of the context first models + second model in contact
+			std::string ev_context_name = m_iter->first + " " + m_iter->second;
+
+			// check if the context is created with the given name, if not create one
+			if(!this->evNamesToContext_M.count(ev_context_name))
+			{
+				std::cout << "*First* creating context name: " << ev_context_name
+						<< " at " << _timestamp_ms << std::endl;
+
+				// create the contact context
+				this->evNamesToContext_M[ev_context_name] = this->mainContext->startContext(
+						ev_context_name + "_Contact", "&sim;", "TouchingSituation", _timestamp_ms);
+
+				// add the objects in contact
+				this->evNamesToContext_M[ev_context_name]->addObject(
+						this->nameToBsObject_M[m_iter->first], "knowrob:objectInContact");
+
+				this->evNamesToContext_M[ev_context_name]->addObject(
+						this->nameToBsObject_M[m_iter->second], "knowrob:objectInContact");
+
+				// set the contact context open to true
+				this->evNamesToCtxOpen_M[ev_context_name] = true;
+
+			}
+			else
+			{
+				// check if the context is open
+				if(this->evNamesToCtxOpen_M[ev_context_name] == true)
+				{
+					std::cout << "*Ending* context name: " << ev_context_name
+							<< " at " << _timestamp_ms << std::endl;
+
+					// ending context
+					this->evNamesToContext_M[ev_context_name]->end(true, _timestamp_ms);
+
+					// set the contact context open to false
+					this->evNamesToCtxOpen_M[ev_context_name] = false;
+				}
+				else
+				{
+					std::cout << "*Re-Opening* context name: " << ev_context_name
+							<< " at " << _timestamp_ms << std::endl;
+
+					// create the contact context
+					this->evNamesToContext_M[ev_context_name] = this->mainContext->startContext(
+							ev_context_name + "_Contact", "&sim;", "TouchingSituation", _timestamp_ms);
+
+					// add the objects in contact
+					this->evNamesToContext_M[ev_context_name]->addObject(
+							this->nameToBsObject_M[m_iter->first], "knowrob:objectInContact");
+
+					this->evNamesToContext_M[ev_context_name]->addObject(
+							this->nameToBsObject_M[m_iter->second], "knowrob:objectInContact");
+
+					// set the contact context open to true
+					this->evNamesToCtxOpen_M[ev_context_name] = true;
+				}
+			}
+		}
+	}
+
+	return diff_detected;
+}
+
+//////////////////////////////////////////////////
+void PostProcess::WorkerLogCheck()
+{
+	// flag to stop the while loop
+	bool log_play_finished = false;
+
+	// loop until the log has finished playing
+	while(!log_play_finished)
+	{
+		// if the world is paused
+		if(this->world && this->world->IsPaused() && !this->pauseMode)
+		{
+			// check that no manual pause happened!
+			std::string sdfString;
+			if(!util::LogPlay::Instance()->Step(sdfString))
+			{
+				log_play_finished = true;
+				std::cout << "!!! Last recorded step at " << this->world->GetSimTime().Double() << ", terminating simulation.."<< std::endl;
+			}
+			else
+			{
+				std::cout << "!!! Manual pause, every time this msg appears one step of the simulation is lost.. "  << std::endl;
+			}
+		}
+		// loop sleep
+		usleep(2000000);
+	}
+
+	// terminate simulation
+	PostProcess::TerminateSimulation();
 }
 
 //////////////////////////////////////////////////
