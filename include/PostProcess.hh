@@ -44,6 +44,8 @@
 #include "gazebo/physics/physics.hh"
 #include "gazebo/physics/PhysicsTypes.hh"
 
+#include "GzEvent.hh"
+
 #include "mongo/client/dbclient.h"
 
 #include <ros/ros.h>
@@ -52,198 +54,199 @@
 #include <beliefstate_client/BeliefstateClient.h>
 #include <beliefstate_client/Context.h>
 
+
 namespace gazebo
 {
-	/// \brief class PostProcess, saving world contacts by subscribing to a topic
-	class PostProcess : public SystemPlugin
-	{
-		/// \brief Constructor
-		public: PostProcess();
+/// \brief class PostProcess
+class PostProcess : public SystemPlugin
+{
+	/// \brief Constructor
+	public: PostProcess();
 
-		/// \brief Destructor
-		public: virtual ~PostProcess();
+	/// \brief Destructor
+	public: virtual ~PostProcess();
 
-		/// \brief Load plugin (Load called first, then Init)
-		protected: virtual void Load(int /*_argc*/, char ** /*_argv*/);
+	/// \brief Load plugin (Load called first, then Init)
+	protected: virtual void Load(int /*_argc*/, char ** /*_argv*/);
 
-		/// \brief Init plugin (Load called first, then Init)
-		protected: virtual void Init();
+	/// \brief Init plugin (Load called first, then Init)
+	protected: virtual void Init();
 
-		/// \brief Call after the world connected event
-		private: void InitOnWorldConnect();
+	/// \brief Call after the world connected event
+	private: void InitOnWorldConnect();
 
-		/// \brief Check which models have face collision for events
-		private: void FirstSimulationStepInit();
+	/// \brief Check which models have face collision for events
+	private: void FirstSimulationStepInit();
 
-        /// \brief Function having all the post processing threads
-        private: void ProcessCurrentData();
+	/// \brief Function having all the post processing threads
+	private: void ProcessCurrentData();
 
-        /// \brief Publish tf
-        private: void PublishAndWriteTFData();
+	/// \brief Publish tf
+	private: void PublishAndWriteTFData();
 
-        /// \brief Write tf transforms to the database
-        private: void WriteTFData(const std::vector<tf::StampedTransform>& _stamped_transforms);
+	/// \brief Write tf transforms to the database
+	private: void WriteTFData(const std::vector<tf::StampedTransform>& _stamped_transforms);
 
-        /// \brief Check if the transform should be written to the db
-        private: bool ShouldWriteTransform(std::vector<tf::StampedTransform>::const_iterator& _st_iter);
+	/// \brief Check if the transform should be written to the db
+	private: bool ShouldWriteTransform(std::vector<tf::StampedTransform>::const_iterator& _st_iter);
 
-        /// \brief Write semantic events to OWL files
-        private: void WriteSemanticData();
+	/// \brief Write semantic events to OWL files
+	private: void WriteSemanticData();
 
-        /// \brief Check current Grasp
-        private: bool CheckCurrentGrasp(
-        		const long int _timestamp_ms,
-        		bool _fore_finger_contact,
-        		bool _thumb_contact,
-        		physics::Collision *_grasp_coll1,
-        		physics::Collision *_grasp_coll2);
+	/// \brief Check current Grasp
+	private: bool CheckCurrentGrasp(
+			const long int _timestamp_ms,
+			bool _fore_finger_contact,
+			bool _thumb_contact,
+			physics::Collision *_grasp_coll1,
+			physics::Collision *_grasp_coll2);
 
-        /// \brief Check current event collisions
-        private: bool CheckCurrentEventCollisions(
-        		const long int _timestamp_ms,
-        		std::set<std::pair<std::string, std::string> > &_curr_ev_contact_model_pair_S);
+	/// \brief Check current event collisions
+	private: bool CheckCurrentEventCollisions(
+			const long int _timestamp_ms,
+			std::set<std::pair<std::string, std::string> > &_curr_ev_contact_model_pair_S);
 
-		/// \brief Contacts callback function, just to start the contacts in the physics engine
-		private: void DummyContactsCallback(ConstContactsPtr& _msg);
+	/// \brief Contacts callback function, just to start the contacts in the physics engine
+	private: void DummyContactsCallback(ConstContactsPtr& _msg);
 
-        /// \brief Check if the log play has finished
-        private: void WorkerLogCheck();
+	/// \brief Check if the log play has finished
+	private: void WorkerLogCheck();
 
-		/// \brief Terminate simulation
-		private: void TerminateSimulation();
+	/// \brief Terminate simulation
+	private: void TerminateSimulation();
 
-		/// \brief World name
-		private: std::string worldName;
+	/// \brief World name
+	private: std::string worldName;
 
-		/// \brief Database name
-		private: std::string dbName;
+	/// \brief Database name
+	private: std::string dbName;
 
-		/// \brief Db collection name
-		private: std::string collName;
+	/// \brief Db collection name
+	private: std::string collName;
 
-		/// \brief database name
-		private: std::string dbCollName;
+	/// \brief database name
+	private: std::string dbCollName;
 
-		/// \brief Gazebo node providing subscription and advertising
-		private: transport::NodePtr gznode;
+	/// \brief Gazebo node providing subscription and advertising
+	private: transport::NodePtr gznode;
 
-		/// \brief Gazebo subscriber
-		private: transport::SubscriberPtr contactSub;
+	/// \brief Gazebo subscriber
+	private: transport::SubscriberPtr contactSub;
 
-		/// \brief Connection to the database
-		private: mongo::DBClientConnection mongoDBClientConnection;
+	/// \brief Connection to the database
+	private: mongo::DBClientConnection mongoDBClientConnection;
 
-	    /// \brief Thread for checking the end of a log
-        private: boost::thread* checkLogEndThread;
+	/// \brief Thread for checking the end of a log
+	private: boost::thread* checkLogEndThread;
 
-	    /// \brief Flag used to set that initially pause mode is set, used of detecting the end of a Log
-	    private: bool pauseMode;
+	/// \brief Flag used to set that initially pause mode is set, used of detecting the end of a Log
+	private: bool pauseMode;
 
-		/// \brief World Pointer
-		private: physics::WorldPtr world;
+	/// \brief World Pointer
+	private: physics::WorldPtr world;
 
-		/// \brief Vector of the world models
-		private: physics::Model_V models;
+	/// \brief Vector of the world models
+	private: physics::Model_V models;
 
-		/// \brief World created connection
-	    private: event::ConnectionPtr worldCreatedConnection;
+	/// \brief World created connection
+	private: event::ConnectionPtr worldCreatedConnection;
 
-		/// \brief Pause event connection
-	    private: event::ConnectionPtr pauseConnection;
+	/// \brief Pause event connection
+	private: event::ConnectionPtr pauseConnection;
 
-		/// \brief World update connection
-	    private: event::ConnectionPtr eventConnection;
+	/// \brief World update connection
+	private: event::ConnectionPtr eventConnection;
 
-	    /// \brief pointer of ContactManager, for getting contacts from physics engine
-	    private: physics::ContactManager *contactManagerPtr;
+	/// \brief pointer of ContactManager, for getting contacts from physics engine
+	private: physics::ContactManager *contactManagerPtr;
 
-	    /// \brief Mug top event collision
-	    private: physics::Collision* eventCollisionMug;
+	/// \brief Mug top event collision
+	private: physics::Collision* eventCollisionMug;
 
-	    /// \brief Hit hand thumb and fore finger event collision
-	    private: physics::Collision *eventCollisionForeFinger, *eventCollisionThumb;
+	/// \brief Hit hand thumb and fore finger event collision
+	private: physics::Collision *eventCollisionForeFinger, *eventCollisionThumb;
 
-	    /// \brief Event no contact collision vector
-	    private: std::set<physics::Collision*> eventCollisions_S;
+	/// \brief Event no contact collision vector
+	private: std::set<physics::Collision*> eventCollisions_S;
 
 
-	    /// \brief Set with the event contact model names
-	    private: std::set<std::pair<std::string, std::string> > prevEvContactModelPair_S;
+	/// \brief Set with the event contact model names
+	private: std::set<std::pair<std::string, std::string> > prevEvContactModelPair_S;
 
-	    // TODO remove maps
-        /// \brief map of event collisions to a set of all its contacts model names
-        private: std::map< physics::Collision*, std::set<std::string> > prevEvCollToModelNames_S_M;
+	// TODO remove maps
+	/// \brief map of event collisions to a set of all its contacts model names
+	private: std::map< physics::Collision*, std::set<std::string> > prevEvCollToModelNames_S_M;
 
-        /// \brief map of event collisions to a set of all its particle names
-        private: std::map< physics::Collision*, std::set<std::string> > eventCollToSetOfParticleNames_M;
+	/// \brief map of event collisions to a set of all its particle names
+	private: std::map< physics::Collision*, std::set<std::string> > eventCollToSetOfParticleNames_M;
 
-	    /// \brief name of the grasped model
-	    private: std::string prevGraspedModel;
+	/// \brief name of the grasped model
+	private: std::string prevGraspedModel;
 
-	    /// \brief liquid model
-	    private: physics::ModelPtr liquidSpheres;
+	/// \brief liquid model
+	private: physics::ModelPtr liquidSpheres;
 
-	    /// \brief all particle collisions
-	    private: std::set<physics::Collision*> allLiquidCollisions_S;
+	/// \brief all particle collisions
+	private: std::set<physics::Collision*> allLiquidCollisions_S;
 
-	    /// \brief poured particle collisions
-	    private: std::set<physics::Collision*> pouredLiquidCollisions_S;
+	/// \brief poured particle collisions
+	private: std::set<physics::Collision*> pouredLiquidCollisions_S;
 
-        /// \brief particle collisions belonging to the pancake
-        private: std::set<physics::Collision*> pancakeCollision_S;
+	/// \brief particle collisions belonging to the pancake
+	private: std::set<physics::Collision*> pancakeCollision_S;
 
-	    /// \brief flag for starting / finishing the pouring
-	    private: bool pouringStarted, pouringFinished;
+	/// \brief flag for starting / finishing the pouring
+	private: bool pouringStarted, pouringFinished;
 
-        /// \brief flag for when the pancake is created
-        private: bool pancakeCreated;
+	/// \brief flag for when the pancake is created
+	private: bool pancakeCreated;
 
-	    /// \brief timestamp of last particle leaving the mug
-	    private: long long int lastParticleLeavingTimestamp;
+	/// \brief timestamp of last particle leaving the mug
+	private: long long int lastParticleLeavingTimestamp;
 
-	    /// \brief flag for writing all tf transformations to the db
-	    private: bool writeAllTFTransf;
+	/// \brief flag for writing all tf transformations to the db
+	private: bool writeAllTFTransf;
 
-	    /// \brief last timestamps tf transforms
-	    private: std::vector<tf::StampedTransform> lastTFTransformsMemory;
+	/// \brief last timestamps tf transforms
+	private: std::vector<tf::StampedTransform> lastTFTransformsMemory;
 
-	    /// \brief Vectorial distance threshold between tf transformation in order to be logged or not
-	    private: double tfVectDistThresh;
+	/// \brief Vectorial distance threshold between tf transformation in order to be logged or not
+	private: double tfVectDistThresh;
 
-	    /// \brief Angular distance threshold between tf transformation in order to be logged or not
-	    private: double tfAngularDistThresh;
+	/// \brief Angular distance threshold between tf transformation in order to be logged or not
+	private: double tfAngularDistThresh;
 
-	    /// \brief Duration threshold between tf transformation in order to be logged or not
-	    private: double tfDurationThresh;
+	/// \brief Duration threshold between tf transformation in order to be logged or not
+	private: double tfDurationThresh;
 
-	    /// \brief Current tf seq nr
-	    private: long long int tfSeq;
+	/// \brief Current tf seq nr
+	private: long long int tfSeq;
 
-	    /// \brief Beliefstate client
-	    private: beliefstate_client::BeliefstateClient* beliefStateClient;
+	/// \brief Beliefstate client
+	private: beliefstate_client::BeliefstateClient* beliefStateClient;
 
-	    /// \brief Main context
-	    // TODO use smart pointers
-	    private: beliefstate_client::Context* mainContext;
+	/// \brief Main context
+	// TODO use smart pointers
+	private: beliefstate_client::Context* mainContext;
 
-	    /// \brief Grasp context
-	    private: beliefstate_client::Context* graspContext;
+	/// \brief Grasp context
+	private: beliefstate_client::Context* graspContext;
 
-	    /// \brief Grasp flag
-	    private: bool graspContextOpen;
+	/// \brief Grasp flag
+	private: bool graspContextOpen;
 
-	    /// \brief Map of all the objects name from the simulation to beliefstate objects
-	    private: std::map<std::string, beliefstate_client::Object*> nameToBsObject_M;
+	/// \brief Map of all the objects name from the simulation to beliefstate objects
+	private: std::map<std::string, beliefstate_client::Object*> nameToBsObject_M;
 
-	    /// \brief Map of the event collisions, first model names concatenated, second the bs context
-	    private: std::map<std::string, beliefstate_client::Context*> evNamesToContext_M;
+	/// \brief Map of the event collisions, first model names concatenated, second the bs context
+	private: std::map<std::string, beliefstate_client::Context*> evNamesToContext_M;
 
-	    /// \brief Map of the state of event collisions, first model names concatenated, second the bool isopen flag
-	    private: std::map<std::string, bool> evNamesToCtxOpen_M;
+	/// \brief Map of the state of event collisions, first model names concatenated, second the bool isopen flag
+	private: std::map<std::string, bool> evNamesToCtxOpen_M;
 
-	    // DEBUG
-	    private: void DebugOutput(std::string _msg);
-	};
+	// DEBUG
+	private: void DebugOutput(std::string _msg);
+};
 }
 
 

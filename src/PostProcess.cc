@@ -40,6 +40,7 @@
 
 using namespace gazebo;
 using namespace mongo;
+using namespace hand_sim;
 
 // Register this plugin with the simulator
 GZ_REGISTER_SYSTEM_PLUGIN(PostProcess)
