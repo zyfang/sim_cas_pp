@@ -34,28 +34,27 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-
 #include "GzEvent.hh"
 
 using namespace hand_sim;
 
 //////////////////////////////////////////////////
-GzEvent::GzEvent(const std::string _name) :
-		name(_name)
+GzEvent::GzEvent(const std::string _name, const std::string _type) :
+		name(_name), type(_type)
 {
 	// add id to the event;
 	id++;
 }
 
 //////////////////////////////////////////////////
-GzEvent::GzEvent(const std::string _name, long int _start_time) :
-		name(_name)
+GzEvent::GzEvent(const std::string _name, const std::string _type, long int _start_time) :
+		name(_name), type(_type)
 {
 	// add id to the event;
 	id++;
 
 	// set the start time;
-	this->StartEvent(_start_time);
+	this->Start(_start_time);
 }
 
 //////////////////////////////////////////////////
@@ -73,6 +72,18 @@ int GzEvent::GetId()
 const std::string GzEvent::GetName()
 {
 	return this->name;
+}
+
+//////////////////////////////////////////////////
+const std::string GzEvent::GetType()
+{
+	return this->type;
+}
+
+//////////////////////////////////////////////////
+bool GzEvent::IsOpen()
+{
+	return this->isOpen;
 }
 
 //////////////////////////////////////////////////
@@ -114,7 +125,7 @@ long int GzEvent::GetDuration()
 }
 
 //////////////////////////////////////////////////
-void GzEvent::StartEvent(long int _start_time)
+void GzEvent::Start(long int _start_time)
 {
 	// close the event
 	this->isOpen = true;
@@ -124,7 +135,7 @@ void GzEvent::StartEvent(long int _start_time)
 }
 
 //////////////////////////////////////////////////
-void GzEvent::CloseEvent(long int _end_time)
+void GzEvent::End(long int _end_time)
 {
 	// close the event
 	this->isOpen = false;
@@ -134,13 +145,13 @@ void GzEvent::CloseEvent(long int _end_time)
 }
 
 //////////////////////////////////////////////////
-void GzEvent::AddObject(GzEventObj _ev_obj)
+void GzEvent::AddObject(GzEventObj* _ev_obj)
 {
 	this->objects.push_back(_ev_obj);
 }
 
 //////////////////////////////////////////////////
-std::vector<GzEventObj> GzEvent::GetObjects()
+std::vector<GzEventObj*> GzEvent::GetObjects()
 {
 	return this->objects;
 }

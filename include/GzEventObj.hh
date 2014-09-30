@@ -37,6 +37,8 @@
 #ifndef GZEVENTOBJ_HH_
 #define GZEVENTOBJ_HH_
 
+#include <string>
+
 namespace hand_sim
 {
 /// \brief class GzEventObj
@@ -55,7 +57,7 @@ class GzEventObj
 	public: const std::string GetName();
 
 	/// \brief Unique ID of the EventObj
-	private: static int id;
+	private: int id;
 
 	/// \brief EventObj name
 	private: const std::string name;

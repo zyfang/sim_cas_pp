@@ -37,6 +37,9 @@
 #ifndef GZEVENT_HH_
 #define GZEVENT_HH_
 
+#include <string>
+#include <vector>
+#include <iostream>
 #include "GzEventObj.hh"
 
 namespace hand_sim
@@ -46,10 +49,10 @@ namespace hand_sim
 class GzEvent
 {
 	/// \brief Constructor
-	public: GzEvent(const std::string _name);
+	public: GzEvent(const std::string _name, const std::string _type);
 
 	/// \brief Constructor
-	public: GzEvent(const std::string _name, long int _start_time);
+	public: GzEvent(const std::string _name, const std::string _type, long int _start_time);
 
 	/// \brief Destructor
 	public: virtual ~GzEvent();
@@ -59,6 +62,12 @@ class GzEvent
 
 	/// \brief Get the event name
 	public: const std::string GetName();
+
+	/// \brief Get the event type
+	public: const std::string GetType();
+
+	/// \brief Check if event is open
+	public: bool IsOpen();
 
 	/// \brief Get the start time
 	public: long int GetStartTime();
@@ -76,22 +85,25 @@ class GzEvent
 	public: long int GetDuration();
 
 	/// \brief Start Event
-	public: void StartEvent(long int _start_time);
+	public: void Start(long int _start_time);
 
-	/// \brief Close Event
-	public: void CloseEvent(long int _end_time);
+	/// \brief End Event
+	public: void End(long int _end_time);
 
 	/// \brief Add object
-	public: void AddObject(GzEventObj _ev_obj);
+	public: void AddObject(GzEventObj *_ev_obj);
 
 	/// \brief Get all objects
-	public: std::vector<GzEventObj> GetObjects();
+	public: std::vector<GzEventObj*> GetObjects();
 
 	/// \brief Unique ID of the event
-	private: static int id;
+	private: int id;
 
 	/// \brief Event name
 	private: const std::string name;
+
+	/// \brief Event type
+	private: const std::string type;
 
 	/// \brief State of the event, open, closed
 	private: bool isOpen;
@@ -103,7 +115,7 @@ class GzEvent
 	private: long int endTime;
 
 	/// \brief Objects involved in the event
-	private: std::vector<GzEventObj> objects;
+	private: std::vector<GzEventObj*> objects;
 };
 
 }

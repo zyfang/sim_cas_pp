@@ -44,8 +44,6 @@
 #include "gazebo/physics/physics.hh"
 #include "gazebo/physics/PhysicsTypes.hh"
 
-#include "GzEvent.hh"
-
 #include "mongo/client/dbclient.h"
 
 #include <ros/ros.h>
@@ -54,6 +52,7 @@
 #include <beliefstate_client/BeliefstateClient.h>
 #include <beliefstate_client/Context.h>
 
+#include "GzEvent.hh"
 
 namespace gazebo
 {
@@ -110,10 +109,17 @@ class PostProcess : public SystemPlugin
 	private: void DummyContactsCallback(ConstContactsPtr& _msg);
 
 	/// \brief Check if the log play has finished
-	private: void WorkerLogCheck();
+	private: void LogCheckWorker();
 
 	/// \brief Terminate simulation
 	private: void TerminateSimulation();
+
+	/// \brief Write beliefstate contexts
+	private: void WriteContexts();
+
+	/// \brief Write timelines to file
+	private: void WriteTimelines();
+
 
 	/// \brief World name
 	private: std::string worldName;
@@ -168,7 +174,6 @@ class PostProcess : public SystemPlugin
 
 	/// \brief Event no contact collision vector
 	private: std::set<physics::Collision*> eventCollisions_S;
-
 
 	/// \brief Set with the event contact model names
 	private: std::set<std::pair<std::string, std::string> > prevEvContactModelPair_S;
@@ -227,25 +232,35 @@ class PostProcess : public SystemPlugin
 
 	/// \brief Main context
 	// TODO use smart pointers
-	private: beliefstate_client::Context* mainContext;
-
-	/// \brief Grasp context
-	private: beliefstate_client::Context* graspContext;
-
-	/// \brief Grasp flag
-	private: bool graspContextOpen;
-
+//	private: beliefstate_client::Context* mainContext;
+//
+//	/// \brief Grasp context
+//	private: beliefstate_client::Context* graspContext;
+//
+//
 	/// \brief Map of all the objects name from the simulation to beliefstate objects
 	private: std::map<std::string, beliefstate_client::Object*> nameToBsObject_M;
+//
+//	/// \brief Map of the event collisions, first model names concatenated, second the bs context
+//	private: std::map<std::string, beliefstate_client::Context*> evNamesToContext_M;
+//
+//	/// \brief Map of the state of event collisions, first model names concatenated, second the bool isopen flag
+//	private: std::map<std::string, bool> evNamesToCtxOpen_M;
 
-	/// \brief Map of the event collisions, first model names concatenated, second the bs context
-	private: std::map<std::string, beliefstate_client::Context*> evNamesToContext_M;
 
-	/// \brief Map of the state of event collisions, first model names concatenated, second the bool isopen flag
-	private: std::map<std::string, bool> evNamesToCtxOpen_M;
+	/// \brief Grasp flag
+	private: bool graspInit;
 
-	// DEBUG
-	private: void DebugOutput(std::string _msg);
+	/// \brief Grasp GzEvent
+	private: hand_sim::GzEvent* graspGzEvent;
+
+	/// \brief Map of event names to a stack of GzEvent
+	private: std::map<std::string, std::list<hand_sim::GzEvent*> > nameToEvents_M;
+
+	// TODO remove this
+	/// \brief Model names to GzEventObj map
+	private: std::map<std::string, hand_sim::GzEventObj*> nameToEventObj_M;
+
 };
 }
 
