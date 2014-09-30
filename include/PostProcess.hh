@@ -114,6 +114,9 @@ class PostProcess : public SystemPlugin
 	/// \brief Terminate simulation
 	private: void TerminateSimulation();
 
+	/// \brief End still active events
+	private: void EndActiveEvents();
+
 	/// \brief Write beliefstate contexts
 	private: void WriteContexts();
 
@@ -230,23 +233,8 @@ class PostProcess : public SystemPlugin
 	/// \brief Beliefstate client
 	private: beliefstate_client::BeliefstateClient* beliefStateClient;
 
-	/// \brief Main context
-	// TODO use smart pointers
-//	private: beliefstate_client::Context* mainContext;
-//
-//	/// \brief Grasp context
-//	private: beliefstate_client::Context* graspContext;
-//
-//
 	/// \brief Map of all the objects name from the simulation to beliefstate objects
 	private: std::map<std::string, beliefstate_client::Object*> nameToBsObject_M;
-//
-//	/// \brief Map of the event collisions, first model names concatenated, second the bs context
-//	private: std::map<std::string, beliefstate_client::Context*> evNamesToContext_M;
-//
-//	/// \brief Map of the state of event collisions, first model names concatenated, second the bool isopen flag
-//	private: std::map<std::string, bool> evNamesToCtxOpen_M;
-
 
 	/// \brief Grasp flag
 	private: bool graspInit;

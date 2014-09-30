@@ -35,6 +35,8 @@
  *********************************************************************/
 
 #include "PostProcess.hh"
+#include <iostream>
+#include <fstream>
 #include <boost/thread.hpp>
 #include <gazebo/util/LogPlay.hh>
 
@@ -52,13 +54,6 @@ PostProcess::PostProcess()
 	int argc = 0;
 	char** argv = NULL;
 	ros::init(argc, argv, "post_process");
-
-	// initialize the beliefstate
-	this->beliefStateClient = new beliefstate_client::BeliefstateClient("bs_client");
-
-	// register the OWL namespace
-	this->beliefStateClient->registerOWLNamespace("sim","http://some-namespace.org/#");
-
 }
 
 //////////////////////////////////////////////////
@@ -67,8 +62,6 @@ PostProcess::~PostProcess()
 	delete this->contactManagerPtr;
 
 	delete this->beliefStateClient;
-
-	delete this->mainContext;
 
 	delete this->checkLogEndThread;
 }
@@ -115,7 +108,7 @@ void PostProcess::Load(int _argc, char ** _argv)
 	// init tf message seq count
 	this->tfSeq = 0;
 
-	// set the thresholds for logging tf transormations
+	// set the thresholds for logging tf transformations
 	this->tfVectDistThresh = 0.001;
 	this->tfAngularDistThresh = 0.1;
 	this->tfDurationThresh = 100; // ms
@@ -132,8 +125,8 @@ void PostProcess::Load(int _argc, char ** _argv)
 //////////////////////////////////////////////////
 void PostProcess::Init()
 {
-	// set the grasp context flag to false
-	this->graspContextOpen = false;
+	// set the grasp init flag to false
+	this->graspInit = false;
 
     // set the pouring started flag to false
     this->pancakeCreated = false;
@@ -156,7 +149,7 @@ void PostProcess::Init()
     this->pauseMode = true;
 
     // thread for checking if the log has finished playing
-	this->checkLogEndThread = new boost::thread(&PostProcess::WorkerLogCheck, this);
+	this->checkLogEndThread = new boost::thread(&PostProcess::LogCheckWorker, this);
 }
 
 //////////////////////////////////////////////////
@@ -198,17 +191,21 @@ void PostProcess::FirstSimulationStepInit()
 
     std::cout << "!!! First recorded step: " << this->world->GetSimTime().Double() * 1000 << std::endl;
 
-	// open the main context
-	this->mainContext = new beliefstate_client::Context(
-			this->beliefStateClient, "PourFlipEpisode", "&sim;", "MainTimelineClass", this->world->GetSimTime().Double() * 1000);
+	// open the main GzEvent
+	this->nameToEvents_M["main"].push_back(
+			new GzEvent("main","PancakeEpisode", this->world->GetSimTime().Double() * 1000));
 
 	// loop through all the models to see which have event collisions
 	for(physics::Model_V::const_iterator m_iter = this->models.begin();
 			m_iter != this->models.end(); m_iter++)
 	{
+		// map model name to the GzEventObj object
+		this->nameToEventObj_M[m_iter->get()->GetName()] = new GzEventObj(m_iter->get()->GetName());
+
 		// map model name to the beliefstate object
 		this->nameToBsObject_M[m_iter->get()->GetName()] =
 				new beliefstate_client::Object("&sim;", m_iter->get()->GetName());
+
 
 		// get the links vector from the current model
 		const physics::Link_V links = m_iter->get()->GetLinks();
@@ -675,7 +672,6 @@ void PostProcess::WriteSemanticData()
     diff_detected = PostProcess::CheckCurrentGrasp(
     		timestamp_ms, fore_finger_contact, thumb_contact, grasp_coll1, grasp_coll2);
 
-
     // Check if difference between the event collisions have appeared
     diff_detected = PostProcess::CheckCurrentEventCollisions(timestamp_ms, curr_ev_contact_model_pair_S);
 
@@ -732,90 +728,90 @@ void PostProcess::WriteSemanticData()
 
     ////////////////////////////
     // Output at detected difference
-    if(diff_detected)
-    {
-        diff_detected = false;
-
-        ////////////////////////////
-        // Event info
-        for(std::map<physics::Collision*, std::set<std::string> >::const_iterator m_iter = curr_ev_coll_to_model_names_S_M.begin();
-            m_iter != curr_ev_coll_to_model_names_S_M.end(); m_iter++)
-        {
-            std::cout << m_iter->first->GetParentModel()->GetName() << " --> ";
-
-            for(std::set<std::string>::const_iterator s_iter = m_iter->second.begin();
-                s_iter != m_iter->second.end(); s_iter++)
-            {
-                std::cout << *s_iter << "; ";
-            }
-            std::cout << std::endl;
-        }
-
-        ////////////////////////////
-        // Grasped model
-        std::cout << "grasp --> " << curr_grasped_model<< ";" << std::endl;
-
-
-        ////////////////////////////
-        // Poured particles
-        std::cout << "poured --> " << this->pouredLiquidCollisions_S.size() <<
-                     "/" << this->allLiquidCollisions_S.size() << ";" << std::endl;
-
-        ////////////////////////////
-        // Pancake size
-        std::cout << "pancake size --> " << this->pancakeCollision_S.size() << " particles" << std::endl;
-
-        for (std::set<physics::Collision*>::const_iterator c_iter = this->pancakeCollision_S.begin();
-             c_iter != this->pancakeCollision_S.end(); c_iter++)
-        {
-            //TODO why is the copy required?
-            physics::Collision* c = *c_iter;
-        }
-
-
-        ////////////////////////////
-        // Pouring Info before pancake created
-        if(!this->pancakeCreated)
-        {
-            // Poured particles supported by
-            for(std::map<physics::Collision*, std::set<std::string> >::const_iterator m_iter = curr_ev_coll_to_particle_names_S_M.begin();
-                m_iter != curr_ev_coll_to_particle_names_S_M.end(); m_iter++)
-            {
-                std::cout << "\t" << m_iter->first->GetParentModel()->GetName() << " --> ";
-
-                // Write only nr of particles at the moment
-                std::cout << m_iter->second.size() << " particles;" <<std::endl;
-                for(std::set<std::string>::const_iterator s_iter = m_iter->second.begin();
-                    s_iter != m_iter->second.end(); s_iter++)
-                {
-                    //std::cout << *s_iter << "; ";
-                }
-                //std::cout << std::endl;
-            }
-        }
-
-        ////////////////////////////
-        // Pancake Info
-        else if(this->pancakeCreated)
-        {
-            // Pancake particles supported by
-            for(std::map<physics::Collision*, std::set<std::string> >::const_iterator m_iter = curr_ev_coll_to_particle_names_S_M.begin();
-                m_iter != curr_ev_coll_to_particle_names_S_M.end(); m_iter++)
-            {
-                std::cout << "\t" << m_iter->first->GetParentModel()->GetName() << " --> ";
-
-                // Write only nr of particles at the moment
-                std::cout << m_iter->second.size() << " pancake particles;" <<std::endl;
-                for(std::set<std::string>::const_iterator s_iter = m_iter->second.begin();
-                    s_iter != m_iter->second.end(); s_iter++)
-                {
-                    //std::cout << *s_iter << "; ";
-                }
-                //std::cout << std::endl;
-            }
-        }
-        std::cout <<"-------------------------------------------------------------------ts: "<< timestamp_ms << " ms"<< std::endl;
-    }
+//    if(diff_detected)
+//    {
+//        diff_detected = false;
+//
+//        ////////////////////////////
+//        // Event info
+//        for(std::map<physics::Collision*, std::set<std::string> >::const_iterator m_iter = curr_ev_coll_to_model_names_S_M.begin();
+//            m_iter != curr_ev_coll_to_model_names_S_M.end(); m_iter++)
+//        {
+//            std::cout << m_iter->first->GetParentModel()->GetName() << " --> ";
+//
+//            for(std::set<std::string>::const_iterator s_iter = m_iter->second.begin();
+//                s_iter != m_iter->second.end(); s_iter++)
+//            {
+//                std::cout << *s_iter << "; ";
+//            }
+//            std::cout << std::endl;
+//        }
+//
+//        ////////////////////////////
+//        // Grasped model
+//        std::cout << "grasp --> " << curr_grasped_model<< ";" << std::endl;
+//
+//
+//        ////////////////////////////
+//        // Poured particles
+//        std::cout << "poured --> " << this->pouredLiquidCollisions_S.size() <<
+//                     "/" << this->allLiquidCollisions_S.size() << ";" << std::endl;
+//
+//        ////////////////////////////
+//        // Pancake size
+//        std::cout << "pancake size --> " << this->pancakeCollision_S.size() << " particles" << std::endl;
+//
+//        for (std::set<physics::Collision*>::const_iterator c_iter = this->pancakeCollision_S.begin();
+//             c_iter != this->pancakeCollision_S.end(); c_iter++)
+//        {
+//            //TODO why is the copy required? try (*c_iter)
+//            physics::Collision* c = *c_iter;
+//        }
+//
+//
+//        ////////////////////////////
+//        // Pouring Info before pancake created
+//        if(!this->pancakeCreated)
+//        {
+//            // Poured particles supported by
+//            for(std::map<physics::Collision*, std::set<std::string> >::const_iterator m_iter = curr_ev_coll_to_particle_names_S_M.begin();
+//                m_iter != curr_ev_coll_to_particle_names_S_M.end(); m_iter++)
+//            {
+//                std::cout << "\t" << m_iter->first->GetParentModel()->GetName() << " --> ";
+//
+//                // Write only nr of particles at the moment
+//                std::cout << m_iter->second.size() << " particles;" <<std::endl;
+//                for(std::set<std::string>::const_iterator s_iter = m_iter->second.begin();
+//                    s_iter != m_iter->second.end(); s_iter++)
+//                {
+//                    //std::cout << *s_iter << "; ";
+//                }
+//                //std::cout << std::endl;
+//            }
+//        }
+//
+//        ////////////////////////////
+//        // Pancake Info
+//        else if(this->pancakeCreated)
+//        {
+//            // Pancake particles supported by
+//            for(std::map<physics::Collision*, std::set<std::string> >::const_iterator m_iter = curr_ev_coll_to_particle_names_S_M.begin();
+//                m_iter != curr_ev_coll_to_particle_names_S_M.end(); m_iter++)
+//            {
+//                std::cout << "\t" << m_iter->first->GetParentModel()->GetName() << " --> ";
+//
+//                // Write only nr of particles at the moment
+//                std::cout << m_iter->second.size() << " pancake particles;" <<std::endl;
+//                for(std::set<std::string>::const_iterator s_iter = m_iter->second.begin();
+//                    s_iter != m_iter->second.end(); s_iter++)
+//                {
+//                    //std::cout << *s_iter << "; ";
+//                }
+//                //std::cout << std::endl;
+//            }
+//        }
+//        std::cout <<"-------------------------------------------------------------------ts: "<< timestamp_ms << " ms"<< std::endl;
+//    }
 }
 
 //////////////////////////////////////////////////
@@ -849,31 +845,45 @@ bool PostProcess::CheckCurrentGrasp(
     // check for difference between current and past grasp
     if (curr_grasped_model != this->prevGraspedModel)
     {
-		// set diff flag to true and the prev grasp value takes the current one
+       // set diff flag to true and the prev grasp value takes the current one
        diff_detected = true;
        this->prevGraspedModel = curr_grasped_model;
 
-       // check if the context is already opened
-       if(!this->graspContextOpen)
+       // the name of the grasping event
+       std::string grasp_ev_name = "grasp_" + curr_grasped_model;
+
+       // Check if grasp event has been initialized
+       // using flag because curr grasped model could be empty and detected as an event
+       if(!this->graspInit)
        {
-    	   // open the grasp context
-    	   this->graspContext = this->mainContext->startContext(
-    			   "Grasp_"+curr_grasped_model, "&sim;", "GraspingSomething", _timestamp_ms);
+    	   this->graspInit = true;
 
-    	   // add the grasped object
-    	   this->graspContext->addObject(
-    			   this->nameToBsObject_M[curr_grasped_model], "knowrob:GraspingSomething");
+    	   // create the contact GzEvent
+    	   this->graspGzEvent = new GzEvent(
+    			   grasp_ev_name, "GraspingSomething", _timestamp_ms);
 
-    	   // set grasp context flag to true
-    	   this->graspContextOpen = true;
+    	   // add grasped object
+    	   this->graspGzEvent->AddObject(this->nameToEventObj_M[curr_grasped_model]);
        }
        else
        {
-    	   // close the grasp context
-    	   this->graspContext->end(true, _timestamp_ms);
+    	   if(this->graspGzEvent->IsOpen())
+    	   {
+    		   // ending context
+    		   this->graspGzEvent->End(_timestamp_ms);
 
-    	   // set grasp context flag to false
-    	   this->graspContextOpen = false;
+    		   // add grasp event to the map of all events
+    		   this->nameToEvents_M[grasp_ev_name].push_back(this->graspGzEvent);
+    	   }
+    	   else
+    	   {
+    		   // create the contact GzEvent
+    		   this->graspGzEvent = new GzEvent(
+    				   grasp_ev_name, "GraspingSomething", _timestamp_ms);
+
+    		   // add grasped object
+    		   this->graspGzEvent->AddObject(this->nameToEventObj_M[curr_grasped_model]);
+    	   }
        }
     }
 
@@ -910,63 +920,46 @@ bool PostProcess::CheckCurrentEventCollisions(
 		for(std::set<std::pair<std::string, std::string> >::const_iterator m_iter = symmetric_diff_S.begin();
 				m_iter != symmetric_diff_S.end(); m_iter++)
 		{
+
 			// set name of the context first models + second model in contact
-			std::string ev_context_name = m_iter->first + " " + m_iter->second;
+			std::string contact_ev_name = "contact_"+ m_iter->first + "_" + m_iter->second;
 
-			// check if the context is created with the given name, if not create one
-			if(!this->evNamesToContext_M.count(ev_context_name))
+			// if event does not exist
+			if(!this->nameToEvents_M.count(contact_ev_name))
 			{
-				std::cout << "*First* creating context name: " << ev_context_name
-						<< " at " << _timestamp_ms << std::endl;
+				// create local contact GzEvent
+				hand_sim::GzEvent* contact_event = new hand_sim::GzEvent(
+						contact_ev_name, "TouchingSituation", _timestamp_ms);
 
-				// create the contact context
-				this->evNamesToContext_M[ev_context_name] = this->mainContext->startContext(
-						ev_context_name + "_Contact", "&sim;", "TouchingSituation", _timestamp_ms);
+				// add the two objects in contact
+				contact_event->AddObject(this->nameToEventObj_M[m_iter->first]);
 
-				// add the objects in contact
-				this->evNamesToContext_M[ev_context_name]->addObject(
-						this->nameToBsObject_M[m_iter->first], "knowrob:objectInContact");
+				contact_event->AddObject(this->nameToEventObj_M[m_iter->second]);
 
-				this->evNamesToContext_M[ev_context_name]->addObject(
-						this->nameToBsObject_M[m_iter->second], "knowrob:objectInContact");
-
-				// set the contact context open to true
-				this->evNamesToCtxOpen_M[ev_context_name] = true;
-
+				// add local event to the map
+				this->nameToEvents_M[contact_ev_name].push_back(contact_event);
 			}
 			else
 			{
-				// check if the context is open
-				if(this->evNamesToCtxOpen_M[ev_context_name] == true)
+				// if the contact exists and it is open, end it
+				if(this->nameToEvents_M[contact_ev_name].back()->IsOpen())
 				{
-					std::cout << "*Ending* context name: " << ev_context_name
-							<< " at " << _timestamp_ms << std::endl;
-
-					// ending context
-					this->evNamesToContext_M[ev_context_name]->end(true, _timestamp_ms);
-
-					// set the contact context open to false
-					this->evNamesToCtxOpen_M[ev_context_name] = false;
+					// end contact event
+					this->nameToEvents_M[contact_ev_name].back()->End(_timestamp_ms);
 				}
 				else
 				{
-					std::cout << "*Re-Opening* context name: " << ev_context_name
-							<< " at " << _timestamp_ms << std::endl;
+					// create local contact GzEvent
+					hand_sim::GzEvent* contact_event = new hand_sim::GzEvent(
+							contact_ev_name, "TouchingSituation", _timestamp_ms);
 
-					// create the contact context
-					this->evNamesToContext_M[ev_context_name] = this->mainContext->startContext(
-							ev_context_name + "_Contact", "&sim;", "TouchingSituation", _timestamp_ms);
+					// add the two objects in contact
+					contact_event->AddObject(this->nameToEventObj_M[m_iter->first]);
 
-					// add the objects in contact
-					this->evNamesToContext_M[ev_context_name]->addObject(
-							this->nameToBsObject_M[m_iter->first], "knowrob:objectInContact");
+					contact_event->AddObject(this->nameToEventObj_M[m_iter->second]);
 
-					this->evNamesToContext_M[ev_context_name]->addObject(
-							this->nameToBsObject_M[m_iter->second], "knowrob:objectInContact");
-
-					// set the contact context open to true
-					this->evNamesToCtxOpen_M[ev_context_name] = true;
-				}
+					// add local event to the map
+					this->nameToEvents_M[contact_ev_name].push_back(contact_event);				}
 			}
 		}
 	}
@@ -975,7 +968,7 @@ bool PostProcess::CheckCurrentEventCollisions(
 }
 
 //////////////////////////////////////////////////
-void PostProcess::WorkerLogCheck()
+void PostProcess::LogCheckWorker()
 {
 	// flag to stop the while loop
 	bool log_play_finished = false;
@@ -1009,11 +1002,17 @@ void PostProcess::WorkerLogCheck()
 //////////////////////////////////////////////////
 void PostProcess::TerminateSimulation()
 {
-	// Terminate main context
-	this->mainContext->end(true, this->world->GetSimTime().Double() * 1000);
+	// close main GzEvent
+	this->nameToEvents_M["main"].back()->End(this->world->GetSimTime().Double() * 1000);
 
-	// export beliefe state client
-	this->beliefStateClient->exportFiles("sim_data");
+	// close all open events
+	PostProcess::EndActiveEvents();
+
+	// write events as belief state contexts
+	PostProcess::WriteContexts();
+
+	// write events to timeline file
+	PostProcess::WriteTimelines();
 
 	// shutting down ros
 	ros::shutdown();
@@ -1023,26 +1022,128 @@ void PostProcess::TerminateSimulation()
 }
 
 //////////////////////////////////////////////////
-void PostProcess::DummyContactsCallback(ConstContactsPtr& _msg)
+void PostProcess::EndActiveEvents()
 {
+	// iterate through the map
+	for(std::map<std::string, std::list<hand_sim::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
+			m_it != this->nameToEvents_M.end(); m_it++)
+	{
+		// iterate through the events with the same name
+		for(std::list<GzEvent*>::const_iterator ev_it = m_it->second.begin();
+				ev_it != m_it->second.end(); ev_it++)
+		{
+			// if event still open end it at the end time
+			if((*ev_it)->IsOpen())
+			{
+				(*ev_it)->End(this->world->GetSimTime().Double() * 1000);
+			}
+		}
+	}
 }
 
 //////////////////////////////////////////////////
-void PostProcess::DebugOutput(std::string _msg)
+void PostProcess::WriteContexts()
 {
+	// initialize the beliefstate
+	this->beliefStateClient = new beliefstate_client::BeliefstateClient("bs_client");
 
-	std::cout << _msg << std::endl;
+	// register the OWL namespace
+	this->beliefStateClient->registerOWLNamespace("sim", "http://some-namespace.org/#");
 
-	std::vector<physics::Contact*> contacts = this->contactManagerPtr->GetContacts();
-
-	for (unsigned int i = 0; i < contacts.size(); i++)
+	// iterate through the map
+	for(std::map<std::string, std::list<hand_sim::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
+			m_it != this->nameToEvents_M.end(); m_it++)
 	{
-		physics::Collision* coll1 = contacts.at(i)->collision1;
-		physics::Collision* coll2 = contacts.at(i)->collision2;
+		// iterate through the events with the same name
+		for(std::list<hand_sim::GzEvent*>::const_iterator ev_it = m_it->second.begin();
+				ev_it != m_it->second.end(); ev_it++)
+		{
+			// create local belief state context
+			beliefstate_client::Context* curr_ctx;
 
-		std::cout << coll1->GetName() << " --> "<< coll2->GetName() << std::endl;
+			// open belief state context
+			curr_ctx = new beliefstate_client::Context(this->beliefStateClient,
+					(*ev_it)->GetName(), "&sim;", (*ev_it)->GetName()+"Class", (*ev_it)->GetStartTime());
 
+			// get the objects of the event
+			std::vector<GzEventObj*> curr_objects = (*ev_it)->GetObjects();
+
+			// iterate through the objects
+			for(std::vector<GzEventObj*>::const_iterator ob_it = curr_objects.begin();
+					ob_it != curr_objects.end(); ob_it++)
+			{
+				// add object to the context
+				curr_ctx->addObject(this->nameToBsObject_M[(*ob_it)->GetName()],
+						"knowrob:" + (*ev_it)->GetType());
+
+			}
+
+			// end belief state context
+			curr_ctx->end(true, (*ev_it)->GetEndTime());
+		}
 	}
+
+	// export belief state client
+	this->beliefStateClient->exportFiles("sim_data");
 
 }
 
+//////////////////////////////////////////////////
+void PostProcess::WriteTimelines()
+{
+
+	std::ofstream timeline_file;
+	timeline_file.open ("timeline.html");
+
+	timeline_file <<
+			"<html>\n"
+			"<script type=\"text/javascript\" src=\"https://www.google.com/jsapi?autoload={'modules':[{'name':'visualization',\n"
+			"       'version':'1','packages':['timeline']}]}\"></script>\n"
+			"<script type=\"text/javascript\">\n"
+			"google.setOnLoadCallback(drawChart);\n"
+			"\n"
+			"function drawChart() {\n"
+			"  var container = document.getElementById('sim_timeline_ex');\n"
+			"\n"
+			"  var chart = new google.visualization.Timeline(container);\n"
+			"\n"
+			"  var dataTable = new google.visualization.DataTable();\n"
+			"\n"
+			"  dataTable.addColumn({ type: 'string', id: 'Event' });\n"
+			"  dataTable.addColumn({ type: 'number', id: 'Start' });\n"
+			"  dataTable.addColumn({ type: 'number', id: 'End' });\n"
+			"\n"
+			"  dataTable.addRows([\n";
+
+	// iterate through the map
+	for(std::map<std::string, std::list<hand_sim::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
+			m_it != this->nameToEvents_M.end(); m_it++)
+	{
+		// iterate through the events with the same name
+		for(std::list<GzEvent*>::const_iterator ev_it = m_it->second.begin();
+				ev_it != m_it->second.end(); ev_it++)
+		{
+			// add all events to the timeline file
+			timeline_file << "    [ '" << (*ev_it)->GetName() << "', "
+					<< (*ev_it)->GetStartTime() << ", "
+					<< (*ev_it)->GetEndTime() << "],\n";
+		}
+	}
+
+	timeline_file <<
+			"  ]);\n"
+			"\n"
+			"  chart.draw(dataTable);\n"
+			"}\n"
+			"</script>\n"
+			"<div id=\"sim_timeline_ex\" style=\"width: 1300px; height: 900px;\"></div>\n"
+			"\n"
+			"</html>";
+
+	timeline_file.close();
+}
+
+//////////////////////////////////////////////////
+void PostProcess::DummyContactsCallback(ConstContactsPtr& _msg)
+{
+}
