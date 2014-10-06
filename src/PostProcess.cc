@@ -224,7 +224,7 @@ void PostProcess::FirstSimulationStepInit()
 				// check if collision belongs to the liquid model
 				if (m_iter->get()->GetName() == "liquid_spheres")
 				{
-					this->allLiquidCollisions_S.insert(c_iter->get());
+					this->allLiquidParticles_S.insert(c_iter->get());
 				}
 
 				// if the collision is without physical contact then add it to the map
@@ -526,7 +526,10 @@ void PostProcess::WriteSemanticData()
 
     // TODO check until the pouring is finished
     // curr poured particles
-    int prev_poured_particles_nr = this->pouredLiquidCollisions_S.size();
+    int prev_poured_particles_nr = this->totalPouredParticles_S.size();
+
+    // TODO eventually change pouring so we compare the two sets?
+    std::set<physics::Collision*> curr_poured_particles_S;
 
 
     //TODO test to remove map
@@ -605,18 +608,18 @@ void PostProcess::WriteSemanticData()
                 if (coll1->GetModel()->GetName() == "liquid_spheres")
                 {
                     // add to poured set, which also checks for duplicates
-                    this->pouredLiquidCollisions_S.insert(coll1);
+                    this->totalPouredParticles_S.insert(coll1);
                 }
                 else if (coll2->GetModel()->GetName() == "liquid_spheres")
                 {
                     // add to poured set, which also checks for duplicates
-                    this->pouredLiquidCollisions_S.insert(coll2);
+                    this->totalPouredParticles_S.insert(coll2);
                 }
             }
 
             ////////////// Poured Particles Collisions
             // check if one collision is a poured particle and the other belongs to the eventCollisions
-            if(this->pouredLiquidCollisions_S.find(coll1) != this->pouredLiquidCollisions_S.end() &&
+            if(this->totalPouredParticles_S.find(coll1) != this->totalPouredParticles_S.end() &&
                     this->eventCollisions_S.find(coll2) != this->eventCollisions_S.end())
             {
                 // add the model name to the set coll2's set
@@ -625,7 +628,7 @@ void PostProcess::WriteSemanticData()
                 // add the particle collision name to the coll2's set
                 curr_ev_coll_to_particle_names_S_M[coll2].insert(coll1->GetName());
             }
-            else if(this->pouredLiquidCollisions_S.find(coll2) != this->pouredLiquidCollisions_S.end() &&
+            else if(this->totalPouredParticles_S.find(coll2) != this->totalPouredParticles_S.end() &&
                     this->eventCollisions_S.find(coll1) != this->eventCollisions_S.end())
             {
                 // add the model name to the set coll1's set
@@ -673,20 +676,17 @@ void PostProcess::WriteSemanticData()
     		timestamp_ms, fore_finger_contact, thumb_contact, grasp_coll1, grasp_coll2);
 
     // Check if difference between the event collisions have appeared
-    diff_detected = PostProcess::CheckCurrentEventCollisions(timestamp_ms, curr_ev_contact_model_pair_S);
+    diff_detected = PostProcess::CheckCurrentEventCollisions(
+    		timestamp_ms, curr_ev_contact_model_pair_S);
 
+	// Check if diff between particles leaving the mug appeared
+	diff_detected = PostProcess::CheckLiquidTransferEvent(
+			timestamp_ms, prev_poured_particles_nr);
 
-
-//    // check current and past collision states difference
-//    if (curr_ev_coll_to_model_names_S_M != this->eventCollToSetOfModelNames_M)
-//    {
-//        diff_detected = true;;
-//        this->eventCollToSetOfModelNames_M = curr_ev_coll_to_model_names_S_M;
-//    }
 
     // TODO Pour Pancake events
     // check if new particle has been poured
-    if (this->pouredLiquidCollisions_S.size() > prev_poured_particles_nr )
+    if (this->totalPouredParticles_S.size() > prev_poured_particles_nr )
     {
         diff_detected = true;
     }
@@ -968,6 +968,45 @@ bool PostProcess::CheckCurrentEventCollisions(
 }
 
 //////////////////////////////////////////////////
+bool PostProcess::CheckLiquidTransferEvent(
+		const long int _timestamp_ms,
+		int _prev_poured_particle_nr)
+{
+	// marks if there is a difference between the previous and current step
+	bool diff_detected = false;
+
+
+    // Check if new particle has been poured
+    if (this->totalPouredParticles_S.size() > _prev_poured_particle_nr )
+    {
+        diff_detected = true;
+
+        // check if the event doesn't exist (first particles leaving)
+		if(!this->nameToEvents_M.count("liquid_transfer"))
+		{
+		    std::cout << "*Creating* liquid_transfer event at " << _timestamp_ms << std::endl;
+
+			// add local event to the map
+			this->nameToEvents_M["liquid_transfer"].push_back(new hand_sim::GzEvent(
+					"liquid_transfer", "LiquidTransfer", _timestamp_ms));
+		}
+		else // check if last particle left
+		{
+			if(this->totalPouredParticles_S.size() == this->allLiquidParticles_S.size())
+			{
+			    std::cout << "*End* liquid_transfer event at " << _timestamp_ms << std::endl;
+				// end liquid transfer event
+				this->nameToEvents_M["liquid_transfer"].back()->End(_timestamp_ms);
+			}
+		}
+
+
+    }
+
+	return diff_detected;
+}
+
+//////////////////////////////////////////////////
 void PostProcess::LogCheckWorker()
 {
 	// flag to stop the while loop
@@ -1008,6 +1047,9 @@ void PostProcess::TerminateSimulation()
 	// close all open events
 	PostProcess::EndActiveEvents();
 
+	// Concatenate timelines with short disconnections
+	PostProcess::JoinShortTimelineDisconnections();
+
 	// write events as belief state contexts
 	PostProcess::WriteContexts();
 
@@ -1036,6 +1078,39 @@ void PostProcess::EndActiveEvents()
 			if((*ev_it)->IsOpen())
 			{
 				(*ev_it)->End(this->world->GetSimTime().Double() * 1000);
+			}
+		}
+	}
+}
+//////////////////////////////////////////////////
+
+void PostProcess::JoinShortTimelineDisconnections()
+{
+	// iterate through the map
+	for(std::map<std::string, std::list<hand_sim::GzEvent*> >::iterator m_it = this->nameToEvents_M.begin();
+			m_it != this->nameToEvents_M.end(); m_it++)
+	{
+		// iterate through the events with the same name
+		for(std::list<GzEvent*>::iterator ev_it = m_it->second.begin();
+				ev_it != m_it->second.end(); /*increment in the loop*/)
+		{
+			// save current event for comparison
+			std::list<GzEvent*>::iterator curr_ev = ev_it;
+
+			// increment current iteration (next event)
+			ev_it++;
+
+			// check that the next value is not the last
+			if(ev_it != m_it->second.end())
+			{
+				if((*ev_it)->GetStartTime() - (*curr_ev)->GetEndTime() < 150)
+				{
+					// set the next values start time
+					(*ev_it)->SetStartTime((*curr_ev)->GetStartTime());
+
+					// remove current value from list
+					m_it->second.erase(curr_ev);
+				}
 			}
 		}
 	}

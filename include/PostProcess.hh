@@ -105,6 +105,11 @@ class PostProcess : public SystemPlugin
 			const long int _timestamp_ms,
 			std::set<std::pair<std::string, std::string> > &_curr_ev_contact_model_pair_S);
 
+	/// \brief Check liquid transfer event
+	private: bool CheckLiquidTransferEvent(
+			const long int _timestamp_ms,
+			int _prev_poured_particle_nr);
+
 	/// \brief Contacts callback function, just to start the contacts in the physics engine
 	private: void DummyContactsCallback(ConstContactsPtr& _msg);
 
@@ -114,6 +119,9 @@ class PostProcess : public SystemPlugin
 	/// \brief Terminate simulation
 	private: void TerminateSimulation();
 
+	/// \brief Join short disconnections in the events timeline
+	private: void JoinShortTimelineDisconnections();
+
 	/// \brief End still active events
 	private: void EndActiveEvents();
 
@@ -122,7 +130,6 @@ class PostProcess : public SystemPlugin
 
 	/// \brief Write timelines to file
 	private: void WriteTimelines();
-
 
 	/// \brief World name
 	private: std::string worldName;
@@ -195,10 +202,10 @@ class PostProcess : public SystemPlugin
 	private: physics::ModelPtr liquidSpheres;
 
 	/// \brief all particle collisions
-	private: std::set<physics::Collision*> allLiquidCollisions_S;
+	private: std::set<physics::Collision*> allLiquidParticles_S;
 
 	/// \brief poured particle collisions
-	private: std::set<physics::Collision*> pouredLiquidCollisions_S;
+	private: std::set<physics::Collision*> totalPouredParticles_S;
 
 	/// \brief particle collisions belonging to the pancake
 	private: std::set<physics::Collision*> pancakeCollision_S;
@@ -210,7 +217,7 @@ class PostProcess : public SystemPlugin
 	private: bool pancakeCreated;
 
 	/// \brief timestamp of last particle leaving the mug
-	private: long long int lastParticleLeavingTimestamp;
+//	private: long long int lastParticleLeavingTimestamp;
 
 	/// \brief flag for writing all tf transformations to the db
 	private: bool writeAllTFTransf;
