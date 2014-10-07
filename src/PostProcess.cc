@@ -165,7 +165,7 @@ void PostProcess::InitOnWorldConnect()
 	this->models = this->world->GetModels();
 
     // get the liquid model
-    this->liquidSpheres = this->world->GetModel("liquid_spheres");
+    this->liquidSpheres = this->world->GetModel("LiquidTangibleThing");
 
 	// get the contact manager
 	this->contactManagerPtr = this->world->GetPhysicsEngine()->GetContactManager();
@@ -204,7 +204,7 @@ void PostProcess::FirstSimulationStepInit()
 
 		// map model name to the beliefstate object
 		this->nameToBsObject_M[m_iter->get()->GetName()] =
-				new beliefstate_client::Object("&sim;", m_iter->get()->GetName());
+				new beliefstate_client::Object("&knowrob", m_iter->get()->GetName());
 
 
 		// get the links vector from the current model
@@ -222,7 +222,7 @@ void PostProcess::FirstSimulationStepInit()
 					c_iter != collisions.end(); c_iter++)
             {
 				// check if collision belongs to the liquid model
-				if (m_iter->get()->GetName() == "liquid_spheres")
+				if ((*m_iter) == this->liquidSpheres)
 				{
 					this->allLiquidParticles_S.insert(c_iter->get());
 				}
@@ -605,12 +605,12 @@ void PostProcess::WriteSemanticData()
             if (coll1 == this->eventCollisionMug || coll2 == this->eventCollisionMug)
             {
                 // check if coll1 or 2 belongs to the liquid
-                if (coll1->GetModel()->GetName() == "liquid_spheres")
+                if (coll1->GetModel() == this->liquidSpheres)
                 {
                     // add to poured set, which also checks for duplicates
                     this->totalPouredParticles_S.insert(coll1);
                 }
-                else if (coll2->GetModel()->GetName() == "liquid_spheres")
+                else if (coll2->GetModel() == this->liquidSpheres)
                 {
                     // add to poured set, which also checks for duplicates
                     this->totalPouredParticles_S.insert(coll2);
@@ -699,7 +699,7 @@ void PostProcess::WriteSemanticData()
     }
 
     // save the particles belonging to the pancake
-    if (!this->pancakeCreated && curr_grasped_model == "spatula")
+    if (!this->pancakeCreated && curr_grasped_model == "Spatula")
     {
         ////////////// Loop through all the contacts
         for (unsigned int i = 0; i < all_contacts.size(); i++)
@@ -710,12 +710,12 @@ void PostProcess::WriteSemanticData()
 
             // save the particles belonging to the pancake
             if ((coll1->GetName() == "pancake_maker_event_collision")
-                    && (coll2->GetModel()->GetName() == "liquid_spheres"))
+                    && (coll2->GetModel() == this->liquidSpheres))
             {
                 this->pancakeCollision_S.insert(coll2);
             }
             else if((coll2->GetName() == "pancake_maker_event_collision")
-                    && (coll1->GetModel()->GetName() == "liquid_spheres"))
+                    && (coll1->GetModel() == this->liquidSpheres))
             {
                 this->pancakeCollision_S.insert(coll1);
             }
@@ -832,7 +832,7 @@ bool PostProcess::CheckCurrentGrasp(
     if (_fore_finger_contact && _thumb_contact)
     {
         // if coll1 belongs to the hand model, then coll2 is the grasped model
-        if (_grasp_coll1->GetParentModel()->GetName() == "hit_hand")
+        if (_grasp_coll1->GetParentModel()->GetName() == "Hand")
         {
             curr_grasped_model = _grasp_coll2->GetParentModel()->GetName();
         }
@@ -1082,8 +1082,8 @@ void PostProcess::EndActiveEvents()
 		}
 	}
 }
-//////////////////////////////////////////////////
 
+//////////////////////////////////////////////////
 void PostProcess::JoinShortTimelineDisconnections()
 {
 	// iterate through the map
@@ -1123,7 +1123,7 @@ void PostProcess::WriteContexts()
 	this->beliefStateClient = new beliefstate_client::BeliefstateClient("bs_client");
 
 	// register the OWL namespace
-	this->beliefStateClient->registerOWLNamespace("sim", "http://some-namespace.org/#");
+	this->beliefStateClient->registerOWLNamespace("knowrob_sim", "http://knowrob.org/kb/knowrob_sim.owl");
 
 	// iterate through the map
 	for(std::map<std::string, std::list<hand_sim::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
@@ -1138,7 +1138,7 @@ void PostProcess::WriteContexts()
 
 			// open belief state context
 			curr_ctx = new beliefstate_client::Context(this->beliefStateClient,
-					(*ev_it)->GetName(), "&sim;", (*ev_it)->GetName()+"Class", (*ev_it)->GetStartTime());
+					(*ev_it)->GetName(), "&knowrob_sim;", (*ev_it)->GetType(), (*ev_it)->GetStartTime());
 
 			// get the objects of the event
 			std::vector<GzEventObj*> curr_objects = (*ev_it)->GetObjects();
@@ -1149,8 +1149,7 @@ void PostProcess::WriteContexts()
 			{
 				// add object to the context
 				curr_ctx->addObject(this->nameToBsObject_M[(*ob_it)->GetName()],
-						"knowrob:" + (*ev_it)->GetType());
-
+						"&knowrob;" + (*ev_it)->GetType());
 			}
 
 			// end belief state context
