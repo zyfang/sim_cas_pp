@@ -192,8 +192,8 @@ void PostProcess::FirstSimulationStepInit()
     std::cout << "!!! First recorded step: " << this->world->GetSimTime().Double() * 1000 << std::endl;
 
 	// open the main GzEvent
-	this->nameToEvents_M["main"].push_back(
-			new GzEvent("main","PancakeEpisode", this->world->GetSimTime().Double() * 1000));
+	this->nameToEvents_M["Main"].push_back(
+			new GzEvent("Main","PancakeEpisode", this->world->GetSimTime().Double() * 1000));
 
 	// loop through all the models to see which have event collisions
 	for(physics::Model_V::const_iterator m_iter = this->models.begin();
@@ -204,7 +204,7 @@ void PostProcess::FirstSimulationStepInit()
 
 		// map model name to the beliefstate object
 		this->nameToBsObject_M[m_iter->get()->GetName()] =
-				new beliefstate_client::Object("&knowrob", m_iter->get()->GetName());
+				new beliefstate_client::Object("&knowrob_sim;", m_iter->get()->GetName());
 
 
 		// get the links vector from the current model
@@ -684,46 +684,46 @@ void PostProcess::WriteSemanticData()
 			timestamp_ms, prev_poured_particles_nr);
 
 
-    // TODO Pour Pancake events
-    // check if new particle has been poured
-    if (this->totalPouredParticles_S.size() > prev_poured_particles_nr )
-    {
-        diff_detected = true;
-    }
-
-    // check if poured particle collision appeared/changed
-    if (curr_ev_coll_to_particle_names_S_M != this->eventCollToSetOfParticleNames_M)
-    {
-        diff_detected = true;;
-        this->eventCollToSetOfParticleNames_M = curr_ev_coll_to_particle_names_S_M;
-    }
-
-    // save the particles belonging to the pancake
-    if (!this->pancakeCreated && curr_grasped_model == "Spatula")
-    {
-        ////////////// Loop through all the contacts
-        for (unsigned int i = 0; i < all_contacts.size(); i++)
-        {
-            // collision 1 and 2 of the contact
-            physics::Collision* coll1 = all_contacts.at(i)->collision1;
-            physics::Collision* coll2 = all_contacts.at(i)->collision2;
-
-            // save the particles belonging to the pancake
-            if ((coll1->GetName() == "pancake_maker_event_collision")
-                    && (coll2->GetModel() == this->liquidSpheres))
-            {
-                this->pancakeCollision_S.insert(coll2);
-            }
-            else if((coll2->GetName() == "pancake_maker_event_collision")
-                    && (coll1->GetModel() == this->liquidSpheres))
-            {
-                this->pancakeCollision_S.insert(coll1);
-            }
-        }
-
-        diff_detected = true;
-        this->pancakeCreated = true;
-    }
+//    // TODO Pour Pancake events
+//    // check if new particle has been poured
+//    if (this->totalPouredParticles_S.size() > prev_poured_particles_nr )
+//    {
+//        diff_detected = true;
+//    }
+//
+//    // check if poured particle collision appeared/changed
+//    if (curr_ev_coll_to_particle_names_S_M != this->eventCollToSetOfParticleNames_M)
+//    {
+//        diff_detected = true;;
+//        this->eventCollToSetOfParticleNames_M = curr_ev_coll_to_particle_names_S_M;
+//    }
+//
+//    // save the particles belonging to the pancake
+//    if (!this->pancakeCreated && curr_grasped_model == "Spatula")
+//    {
+//        ////////////// Loop through all the contacts
+//        for (unsigned int i = 0; i < all_contacts.size(); i++)
+//        {
+//            // collision 1 and 2 of the contact
+//            physics::Collision* coll1 = all_contacts.at(i)->collision1;
+//            physics::Collision* coll2 = all_contacts.at(i)->collision2;
+//
+//            // save the particles belonging to the pancake
+//            if ((coll1->GetName() == "pancake_maker_event_collision")
+//                    && (coll2->GetModel() == this->liquidSpheres))
+//            {
+//                this->pancakeCollision_S.insert(coll2);
+//            }
+//            else if((coll2->GetName() == "pancake_maker_event_collision")
+//                    && (coll1->GetModel() == this->liquidSpheres))
+//            {
+//                this->pancakeCollision_S.insert(coll1);
+//            }
+//        }
+//
+//        diff_detected = true;
+//        this->pancakeCreated = true;
+//    }
 
 
     ////////////////////////////
@@ -850,7 +850,7 @@ bool PostProcess::CheckCurrentGrasp(
        this->prevGraspedModel = curr_grasped_model;
 
        // the name of the grasping event
-       std::string grasp_ev_name = "grasp_" + curr_grasped_model;
+       std::string grasp_ev_name = "Grasp" + curr_grasped_model;
 
        // Check if grasp event has been initialized
        // using flag because curr grasped model could be empty and detected as an event
@@ -922,10 +922,12 @@ bool PostProcess::CheckCurrentEventCollisions(
 		{
 
 			// set name of the context first models + second model in contact
-			std::string contact_ev_name = "contact_"+ m_iter->first + "_" + m_iter->second;
+			std::string contact_ev_name = "Contact" + m_iter->first + m_iter->second;
 
 			// if event does not exist
-			if(!this->nameToEvents_M.count(contact_ev_name))
+			// TODO add two way detection of contacts, store somewhere the pairs in contact
+			if(!this->nameToEvents_M.count(contact_ev_name)
+					&& m_iter->first != "Spatula" && m_iter->second != "PancakeMaker") // TODO hardcoded check for duplicates of spatula<->pancake maker
 			{
 				// create local contact GzEvent
 				hand_sim::GzEvent* contact_event = new hand_sim::GzEvent(
@@ -982,21 +984,21 @@ bool PostProcess::CheckLiquidTransferEvent(
         diff_detected = true;
 
         // check if the event doesn't exist (first particles leaving)
-		if(!this->nameToEvents_M.count("liquid_transfer"))
+		if(!this->nameToEvents_M.count("LiquidTransfer"))
 		{
-		    std::cout << "*Creating* liquid_transfer event at " << _timestamp_ms << std::endl;
+		    std::cout << "*Creating* LiquidTransfer event at " << _timestamp_ms << std::endl;
 
 			// add local event to the map
-			this->nameToEvents_M["liquid_transfer"].push_back(new hand_sim::GzEvent(
-					"liquid_transfer", "LiquidTransfer", _timestamp_ms));
+			this->nameToEvents_M["LiquidTransfer"].push_back(new hand_sim::GzEvent(
+					"LiquidTransfer", "LiquidTransfer", _timestamp_ms));
 		}
 		else // check if last particle left
 		{
 			if(this->totalPouredParticles_S.size() == this->allLiquidParticles_S.size())
 			{
-			    std::cout << "*End* liquid_transfer event at " << _timestamp_ms << std::endl;
+			    std::cout << "*End* LiquidTransfer event at " << _timestamp_ms << std::endl;
 				// end liquid transfer event
-				this->nameToEvents_M["liquid_transfer"].back()->End(_timestamp_ms);
+				this->nameToEvents_M["LiquidTransfer"].back()->End(_timestamp_ms);
 			}
 		}
 
@@ -1042,7 +1044,7 @@ void PostProcess::LogCheckWorker()
 void PostProcess::TerminateSimulation()
 {
 	// close main GzEvent
-	this->nameToEvents_M["main"].back()->End(this->world->GetSimTime().Double() * 1000);
+	this->nameToEvents_M["Main"].back()->End(this->world->GetSimTime().Double() * 1000);
 
 	// close all open events
 	PostProcess::EndActiveEvents();
@@ -1103,7 +1105,7 @@ void PostProcess::JoinShortTimelineDisconnections()
 			// check that the next value is not the last
 			if(ev_it != m_it->second.end())
 			{
-				if((*ev_it)->GetStartTime() - (*curr_ev)->GetEndTime() < 150)
+				if((*ev_it)->GetStartTime() - (*curr_ev)->GetEndTime() < 200)
 				{
 					// set the next values start time
 					(*ev_it)->SetStartTime((*curr_ev)->GetStartTime());
@@ -1149,7 +1151,7 @@ void PostProcess::WriteContexts()
 			{
 				// add object to the context
 				curr_ctx->addObject(this->nameToBsObject_M[(*ob_it)->GetName()],
-						"&knowrob;" + (*ev_it)->GetType());
+						"knowrob_sim:" + (*ev_it)->GetType());
 			}
 
 			// end belief state context
