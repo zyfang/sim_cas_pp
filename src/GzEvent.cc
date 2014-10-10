@@ -39,16 +39,33 @@
 using namespace hand_sim;
 
 //////////////////////////////////////////////////
-GzEvent::GzEvent(const std::string _name, const std::string _type) :
-		name(_name), type(_type)
+GzEvent::GzEvent(const std::string _name,
+		const std::string _class_namespace,
+		const std::string _class_type,
+		double _start_time) :
+		name(_name),
+		classNamespace(_class_namespace),
+		classType(_class_type)
 {
 	// add id to the event;
 	id++;
+
+	// set the start time;
+	this->Start(_start_time);
 }
 
 //////////////////////////////////////////////////
-GzEvent::GzEvent(const std::string _name, const std::string _type, long int _start_time) :
-		name(_name), type(_type)
+GzEvent::GzEvent(const std::string _name,
+		const std::string _class_namespace,
+		const std::string _class_type,
+		const std::string _property_namespace,
+		const std::string _property,
+		double _start_time) :
+		name(_name),
+		classNamespace(_class_namespace),
+		classType(_class_type),
+		propertyNamespace(_property_namespace),
+		property(_property)
 {
 	// add id to the event;
 	id++;
@@ -75,9 +92,28 @@ const std::string GzEvent::GetName()
 }
 
 //////////////////////////////////////////////////
-const std::string GzEvent::GetType()
+const std::string GzEvent::GetClassNamespace()
 {
-	return this->type;
+	return this->classNamespace;
+}
+
+
+//////////////////////////////////////////////////
+const std::string GzEvent::GetClass()
+{
+	return this->classType;
+}
+
+//////////////////////////////////////////////////
+const std::string GzEvent::GetPropertyNamespace()
+{
+	return this->propertyNamespace;
+}
+
+//////////////////////////////////////////////////
+const std::string GzEvent::GetProperty()
+{
+	return this->property;
 }
 
 //////////////////////////////////////////////////
@@ -87,31 +123,31 @@ bool GzEvent::IsOpen()
 }
 
 //////////////////////////////////////////////////
-long int GzEvent::GetStartTime()
+double GzEvent::GetStartTime()
 {
 	return this->startTime;
 }
 
 //////////////////////////////////////////////////
-void GzEvent::SetStartTime(long int _start_time)
+void GzEvent::SetStartTime(double _start_time)
 {
 	this->startTime = _start_time;
 }
 
 //////////////////////////////////////////////////
-long int GzEvent::GetEndTime()
+double GzEvent::GetEndTime()
 {
 	return this->endTime;
 }
 
 //////////////////////////////////////////////////
-void GzEvent::SetEndTime(long int _end_time)
+void GzEvent::SetEndTime(double _end_time)
 {
 	this->endTime = _end_time;
 }
 
 //////////////////////////////////////////////////
-long int GzEvent::GetDuration()
+double GzEvent::GetDuration()
 {
 	if(!this->isOpen)
 	{
@@ -125,7 +161,7 @@ long int GzEvent::GetDuration()
 }
 
 //////////////////////////////////////////////////
-void GzEvent::Start(long int _start_time)
+void GzEvent::Start(double _start_time)
 {
 	// close the event
 	this->isOpen = true;
@@ -135,7 +171,7 @@ void GzEvent::Start(long int _start_time)
 }
 
 //////////////////////////////////////////////////
-void GzEvent::End(long int _end_time)
+void GzEvent::End(double _end_time)
 {
 	// close the event
 	this->isOpen = false;

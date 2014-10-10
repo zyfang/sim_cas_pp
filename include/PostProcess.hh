@@ -52,6 +52,8 @@
 #include <beliefstate_client/BeliefstateClient.h>
 #include <beliefstate_client/Context.h>
 
+#include <libconfig.h++>
+
 #include "GzEvent.hh"
 
 namespace gazebo
@@ -70,6 +72,9 @@ class PostProcess : public SystemPlugin
 
 	/// \brief Init plugin (Load called first, then Init)
 	protected: virtual void Init();
+
+	/// \brief Load config file
+	protected: void ReadConfigFile();
 
 	/// \brief Call after the world connected event
 	private: void InitOnWorldConnect();
@@ -94,7 +99,7 @@ class PostProcess : public SystemPlugin
 
 	/// \brief Check current Grasp
 	private: bool CheckCurrentGrasp(
-			const long int _timestamp_ms,
+			const double _timestamp_ms,
 			bool _fore_finger_contact,
 			bool _thumb_contact,
 			physics::Collision *_grasp_coll1,
@@ -102,12 +107,12 @@ class PostProcess : public SystemPlugin
 
 	/// \brief Check current event collisions
 	private: bool CheckCurrentEventCollisions(
-			const long int _timestamp_ms,
+			const double _timestamp_ms,
 			std::set<std::pair<std::string, std::string> > &_curr_ev_contact_model_pair_S);
 
 	/// \brief Check liquid transfer event
 	private: bool CheckLiquidTransferEvent(
-			const long int _timestamp_ms,
+			const double _timestamp_ms,
 			int _prev_poured_particle_nr);
 
 	/// \brief Contacts callback function, just to start the contacts in the physics engine
@@ -120,7 +125,7 @@ class PostProcess : public SystemPlugin
 	private: void TerminateSimulation();
 
 	/// \brief Join short disconnections in the events timeline
-	private: void JoinShortTimelineDisconnections();
+	private: void JoinShortDisconnections();
 
 	/// \brief End still active events
 	private: void EndActiveEvents();

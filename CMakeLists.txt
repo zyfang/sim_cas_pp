@@ -50,7 +50,7 @@ include_directories(
 
 add_library(PostProcess SHARED src/PostProcess.cc src/GzEvent.cc src/GzEventObj.cc)
 
-target_link_libraries(PostProcess ${catkin_LIBRARIES} ${MONGOCLIENT})# ${Boost_CHRONO_LIBRARY})
+target_link_libraries(PostProcess ${catkin_LIBRARIES} ${MONGOCLIENT} config++)# ${Boost_CHRONO_LIBRARY})
 
 
 

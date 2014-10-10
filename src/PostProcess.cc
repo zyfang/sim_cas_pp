@@ -35,6 +35,7 @@
  *********************************************************************/
 
 #include "PostProcess.hh"
+
 #include <iostream>
 #include <fstream>
 #include <boost/thread.hpp>
@@ -120,6 +121,9 @@ void PostProcess::Load(int _argc, char ** _argv)
     std::cout << "\nOptions: " << std::endl;
     std::cout << "   -w  \t\t World name to be loaded." << std::endl;
     std::cout << "   -db \t\t Database.Collection name for the data to be written to." << std::endl;
+
+    // TODO config file
+    PostProcess::ReadConfigFile();
 }
 
 //////////////////////////////////////////////////
@@ -150,6 +154,40 @@ void PostProcess::Init()
 
     // thread for checking if the log has finished playing
 	this->checkLogEndThread = new boost::thread(&PostProcess::LogCheckWorker, this);
+}
+
+//////////////////////////////////////////////////
+void PostProcess::ReadConfigFile()
+{
+
+	std::cout << "reading config file /******************" << std::endl;
+	libconfig::Config cfg;
+
+	try
+	{
+		cfg.readFile("config.cfg");
+	}
+	catch(const libconfig::FileIOException &fioex)
+	{
+		std::cerr << "I/O error while reading file." << std::endl;
+
+	}
+	catch(const libconfig::ParseException &pex)
+	{
+		std::cerr << "Parse error at " << pex.getFile() << ":" << pex.getLine()
+		            		  << " - " << pex.getError() << std::endl;
+
+	}
+
+	try
+	{
+		std::string name = cfg.lookup("name");
+		std::cout << "Store name: " << name << std::endl;
+	}
+	catch(const libconfig::SettingNotFoundException &nfex)
+	{
+		std::cerr << "No 'name' setting in configuration file." << std::endl;
+	}
 }
 
 //////////////////////////////////////////////////
@@ -189,11 +227,11 @@ void PostProcess::FirstSimulationStepInit()
     // set the flag to false, so the end of the log simulation can be detected
     this->pauseMode = false;
 
-    std::cout << "!!! First recorded step: " << this->world->GetSimTime().Double() * 1000 << std::endl;
+    std::cout << "!!! First recorded step: " << this->world->GetSimTime().Double() << std::endl;
 
 	// open the main GzEvent
 	this->nameToEvents_M["Main"].push_back(
-			new GzEvent("Main","PancakeEpisode", this->world->GetSimTime().Double() * 1000));
+			new GzEvent("Main","&knowrob_sim;", "PancakeEpisode", this->world->GetSimTime().Double()));
 
 	// loop through all the models to see which have event collisions
 	for(physics::Model_V::const_iterator m_iter = this->models.begin();
@@ -273,7 +311,7 @@ void PostProcess::ProcessCurrentData()
 	// group of threads for processing the data in parallel
 	boost::thread_group process_thread_group;
 
-	process_thread_group.create_thread(boost::bind(&PostProcess::PublishAndWriteTFData, this));
+//	process_thread_group.create_thread(boost::bind(&PostProcess::PublishAndWriteTFData, this));
 	process_thread_group.create_thread(boost::bind(&PostProcess::WriteSemanticData, this));
 
 	// wait for all the threads to finish work
@@ -316,7 +354,7 @@ void PostProcess::PublishAndWriteTFData()
 
 		// add the transform to the vectors
 		stamped_transforms.push_back(
-				tf::StampedTransform(transform, tf_time, this->world->GetName(), m_iter->get()->GetName()));
+				tf::StampedTransform(transform, tf_time, "/map" /*this->world->GetName()*/, m_iter->get()->GetName()));
 
 		// get the links vector from the current model
 		physics::Link_V links = m_iter->get()->GetLinks();
@@ -463,9 +501,9 @@ bool PostProcess::ShouldWriteTransform(std::vector<tf::StampedTransform>::const_
 						(_curr_st_iter->stamp_.sec * 1000.0 + _curr_st_iter->stamp_.nsec / 1000000.0) -
 								(memory_st_iter->stamp_.sec * 1000.0 + memory_st_iter->stamp_.nsec / 1000000.0));
 				// ns
-				double duration2 = fabs(
-						(_curr_st_iter->stamp_.sec * 1e9 + _curr_st_iter->stamp_.nsec) -
-								(memory_st_iter->stamp_.sec * 1e9 + memory_st_iter->stamp_.nsec));
+//				double duration2 = fabs(
+//						(_curr_st_iter->stamp_.sec * 1e9 + _curr_st_iter->stamp_.nsec) -
+//								(memory_st_iter->stamp_.sec * 1e9 + memory_st_iter->stamp_.nsec));
 
 
 				// check if the thresholds are crossed
@@ -476,8 +514,7 @@ bool PostProcess::ShouldWriteTransform(std::vector<tf::StampedTransform>::const_
 					std::cout << memory_st_iter->frame_id_<< "->" <<memory_st_iter->child_frame_id_
 							<< " dist: " << vect_dist
 							<< " rot: " << angular_dist
-							<< " duration: " << duration
-							<< " duration2: " << duration2 << std::endl;
+							<< " duration: " << duration << std::endl;
 
 					// one of the threshold passed, the current transformation is added to the memory
 					*(memory_st_iter) = *(_curr_st_iter);
@@ -506,7 +543,7 @@ bool PostProcess::ShouldWriteTransform(std::vector<tf::StampedTransform>::const_
 void PostProcess::WriteSemanticData()
 {
     // compute simulation time in milliseconds
-    const long int timestamp_ms = this->world->GetSimTime().Double() * 1000;
+    const double timestamp_ms = this->world->GetSimTime().Double();
 
     // get all the contacts from the physics engine
     const std::vector<physics::Contact*> all_contacts = this->contactManagerPtr->GetContacts();
@@ -816,7 +853,7 @@ void PostProcess::WriteSemanticData()
 
 //////////////////////////////////////////////////
 bool PostProcess::CheckCurrentGrasp(
-		const long int _timestamp_ms,
+		const double _timestamp_ms,
 		bool _fore_finger_contact,
 		bool _thumb_contact,
 		physics::Collision *_grasp_coll1,
@@ -860,7 +897,7 @@ bool PostProcess::CheckCurrentGrasp(
 
     	   // create the contact GzEvent
     	   this->graspGzEvent = new GzEvent(
-    			   grasp_ev_name, "GraspingSomething", _timestamp_ms);
+    			   grasp_ev_name, "GraspingSomething", "objectActedOn", _timestamp_ms);
 
     	   // add grasped object
     	   this->graspGzEvent->AddObject(this->nameToEventObj_M[curr_grasped_model]);
@@ -879,7 +916,8 @@ bool PostProcess::CheckCurrentGrasp(
     	   {
     		   // create the contact GzEvent
     		   this->graspGzEvent = new GzEvent(
-    				   grasp_ev_name, "GraspingSomething", _timestamp_ms);
+    				   grasp_ev_name, "&knowrob_sim;", "GraspingSomething",
+    				   "knowrob:", "objectActedOn", _timestamp_ms);
 
     		   // add grasped object
     		   this->graspGzEvent->AddObject(this->nameToEventObj_M[curr_grasped_model]);
@@ -892,7 +930,7 @@ bool PostProcess::CheckCurrentGrasp(
 
 //////////////////////////////////////////////////
 bool PostProcess::CheckCurrentEventCollisions(
-		const long int _timestamp_ms,
+		const double _timestamp_ms,
 		std::set<std::pair<std::string, std::string> > &_curr_ev_contact_model_pair_S)
 {
 	// marks if there is a difference between the previous and current step
@@ -921,17 +959,25 @@ bool PostProcess::CheckCurrentEventCollisions(
 				m_iter != symmetric_diff_S.end(); m_iter++)
 		{
 
+			// TODO hardcoded check for duplicates of spatula<->pancake maker,
+			// aka ignore spatula->pancakemaker, use pancakemaker->spatula
+			if(m_iter->first == "Spatula" && m_iter->second == "PancakeMaker")
+			{
+				continue;
+			}
+
 			// set name of the context first models + second model in contact
 			std::string contact_ev_name = "Contact" + m_iter->first + m_iter->second;
 
+
 			// if event does not exist
 			// TODO add two way detection of contacts, store somewhere the pairs in contact
-			if(!this->nameToEvents_M.count(contact_ev_name)
-					&& m_iter->first != "Spatula" && m_iter->second != "PancakeMaker") // TODO hardcoded check for duplicates of spatula<->pancake maker
+			if(!this->nameToEvents_M.count(contact_ev_name))
 			{
 				// create local contact GzEvent
 				hand_sim::GzEvent* contact_event = new hand_sim::GzEvent(
-						contact_ev_name, "TouchingSituation", _timestamp_ms);
+						contact_ev_name, "&knowrob_sim;", "TouchingSituation",
+						"knowrob_sim:", "inContact", _timestamp_ms);
 
 				// add the two objects in contact
 				contact_event->AddObject(this->nameToEventObj_M[m_iter->first]);
@@ -953,7 +999,8 @@ bool PostProcess::CheckCurrentEventCollisions(
 				{
 					// create local contact GzEvent
 					hand_sim::GzEvent* contact_event = new hand_sim::GzEvent(
-							contact_ev_name, "TouchingSituation", _timestamp_ms);
+							contact_ev_name, "&knowrob_sim;", "TouchingSituation",
+							"knowrob_sim:", "inContact", _timestamp_ms);
 
 					// add the two objects in contact
 					contact_event->AddObject(this->nameToEventObj_M[m_iter->first]);
@@ -971,7 +1018,7 @@ bool PostProcess::CheckCurrentEventCollisions(
 
 //////////////////////////////////////////////////
 bool PostProcess::CheckLiquidTransferEvent(
-		const long int _timestamp_ms,
+		const double _timestamp_ms,
 		int _prev_poured_particle_nr)
 {
 	// marks if there is a difference between the previous and current step
@@ -990,7 +1037,7 @@ bool PostProcess::CheckLiquidTransferEvent(
 
 			// add local event to the map
 			this->nameToEvents_M["LiquidTransfer"].push_back(new hand_sim::GzEvent(
-					"LiquidTransfer", "LiquidTransfer", _timestamp_ms));
+					"LiquidTransfer", "&knowrob_sim;", "LiquidTransfer", _timestamp_ms));
 		}
 		else // check if last particle left
 		{
@@ -1044,13 +1091,13 @@ void PostProcess::LogCheckWorker()
 void PostProcess::TerminateSimulation()
 {
 	// close main GzEvent
-	this->nameToEvents_M["Main"].back()->End(this->world->GetSimTime().Double() * 1000);
+	this->nameToEvents_M["Main"].back()->End(this->world->GetSimTime().Double());
 
 	// close all open events
 	PostProcess::EndActiveEvents();
 
 	// Concatenate timelines with short disconnections
-	PostProcess::JoinShortTimelineDisconnections();
+	PostProcess::JoinShortDisconnections();
 
 	// write events as belief state contexts
 	PostProcess::WriteContexts();
@@ -1079,14 +1126,14 @@ void PostProcess::EndActiveEvents()
 			// if event still open end it at the end time
 			if((*ev_it)->IsOpen())
 			{
-				(*ev_it)->End(this->world->GetSimTime().Double() * 1000);
+				(*ev_it)->End(this->world->GetSimTime().Double());
 			}
 		}
 	}
 }
 
 //////////////////////////////////////////////////
-void PostProcess::JoinShortTimelineDisconnections()
+void PostProcess::JoinShortDisconnections()
 {
 	// iterate through the map
 	for(std::map<std::string, std::list<hand_sim::GzEvent*> >::iterator m_it = this->nameToEvents_M.begin();
@@ -1105,7 +1152,7 @@ void PostProcess::JoinShortTimelineDisconnections()
 			// check that the next value is not the last
 			if(ev_it != m_it->second.end())
 			{
-				if((*ev_it)->GetStartTime() - (*curr_ev)->GetEndTime() < 200)
+				if((*ev_it)->GetStartTime() - (*curr_ev)->GetEndTime() < 0.2)
 				{
 					// set the next values start time
 					(*ev_it)->SetStartTime((*curr_ev)->GetStartTime());
@@ -1125,7 +1172,7 @@ void PostProcess::WriteContexts()
 	this->beliefStateClient = new beliefstate_client::BeliefstateClient("bs_client");
 
 	// register the OWL namespace
-	this->beliefStateClient->registerOWLNamespace("knowrob_sim", "http://knowrob.org/kb/knowrob_sim.owl");
+	this->beliefStateClient->registerOWLNamespace("knowrob_sim", "http://knowrob.org/kb/knowrob_sim.owl#");
 
 	// iterate through the map
 	for(std::map<std::string, std::list<hand_sim::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
@@ -1140,7 +1187,7 @@ void PostProcess::WriteContexts()
 
 			// open belief state context
 			curr_ctx = new beliefstate_client::Context(this->beliefStateClient,
-					(*ev_it)->GetName(), "&knowrob_sim;", (*ev_it)->GetType(), (*ev_it)->GetStartTime());
+					(*ev_it)->GetName(), (*ev_it)->GetClassNamespace(), (*ev_it)->GetClass(), (*ev_it)->GetStartTime());
 
 			// get the objects of the event
 			std::vector<GzEventObj*> curr_objects = (*ev_it)->GetObjects();
@@ -1151,7 +1198,7 @@ void PostProcess::WriteContexts()
 			{
 				// add object to the context
 				curr_ctx->addObject(this->nameToBsObject_M[(*ob_it)->GetName()],
-						"knowrob_sim:" + (*ev_it)->GetType());
+						(*ev_it)->GetPropertyNamespace() + (*ev_it)->GetProperty());
 			}
 
 			// end belief state context
@@ -1201,8 +1248,8 @@ void PostProcess::WriteTimelines()
 		{
 			// add all events to the timeline file
 			timeline_file << "    [ '" << (*ev_it)->GetName() << "', "
-					<< (*ev_it)->GetStartTime() << ", "
-					<< (*ev_it)->GetEndTime() << "],\n";
+					<< (*ev_it)->GetStartTime() * 1000 << ", "
+					<< (*ev_it)->GetEndTime() * 1000 << "],\n";
 		}
 	}
 

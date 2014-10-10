@@ -49,10 +49,19 @@ namespace hand_sim
 class GzEvent
 {
 	/// \brief Constructor
-	public: GzEvent(const std::string _name, const std::string _type);
+	public: GzEvent(const std::string _name,
+			const std::string _class_namespace,
+			const std::string _class_type,
+			double _start_time);
 
 	/// \brief Constructor
-	public: GzEvent(const std::string _name, const std::string _type, long int _start_time);
+	public: GzEvent(const std::string _name,
+			const std::string _class_namespace,
+			const std::string _class_type,
+			const std::string _property_namespace,
+			const std::string _property,
+			double _start_time);
+
 
 	/// \brief Destructor
 	public: virtual ~GzEvent();
@@ -63,32 +72,42 @@ class GzEvent
 	/// \brief Get the event name
 	public: const std::string GetName();
 
-	/// \brief Get the event type
-	public: const std::string GetType();
+	/// \brief Get the class namespace
+	public: const std::string GetClassNamespace();
+
+	/// \brief Get the class type
+	public: const std::string GetClass();
+
+	//TODO property is connected with object
+	/// \brief Get the property namespace
+	public: const std::string GetPropertyNamespace();
+
+	/// \brief Get the property type
+	public: const std::string GetProperty();
 
 	/// \brief Check if event is open
 	public: bool IsOpen();
 
 	/// \brief Get the start time
-	public: long int GetStartTime();
+	public: double GetStartTime();
 
 	/// \brief Set the start time
-	public: void SetStartTime(long int _start_time);
+	public: void SetStartTime(double _start_time);
 
 	/// \brief Get the start time
-	public: long int GetEndTime();
+	public: double GetEndTime();
 
 	/// \brief Set the start time
-	public: void SetEndTime(long int _end_time);
+	public: void SetEndTime(double _end_time);
 
 	/// \brief Get the start time
-	public: long int GetDuration();
+	public: double GetDuration();
 
 	/// \brief Start Event
-	public: void Start(long int _start_time);
+	public: void Start(double _start_time);
 
 	/// \brief End Event
-	public: void End(long int _end_time);
+	public: void End(double _end_time);
 
 	/// \brief Add object
 	public: void AddObject(GzEventObj *_ev_obj);
@@ -102,17 +121,26 @@ class GzEvent
 	/// \brief Event name
 	private: const std::string name;
 
-	/// \brief Event type
-	private: const std::string type;
+	/// \brief Event class namespace
+	private: const std::string classNamespace;
+
+	/// \brief Event class type
+	private: const std::string classType;
+
+	/// \brief Event property type
+	private: const std::string propertyNamespace;
+
+	/// \brief Event property type
+	private: const std::string property;
 
 	/// \brief State of the event, open, closed
 	private: bool isOpen;
 
 	/// \brief Start time of the event
-	private: long int startTime;
+	private: double startTime;
 
 	/// \brief End time of the event
-	private: long int endTime;
+	private: double endTime;
 
 	/// \brief Objects involved in the event
 	private: std::vector<GzEventObj*> objects;
