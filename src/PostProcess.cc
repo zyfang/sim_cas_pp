@@ -70,65 +70,16 @@ PostProcess::~PostProcess()
 //////////////////////////////////////////////////
 void PostProcess::Load(int _argc, char ** _argv)
 {
-    // TODO add default values and separate db from coll
-	// check if database and collection name have been given as arguments from the command line
-    for (unsigned int i = 0; i < _argc; ++i){
-    	// look for '-db' characters
-    	if(std::string(_argv[i]) == "-db"){
-            // set the next argument as the name of the db and collection
-    		this->dbCollName = _argv[++i];
-
-    		// if the name doesn't have a correct style, add default value
-    		if(this->dbCollName.find(".") == std::string::npos){
-                this->dbCollName = "sim_db.default";
-    		}
-    	}
-
-    	// look for '-w' characters, for world name
-    	if(std::string(_argv[i]) == "-w"){
-    		// set the next argument as the name of world
-    		this->worldName = _argv[++i];
-    	}
-
-    }
-
-    // if no db.coll name has been added, use default
-    if (this->dbCollName.empty()){
-        this->dbCollName = "sim_db.default";
-    }
-
-    // if no world name has been added, use default
-    if (this->worldName.empty()){
-    	this->worldName = "kitchen_world";
-    }
-
-
-	// set the saving of all tf transformations flag
-	this->writeAllTFTransf = true;
-
-	// init tf message seq count
-	this->tfSeq = 0;
-
-	// set the thresholds for logging tf transformations
-	this->tfVectDistThresh = 0.001;
-	this->tfAngularDistThresh = 0.1;
-	this->tfDurationThresh = 100; // ms
-
-
-	std::cout << "******** MONGO LOG PLUGIN LOADED *********" << std::endl;
-    std::cout << "\nWorld: " << this->worldName << std::endl;
-    std::cout << "Database.Collection: " << this->dbCollName << std::endl;
-    std::cout << "\nOptions: " << std::endl;
-    std::cout << "   -w  \t\t World name to be loaded." << std::endl;
-    std::cout << "   -db \t\t Database.Collection name for the data to be written to." << std::endl;
-
-    // TODO config file
+    // read config file
     PostProcess::ReadConfigFile();
 }
 
 //////////////////////////////////////////////////
 void PostProcess::Init()
 {
+	// init tf message seq count
+	this->tfSeq = 0;
+
 	// set the grasp init flag to false
 	this->graspInit = false;
 
@@ -159,10 +110,10 @@ void PostProcess::Init()
 //////////////////////////////////////////////////
 void PostProcess::ReadConfigFile()
 {
-
-	std::cout << "reading config file /******************" << std::endl;
+	// create the config
 	libconfig::Config cfg;
 
+	// read config file
 	try
 	{
 		cfg.readFile("config.cfg");
@@ -170,24 +121,35 @@ void PostProcess::ReadConfigFile()
 	catch(const libconfig::FileIOException &fioex)
 	{
 		std::cerr << "I/O error while reading file." << std::endl;
-
 	}
 	catch(const libconfig::ParseException &pex)
 	{
 		std::cerr << "Parse error at " << pex.getFile() << ":" << pex.getLine()
 		            		  << " - " << pex.getError() << std::endl;
-
 	}
 
-	try
-	{
-		std::string name = cfg.lookup("name");
-		std::cout << "Store name: " << name << std::endl;
-	}
-	catch(const libconfig::SettingNotFoundException &nfex)
-	{
-		std::cerr << "No 'name' setting in configuration file." << std::endl;
-	}
+	// get the variables from the config file
+	// TODO use func: int config_lookup_string(..) to set default values?
+	this->dbName = cfg.lookup("mongo.db_name").c_str();
+	std::cout << "db_name: " << this->dbName << std::endl;
+
+	this->collName = cfg.lookup("mongo.coll_name").c_str();
+	std::cout << "coll_name: " << this->collName << std::endl;
+
+	this->writeAllTFTransf = cfg.lookup("tf.write_all_tf_transf");
+	std::cout << "write_all_tf_transf: " << this->writeAllTFTransf << std::endl;
+
+	this->tfVectDistThresh = cfg.lookup("tf.dist_tresh");
+	std::cout << "tf_dist_tresh: " << this->tfVectDistThresh << std::endl;
+
+	this->tfAngularDistThresh = cfg.lookup("tf.angular_tresh");
+	std::cout << "angular_tresh: " << this->tfAngularDistThresh << std::endl;
+
+	this->tfDurationThresh = cfg.lookup("tf.duration_tresh");
+	std::cout << "duration_tresh: " << this->tfDurationThresh << std::endl;
+
+	this->worldName = cfg.lookup("sim.world_name").c_str();
+	std::cout << "world_name: " << this->worldName << std::endl;
 }
 
 //////////////////////////////////////////////////
@@ -242,7 +204,7 @@ void PostProcess::FirstSimulationStepInit()
 
 		// map model name to the beliefstate object
 		this->nameToBsObject_M[m_iter->get()->GetName()] =
-				new beliefstate_client::Object("&knowrob_sim;", m_iter->get()->GetName());
+				new beliefstate_client::Object("&knowrob;", m_iter->get()->GetName());
 
 
 		// get the links vector from the current model
@@ -453,7 +415,7 @@ void PostProcess::WriteTFData(const std::vector<tf::StampedTransform>& _stamped_
 	ScopedDbConnection scoped_connection("localhost");
 
 	// insert document object into the database
-	scoped_connection->insert(this->dbCollName + ".tf", BSON("transforms" << transforms_bo
+	scoped_connection->insert(this->dbName + "." + this->collName + "_tf", BSON("transforms" << transforms_bo
 														<< "__recorded" << stamp_ms
 														<< "__topic" << "/tf_sim"));
 
@@ -717,7 +679,7 @@ void PostProcess::WriteSemanticData()
     		timestamp_ms, curr_ev_contact_model_pair_S);
 
 	// Check if diff between particles leaving the mug appeared
-	diff_detected = PostProcess::CheckLiquidTransferEvent(
+	diff_detected = PostProcess::CheckFluidFlowTransEvent(
 			timestamp_ms, prev_poured_particles_nr);
 
 
@@ -916,7 +878,7 @@ bool PostProcess::CheckCurrentGrasp(
     	   {
     		   // create the contact GzEvent
     		   this->graspGzEvent = new GzEvent(
-    				   grasp_ev_name, "&knowrob_sim;", "GraspingSomething",
+    				   grasp_ev_name, "&knowrob;", "GraspingSomething",
     				   "knowrob:", "objectActedOn", _timestamp_ms);
 
     		   // add grasped object
@@ -1017,7 +979,7 @@ bool PostProcess::CheckCurrentEventCollisions(
 }
 
 //////////////////////////////////////////////////
-bool PostProcess::CheckLiquidTransferEvent(
+bool PostProcess::CheckFluidFlowTransEvent(
 		const double _timestamp_ms,
 		int _prev_poured_particle_nr)
 {
@@ -1031,21 +993,21 @@ bool PostProcess::CheckLiquidTransferEvent(
         diff_detected = true;
 
         // check if the event doesn't exist (first particles leaving)
-		if(!this->nameToEvents_M.count("LiquidTransfer"))
+		if(!this->nameToEvents_M.count("FluidFlow-Translation"))
 		{
-		    std::cout << "*Creating* LiquidTransfer event at " << _timestamp_ms << std::endl;
+		    std::cout << "*Creating* FluidFlow-Translation event at " << _timestamp_ms << std::endl;
 
 			// add local event to the map
-			this->nameToEvents_M["LiquidTransfer"].push_back(new hand_sim::GzEvent(
-					"LiquidTransfer", "&knowrob_sim;", "LiquidTransfer", _timestamp_ms));
+			this->nameToEvents_M["FluidFlow-Translation"].push_back(new hand_sim::GzEvent(
+					"FluidFlow-Translation", "&knowrob_sim;", "FluidFlow-Translation", _timestamp_ms));
 		}
 		else // check if last particle left
 		{
 			if(this->totalPouredParticles_S.size() == this->allLiquidParticles_S.size())
 			{
-			    std::cout << "*End* LiquidTransfer event at " << _timestamp_ms << std::endl;
+			    std::cout << "*End* FluidFlow-Translation event at " << _timestamp_ms << std::endl;
 				// end liquid transfer event
-				this->nameToEvents_M["LiquidTransfer"].back()->End(_timestamp_ms);
+				this->nameToEvents_M["FluidFlow-Translation"].back()->End(_timestamp_ms);
 			}
 		}
 

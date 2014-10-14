@@ -111,7 +111,7 @@ class PostProcess : public SystemPlugin
 			std::set<std::pair<std::string, std::string> > &_curr_ev_contact_model_pair_S);
 
 	/// \brief Check liquid transfer event
-	private: bool CheckLiquidTransferEvent(
+	private: bool CheckFluidFlowTransEvent(
 			const double _timestamp_ms,
 			int _prev_poured_particle_nr);
 
@@ -145,10 +145,7 @@ class PostProcess : public SystemPlugin
 	/// \brief Db collection name
 	private: std::string collName;
 
-	/// \brief database name
-	private: std::string dbCollName;
-
-	/// \brief Gazebo node providing subscription and advertising
+	/// \brief Gazebo communication node
 	private: transport::NodePtr gznode;
 
 	/// \brief Gazebo subscriber
@@ -237,7 +234,7 @@ class PostProcess : public SystemPlugin
 	private: double tfAngularDistThresh;
 
 	/// \brief Duration threshold between tf transformation in order to be logged or not
-	private: double tfDurationThresh;
+	private: int tfDurationThresh;
 
 	/// \brief Current tf seq nr
 	private: long long int tfSeq;
