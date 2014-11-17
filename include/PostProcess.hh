@@ -145,6 +145,9 @@ class PostProcess : public SystemPlugin
 	/// \brief Db collection name
 	private: std::string collName;
 
+	/// \brief Db collection name
+	private: std::string collSuffix;
+
 	/// \brief Gazebo communication node
 	private: transport::NodePtr gznode;
 

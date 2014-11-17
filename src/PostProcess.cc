@@ -70,6 +70,14 @@ PostProcess::~PostProcess()
 //////////////////////////////////////////////////
 void PostProcess::Load(int _argc, char ** _argv)
 {
+    for (unsigned int i = 0; i < _argc; ++i){
+    	// look for '-suffix' characters
+    	if(std::string(_argv[i]) == "--collsuffix"){
+            // set the next argument as the name of the db and collection
+    		this->collSuffix = _argv[++i];
+    	}
+    }
+
     // read config file
     PostProcess::ReadConfigFile();
 }
@@ -133,7 +141,12 @@ void PostProcess::ReadConfigFile()
 	this->dbName = cfg.lookup("mongo.db_name").c_str();
 	std::cout << "db_name: " << this->dbName << std::endl;
 
+	// set the collection name
 	this->collName = cfg.lookup("mongo.coll_name").c_str();
+	// if a suffix has been added append it to the collection name
+	if(this->collSuffix != NULL){
+		this->collName += this->collSuffix;
+	}
 	std::cout << "coll_name: " << this->collName << std::endl;
 
 	this->writeAllTFTransf = cfg.lookup("tf.write_all_tf_transf");
@@ -273,7 +286,7 @@ void PostProcess::ProcessCurrentData()
 	// group of threads for processing the data in parallel
 	boost::thread_group process_thread_group;
 
-//	process_thread_group.create_thread(boost::bind(&PostProcess::PublishAndWriteTFData, this));
+	process_thread_group.create_thread(boost::bind(&PostProcess::PublishAndWriteTFData, this));
 	process_thread_group.create_thread(boost::bind(&PostProcess::WriteSemanticData, this));
 
 	// wait for all the threads to finish work
@@ -999,7 +1012,7 @@ bool PostProcess::CheckFluidFlowTransEvent(
 
 			// add local event to the map
 			this->nameToEvents_M["FluidFlow-Translation"].push_back(new hand_sim::GzEvent(
-					"FluidFlow-Translation", "&knowrob_sim;", "FluidFlow-Translation", _timestamp_ms));
+					"FluidFlow-Translation", "&knowrob;", "FluidFlow-Translation", _timestamp_ms));
 		}
 		else // check if last particle left
 		{
@@ -1010,8 +1023,6 @@ bool PostProcess::CheckFluidFlowTransEvent(
 				this->nameToEvents_M["FluidFlow-Translation"].back()->End(_timestamp_ms);
 			}
 		}
-
-
     }
 
 	return diff_detected;

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+for d in logs/* ; do  
+  gzserver --verbose -s libPostProcess.so -p $d/gzserver/state.log --collsuffix ${d##*/}
+done
