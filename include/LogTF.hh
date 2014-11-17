@@ -89,6 +89,9 @@ class LogTF
 	private: long long int tfSeq;
 
 	/// \brief flag for writing all tf transformations to the db
+	private: bool publishTF;
+
+	/// \brief flag for writing all tf transformations to the db
 	private: bool writeAllTFTransf;
 
 	/// \brief last timestamps tf transforms

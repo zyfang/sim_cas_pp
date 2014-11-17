@@ -86,30 +86,29 @@ void LogTF::ReadConfigFile()
 	}
 
 
-	this->writeAllTFTransf = cfg.lookup("tf.write_all_tf_transf");
-	std::cout << "LogTF: write_all_tf_transf: " << this->writeAllTFTransf << std::endl;
+	this->publishTF = cfg.lookup("tf.publish");
+	std::cout << "LogTF - publish TF: " << this->publishTF << std::endl;
+
+	this->writeAllTFTransf = cfg.lookup("tf.write_all_transf");
+	std::cout << "LogTF - write_all_transf: " << this->writeAllTFTransf << std::endl;
 
 	// in case thresholds are set for logging the tf
 	if (!this->writeAllTFTransf)
 	{
 		this->tfVectDistThresh = cfg.lookup("tf.dist_tresh");
-		std::cout << "LogTF: tf_dist_tresh: " << this->tfVectDistThresh << std::endl;
+		std::cout << "LogTF - tf_dist_tresh: " << this->tfVectDistThresh << std::endl;
 
 		this->tfAngularDistThresh = cfg.lookup("tf.angular_tresh");
-		std::cout << "LogTF: angular_tresh: " << this->tfAngularDistThresh << std::endl;
+		std::cout << "LogTF - angular_tresh: " << this->tfAngularDistThresh << std::endl;
 
 		this->tfDurationThresh = cfg.lookup("tf.duration_tresh");
-		std::cout << "LogTF: duration_tresh: " << this->tfDurationThresh << std::endl;
+		std::cout << "LogTF - duration_tresh: " << this->tfDurationThresh << std::endl;
 	}
 }
 
 //////////////////////////////////////////////////
 void LogTF::WriteAndPublishTF()
 {
-	// TODO, static or class member?
-	// broadcaster to send the information
-	static tf::TransformBroadcaster transf_br;
-
 	// vector with all the transforms
 	std::vector<tf::StampedTransform> stamped_transforms;
 
@@ -177,8 +176,16 @@ void LogTF::WriteAndPublishTF()
 		}
 	}
 
-	// broadcast the transforms
-	transf_br.sendTransform(stamped_transforms);
+	// publish if flag is set to true
+	if(this->publishTF)
+	{
+		// TODO, static or class member?
+		// broadcaster to send the information
+		static tf::TransformBroadcaster transf_br;
+
+		// broadcast the transforms
+		transf_br.sendTransform(stamped_transforms);
+	}
 
 	// write the transformations to the data base
 	LogTF::WriteTFData(stamped_transforms);
