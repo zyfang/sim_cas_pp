@@ -46,15 +46,13 @@
 
 #include "mongo/client/dbclient.h"
 
-#include <ros/ros.h>
-#include <tf/transform_broadcaster.h>
-
 #include <beliefstate_client/BeliefstateClient.h>
 #include <beliefstate_client/Context.h>
 
 #include <libconfig.h++>
 
 #include "GzEvent.hh"
+#include "LogTF.hh"
 
 namespace gazebo
 {
@@ -84,15 +82,6 @@ class PostProcess : public SystemPlugin
 
 	/// \brief Function having all the post processing threads
 	private: void ProcessCurrentData();
-
-	/// \brief Publish tf
-	private: void PublishAndWriteTFData();
-
-	/// \brief Write tf transforms to the database
-	private: void WriteTFData(const std::vector<tf::StampedTransform>& _stamped_transforms);
-
-	/// \brief Check if the transform should be written to the db
-	private: bool ShouldWriteTransform(std::vector<tf::StampedTransform>::const_iterator& _st_iter);
 
 	/// \brief Write semantic events to OWL files
 	private: void WriteSemanticData();
@@ -135,6 +124,9 @@ class PostProcess : public SystemPlugin
 
 	/// \brief Write timelines to file
 	private: void WriteTimelines();
+
+	/// \brief TF logger class
+	private: postp::LogTF* tfLogger;
 
 	/// \brief World name
 	private: std::string worldName;
@@ -221,27 +213,6 @@ class PostProcess : public SystemPlugin
 	/// \brief flag for when the pancake is created
 	private: bool pancakeCreated;
 
-	/// \brief timestamp of last particle leaving the mug
-//	private: long long int lastParticleLeavingTimestamp;
-
-	/// \brief flag for writing all tf transformations to the db
-	private: bool writeAllTFTransf;
-
-	/// \brief last timestamps tf transforms
-	private: std::vector<tf::StampedTransform> lastTFTransformsMemory;
-
-	/// \brief Vectorial distance threshold between tf transformation in order to be logged or not
-	private: double tfVectDistThresh;
-
-	/// \brief Angular distance threshold between tf transformation in order to be logged or not
-	private: double tfAngularDistThresh;
-
-	/// \brief Duration threshold between tf transformation in order to be logged or not
-	private: int tfDurationThresh;
-
-	/// \brief Current tf seq nr
-	private: long long int tfSeq;
-
 	/// \brief Beliefstate client
 	private: beliefstate_client::BeliefstateClient* beliefStateClient;
 
@@ -260,6 +231,7 @@ class PostProcess : public SystemPlugin
 	// TODO remove this
 	/// \brief Model names to GzEventObj map
 	private: std::map<std::string, hand_sim::GzEventObj*> nameToEventObj_M;
+
 
 };
 }
