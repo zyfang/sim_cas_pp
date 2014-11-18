@@ -61,11 +61,11 @@ class LogTF
 	/// \brief Destructor
 	public: virtual ~LogTF();
 
-	/// \brief Load config file
-	protected: void ReadConfigFile();
-
 	/// \brief Publish / Write tf data
 	public: void WriteAndPublishTF();
+
+	/// \brief Load config file
+	private: void ReadConfigFile();
 
 	/// \brief Write tf transforms to the database
 	private: void WriteTFData(const std::vector<tf::StampedTransform>& _stamped_transforms);

@@ -12,11 +12,6 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ## TODO manually added
-#find_package(Boost COMPONENTS chrono)
-#set(Boost_CHRONO_LIBRARY /usr/lib/x86_64-linux-gnu/libboost_chrono.so)
-#message(Chrono boost lib: "${Boost_CHRONO_LIBRARY}")
-
-## TODO manually added
 set(MONGOCLIENT /home/haidu/bin/mongo-client-install/lib/libmongoclient.so)
 set(MONGO_INCLUDE_DIR /home/haidu/bin/mongo-client-install/include)
 
@@ -48,9 +43,16 @@ include_directories(
 )
 
 
-add_library(PostProcess SHARED src/PostProcess.cc src/GzEvent.cc src/GzEventObj.cc src/LogTF.cc)
+add_library(
+  PostProcess SHARED 
+  src/PostProcess.cc 
+  src/GzEvent.cc 
+  src/GzEventObj.cc 
+  src/LogTF.cc
+  src/LogEvents.cc
+  )
 
-target_link_libraries(PostProcess ${catkin_LIBRARIES} ${MONGOCLIENT} config++)# ${Boost_CHRONO_LIBRARY})
+target_link_libraries(PostProcess ${catkin_LIBRARIES} ${MONGOCLIENT} config++)
 
 
 

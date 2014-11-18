@@ -42,7 +42,7 @@
 #include <iostream>
 #include "GzEventObj.hh"
 
-namespace hand_sim
+namespace postp
 {
 
 /// \brief class GzEvent

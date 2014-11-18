@@ -36,7 +36,7 @@
 
 #include "GzEvent.hh"
 
-using namespace hand_sim;
+using namespace postp;
 
 //////////////////////////////////////////////////
 GzEvent::GzEvent(const std::string _name,

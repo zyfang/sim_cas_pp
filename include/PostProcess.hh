@@ -53,6 +53,7 @@
 
 #include "GzEvent.hh"
 #include "LogTF.hh"
+#include "LogEvents.hh"
 
 namespace gazebo
 {
@@ -127,6 +128,10 @@ class PostProcess : public SystemPlugin
 
 	/// \brief TF logger class
 	private: postp::LogTF* tfLogger;
+
+	/// \brief Event logger class
+	private: postp::LogEvents* eventsLogger;
+
 
 	/// \brief World name
 	private: std::string worldName;
@@ -223,14 +228,14 @@ class PostProcess : public SystemPlugin
 	private: bool graspInit;
 
 	/// \brief Grasp GzEvent
-	private: hand_sim::GzEvent* graspGzEvent;
+	private: postp::GzEvent* graspGzEvent;
 
 	/// \brief Map of event names to a stack of GzEvent
-	private: std::map<std::string, std::list<hand_sim::GzEvent*> > nameToEvents_M;
+	private: std::map<std::string, std::list<postp::GzEvent*> > nameToEvents_M;
 
 	// TODO remove this
 	/// \brief Model names to GzEventObj map
-	private: std::map<std::string, hand_sim::GzEventObj*> nameToEventObj_M;
+	private: std::map<std::string, postp::GzEventObj*> nameToEventObj_M;
 
 
 };

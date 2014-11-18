@@ -39,7 +39,7 @@
 
 #include <string>
 
-namespace hand_sim
+namespace postp
 {
 /// \brief class GzEventObj
 class GzEventObj

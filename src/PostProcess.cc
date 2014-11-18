@@ -43,7 +43,7 @@
 
 using namespace gazebo;
 using namespace mongo;
-using namespace hand_sim;
+using namespace postp;
 
 // Register this plugin with the simulator
 GZ_REGISTER_SYSTEM_PLUGIN(PostProcess)
@@ -179,8 +179,11 @@ void PostProcess::InitOnWorldConnect()
     this->contactSub = this->gznode->Subscribe(
             "~/physics/contacts", &PostProcess::DummyContactsCallback, this);
 
-    // initialize the tf loggin class
+    // initialize the tf logging class
     this->tfLogger = new postp::LogTF(this->world, this->dbName, this->collName);
+
+    // initialize the events logging class
+    this->eventsLogger = new postp::LogEvents(this->world, this->dbName, this->collName);
 }
 
 //////////////////////////////////////////////////
@@ -191,73 +194,76 @@ void PostProcess::FirstSimulationStepInit()
 
     std::cout << "!!! First recorded step: " << this->world->GetSimTime().Double() << std::endl;
 
-	// open the main GzEvent
-	this->nameToEvents_M["Main"].push_back(
-			new GzEvent("Main","&knowrob_sim;", "PancakeEpisode", this->world->GetSimTime().Double()));
+//	// open the main GzEvent
+//	this->nameToEvents_M["Main"].push_back(
+//			new GzEvent("Main","&knowrob_sim;", "PancakeEpisode", this->world->GetSimTime().Double()));
+//
+//	// loop through all the models to see which have event collisions
+//	for(physics::Model_V::const_iterator m_iter = this->models.begin();
+//			m_iter != this->models.end(); m_iter++)
+//	{
+//		// map model name to the GzEventObj object
+//		this->nameToEventObj_M[m_iter->get()->GetName()] = new GzEventObj(m_iter->get()->GetName());
+//
+//		// map model name to the beliefstate object
+//		this->nameToBsObject_M[m_iter->get()->GetName()] =
+//				new beliefstate_client::Object("&knowrob;", m_iter->get()->GetName());
+//
+//
+//		// get the links vector from the current model
+//		const physics::Link_V links = m_iter->get()->GetLinks();
+//
+//		// loop through the links
+//		for (physics::Link_V::const_iterator l_iter = links.begin();
+//				l_iter != links.end(); l_iter++)
+//		{
+//			// get the collisions of the current link
+//            const physics::Collision_V collisions = l_iter->get()->GetCollisions();
+//
+//			// loop through all the collision
+//			for (physics::Collision_V::const_iterator c_iter = collisions.begin();
+//					c_iter != collisions.end(); c_iter++)
+//            {
+//				// check if collision belongs to the liquid model
+//				if ((*m_iter) == this->liquidSpheres)
+//				{
+//					this->allLiquidParticles_S.insert(c_iter->get());
+//				}
+//
+//				// if the collision is without physical contact then add it to the map
+//				if (c_iter->get()->GetSurface()->collideWithoutContact)
+//				{
+//					// specific no-contact collision
+//					if (c_iter->get()->GetName() == "mug_event_collision")
+//					{
+//						this->eventCollisionMug = c_iter->get();
+//					}
+//					else if (c_iter->get()->GetName() == "fore_finger_event_collision")
+//					{
+//						this->eventCollisionForeFinger = c_iter->get();
+//					}
+//					else if (c_iter->get()->GetName() == "thumb_event_collision")
+//					{
+//						this->eventCollisionThumb = c_iter->get();
+//					}
+//					else
+//                    {
+//						// insert collision into set
+//                        this->eventCollisions_S.insert(c_iter->get());
+//
+//                        // init the event collision with an empty set (models that are in collision with)
+////                        this->prevEvCollToModelNames_S_M[c_iter->get()] = std::set<std::string>();
+//
+//                        // init the event coll to particle names map with empty sets of strings
+//                        this->eventCollToSetOfParticleNames_M[c_iter->get()] = std::set<std::string>();
+//					}
+//				}
+//			}
+//		}
+//	}
 
-	// loop through all the models to see which have event collisions
-	for(physics::Model_V::const_iterator m_iter = this->models.begin();
-			m_iter != this->models.end(); m_iter++)
-	{
-		// map model name to the GzEventObj object
-		this->nameToEventObj_M[m_iter->get()->GetName()] = new GzEventObj(m_iter->get()->GetName());
-
-		// map model name to the beliefstate object
-		this->nameToBsObject_M[m_iter->get()->GetName()] =
-				new beliefstate_client::Object("&knowrob;", m_iter->get()->GetName());
-
-
-		// get the links vector from the current model
-		const physics::Link_V links = m_iter->get()->GetLinks();
-
-		// loop through the links
-		for (physics::Link_V::const_iterator l_iter = links.begin();
-				l_iter != links.end(); l_iter++)
-		{
-			// get the collisions of the current link
-            const physics::Collision_V collisions = l_iter->get()->GetCollisions();
-
-			// loop through all the collision
-			for (physics::Collision_V::const_iterator c_iter = collisions.begin();
-					c_iter != collisions.end(); c_iter++)
-            {
-				// check if collision belongs to the liquid model
-				if ((*m_iter) == this->liquidSpheres)
-				{
-					this->allLiquidParticles_S.insert(c_iter->get());
-				}
-
-				// if the collision is without physical contact then add it to the map
-				if (c_iter->get()->GetSurface()->collideWithoutContact)
-				{
-					// specific no-contact collision
-					if (c_iter->get()->GetName() == "mug_event_collision")
-					{
-						this->eventCollisionMug = c_iter->get();
-					}
-					else if (c_iter->get()->GetName() == "fore_finger_event_collision")
-					{
-						this->eventCollisionForeFinger = c_iter->get();
-					}
-					else if (c_iter->get()->GetName() == "thumb_event_collision")
-					{
-						this->eventCollisionThumb = c_iter->get();
-					}
-					else
-                    {
-						// insert collision into set
-                        this->eventCollisions_S.insert(c_iter->get());
-
-                        // init the event collision with an empty set (models that are in collision with)
-//                        this->prevEvCollToModelNames_S_M[c_iter->get()] = std::set<std::string>();
-
-                        // init the event coll to particle names map with empty sets of strings
-                        this->eventCollToSetOfParticleNames_M[c_iter->get()] = std::set<std::string>();
-					}
-				}
-			}
-		}
-	}
+    // Initialise events
+    this->eventsLogger->InitEvents();
 
 	// Run the post processing threads once so the first step is not skipped
 	PostProcess::ProcessCurrentData();
@@ -275,7 +281,9 @@ void PostProcess::ProcessCurrentData()
 
 //	process_thread_group.create_thread(boost::bind(&PostProcess::PublishAndWriteTFData, this));
 	process_thread_group.create_thread(boost::bind(&postp::LogTF::WriteAndPublishTF, this->tfLogger));
-	process_thread_group.create_thread(boost::bind(&PostProcess::WriteSemanticData, this));
+//	process_thread_group.create_thread(boost::bind(&PostProcess::WriteSemanticData, this));
+	process_thread_group.create_thread(boost::bind(&postp::LogEvents::WriteSemanticData, this->eventsLogger));
+
 
 	// wait for all the threads to finish work
 	process_thread_group.join_all();
@@ -720,7 +728,7 @@ bool PostProcess::CheckCurrentEventCollisions(
 			if(!this->nameToEvents_M.count(contact_ev_name))
 			{
 				// create local contact GzEvent
-				hand_sim::GzEvent* contact_event = new hand_sim::GzEvent(
+				postp::GzEvent* contact_event = new postp::GzEvent(
 						contact_ev_name, "&knowrob_sim;", "TouchingSituation",
 						"knowrob_sim:", "inContact", _timestamp_ms);
 
@@ -743,7 +751,7 @@ bool PostProcess::CheckCurrentEventCollisions(
 				else
 				{
 					// create local contact GzEvent
-					hand_sim::GzEvent* contact_event = new hand_sim::GzEvent(
+					postp::GzEvent* contact_event = new postp::GzEvent(
 							contact_ev_name, "&knowrob_sim;", "TouchingSituation",
 							"knowrob_sim:", "inContact", _timestamp_ms);
 
@@ -781,7 +789,7 @@ bool PostProcess::CheckFluidFlowTransEvent(
 		    std::cout << "*Creating* FluidFlow-Translation event at " << _timestamp_ms << std::endl;
 
 			// add local event to the map
-			this->nameToEvents_M["FluidFlow-Translation"].push_back(new hand_sim::GzEvent(
+			this->nameToEvents_M["FluidFlow-Translation"].push_back(new postp::GzEvent(
 					"FluidFlow-Translation", "&knowrob;", "FluidFlow-Translation", _timestamp_ms));
 		}
 		else // check if last particle left
@@ -833,20 +841,22 @@ void PostProcess::LogCheckWorker()
 //////////////////////////////////////////////////
 void PostProcess::TerminateSimulation()
 {
-	// close main GzEvent
-	this->nameToEvents_M["Main"].back()->End(this->world->GetSimTime().Double());
+	this->eventsLogger->FiniEvents();
 
-	// close all open events
-	PostProcess::EndActiveEvents();
-
-	// Concatenate timelines with short disconnections
-	PostProcess::JoinShortDisconnections();
-
-	// write events as belief state contexts
-	PostProcess::WriteContexts();
-
-	// write events to timeline file
-	PostProcess::WriteTimelines();
+//	// close main GzEvent
+//	this->nameToEvents_M["Main"].back()->End(this->world->GetSimTime().Double());
+//
+//	// close all open events
+//	PostProcess::EndActiveEvents();
+//
+//	// Concatenate timelines with short disconnections
+//	PostProcess::JoinShortDisconnections();
+//
+//	// write events as belief state contexts
+//	PostProcess::WriteContexts();
+//
+//	// write events to timeline file
+//	PostProcess::WriteTimelines();
 
 	// shutting down ros
 	ros::shutdown();
@@ -859,7 +869,7 @@ void PostProcess::TerminateSimulation()
 void PostProcess::EndActiveEvents()
 {
 	// iterate through the map
-	for(std::map<std::string, std::list<hand_sim::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
+	for(std::map<std::string, std::list<postp::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
 			m_it != this->nameToEvents_M.end(); m_it++)
 	{
 		// iterate through the events with the same name
@@ -879,7 +889,7 @@ void PostProcess::EndActiveEvents()
 void PostProcess::JoinShortDisconnections()
 {
 	// iterate through the map
-	for(std::map<std::string, std::list<hand_sim::GzEvent*> >::iterator m_it = this->nameToEvents_M.begin();
+	for(std::map<std::string, std::list<postp::GzEvent*> >::iterator m_it = this->nameToEvents_M.begin();
 			m_it != this->nameToEvents_M.end(); m_it++)
 	{
 		// iterate through the events with the same name
@@ -918,11 +928,11 @@ void PostProcess::WriteContexts()
 	this->beliefStateClient->registerOWLNamespace("knowrob_sim", "http://knowrob.org/kb/knowrob_sim.owl#");
 
 	// iterate through the map
-	for(std::map<std::string, std::list<hand_sim::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
+	for(std::map<std::string, std::list<postp::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
 			m_it != this->nameToEvents_M.end(); m_it++)
 	{
 		// iterate through the events with the same name
-		for(std::list<hand_sim::GzEvent*>::const_iterator ev_it = m_it->second.begin();
+		for(std::list<postp::GzEvent*>::const_iterator ev_it = m_it->second.begin();
 				ev_it != m_it->second.end(); ev_it++)
 		{
 			// create local belief state context
@@ -982,7 +992,7 @@ void PostProcess::WriteTimelines()
 			"  dataTable.addRows([\n";
 
 	// iterate through the map
-	for(std::map<std::string, std::list<hand_sim::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
+	for(std::map<std::string, std::list<postp::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
 			m_it != this->nameToEvents_M.end(); m_it++)
 	{
 		// iterate through the events with the same name
