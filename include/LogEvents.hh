@@ -70,7 +70,7 @@ class LogEvents
 	public: void InitEvents();
 
 	/// \brief Write semantic events to OWL files
-	public: void WriteSemanticData();
+	public: void CheckEvents();
 
 	/// \brief Finalize events
 	public: void FiniEvents();
@@ -183,6 +183,9 @@ class LogEvents
 
 	/// \brief Beliefstate client
 	private: beliefstate_client::BeliefstateClient* beliefStateClient;
+
+	/// \brief Log location of the events
+	private: std::string logLocation;
 
 };
 }

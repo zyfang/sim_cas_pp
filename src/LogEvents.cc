@@ -40,6 +40,8 @@ using namespace postp;
 using namespace gazebo;
 using namespace mongo;
 
+#define TIME_OFFSET 100
+
 //////////////////////////////////////////////////
 LogEvents::LogEvents(const gazebo::physics::WorldPtr _world,
 		const std::string _db_name,
@@ -76,11 +78,35 @@ LogEvents::~LogEvents()
 //////////////////////////////////////////////////
 void LogEvents::ReadConfigFile()
 {
+	// create the config
+	libconfig::Config cfg;
+
+	// read config file
+	try
+	{
+		cfg.readFile("config.cfg");
+	}
+	catch(const libconfig::FileIOException &fioex)
+	{
+		std::cerr << "I/O error while reading file." << std::endl;
+	}
+	catch(const libconfig::ParseException &pex)
+	{
+		std::cerr << "Parse error at " << pex.getFile() << ":" << pex.getLine()
+		            		  << " - " << pex.getError() << std::endl;
+	}
+
+	// get the variables from the config file
+	this->logLocation = cfg.lookup("events.log_location").c_str();
+	std::cout << "LogEvents - log_location: " << this->logLocation << std::endl;
+
 }
 
 //////////////////////////////////////////////////
 void LogEvents::InitEvents()
 {
+	std::cout << "LogEvents - Sim start: " << this->world->GetSimTime().Double() << std::endl;
+
 	// open the main GzEvent
 	this->nameToEvents_M["Main"].push_back(
 			new GzEvent("Main","&knowrob_sim;", "PancakeEpisode", this->world->GetSimTime().Double()));
@@ -138,9 +164,6 @@ void LogEvents::InitEvents()
 						// insert collision into set
                         this->eventCollisions_S.insert(c_iter->get());
 
-                        // init the event collision with an empty set (models that are in collision with)
-//                        this->prevEvCollToModelNames_S_M[c_iter->get()] = std::set<std::string>();
-
                         // init the event coll to particle names map with empty sets of strings
                         this->eventCollToSetOfParticleNames_M[c_iter->get()] = std::set<std::string>();
 					}
@@ -151,7 +174,7 @@ void LogEvents::InitEvents()
 }
 
 //////////////////////////////////////////////////
-void LogEvents::WriteSemanticData()
+void LogEvents::CheckEvents()
 {
     // compute simulation time in milliseconds
     const double timestamp_ms = this->world->GetSimTime().Double();
@@ -663,7 +686,7 @@ bool LogEvents::CheckFluidFlowTransEvent(
         // check if the event doesn't exist (first particles leaving)
 		if(!this->nameToEvents_M.count("FluidFlow-Translation"))
 		{
-		    std::cout << "*Creating* FluidFlow-Translation event at " << _timestamp_ms << std::endl;
+		    std::cout << "LogEvents - Creating FluidFlow-Translation event at " << _timestamp_ms << std::endl;
 
 			// add local event to the map
 			this->nameToEvents_M["FluidFlow-Translation"].push_back(new postp::GzEvent(
@@ -673,7 +696,7 @@ bool LogEvents::CheckFluidFlowTransEvent(
 		{
 			if(this->totalPouredParticles_S.size() == this->allLiquidParticles_S.size())
 			{
-			    std::cout << "*End* FluidFlow-Translation event at " << _timestamp_ms << std::endl;
+			    std::cout << "LogEvents - End FluidFlow-Translation event at " << _timestamp_ms << std::endl;
 				// end liquid transfer event
 				this->nameToEvents_M["FluidFlow-Translation"].back()->End(_timestamp_ms);
 			}
@@ -739,47 +762,90 @@ void LogEvents::JoinShortDisconnections()
 //////////////////////////////////////////////////
 void LogEvents::WriteContexts()
 {
-	// initialize the beliefstate
-	this->beliefStateClient = new beliefstate_client::BeliefstateClient("bs_client");
-
-	// register the OWL namespace
-	this->beliefStateClient->registerOWLNamespace("knowrob_sim", "http://knowrob.org/kb/knowrob_sim.owl#");
-
-	// iterate through the map
-	for(std::map<std::string, std::list<postp::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
-			m_it != this->nameToEvents_M.end(); m_it++)
+	if(this->logLocation == "owl")
 	{
-		// iterate through the events with the same name
-		for(std::list<postp::GzEvent*>::const_iterator ev_it = m_it->second.begin();
-				ev_it != m_it->second.end(); ev_it++)
+		// initialize the beliefstate
+		this->beliefStateClient = new beliefstate_client::BeliefstateClient("bs_client");
+
+		// register the OWL namespace
+		this->beliefStateClient->registerOWLNamespace("knowrob_sim", "http://knowrob.org/kb/knowrob_sim.owl#");
+
+		// iterate through the map
+		for(std::map<std::string, std::list<postp::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
+				m_it != this->nameToEvents_M.end(); m_it++)
 		{
-			// create local belief state context
-			beliefstate_client::Context* curr_ctx;
-
-			// open belief state context
-			curr_ctx = new beliefstate_client::Context(this->beliefStateClient,
-					(*ev_it)->GetName(), (*ev_it)->GetClassNamespace(), (*ev_it)->GetClass(), (*ev_it)->GetStartTime());
-
-			// get the objects of the event
-			std::vector<GzEventObj*> curr_objects = (*ev_it)->GetObjects();
-
-			// iterate through the objects
-			for(std::vector<GzEventObj*>::const_iterator ob_it = curr_objects.begin();
-					ob_it != curr_objects.end(); ob_it++)
+			// iterate through the events with the same name
+			for(std::list<postp::GzEvent*>::const_iterator ev_it = m_it->second.begin();
+					ev_it != m_it->second.end(); ev_it++)
 			{
-				// add object to the context
-				curr_ctx->addObject(this->nameToBsObject_M[(*ob_it)->GetName()],
-						(*ev_it)->GetPropertyNamespace() + (*ev_it)->GetProperty());
+				// create local belief state context
+				beliefstate_client::Context* curr_ctx;
+
+				// open belief state context
+				curr_ctx = new beliefstate_client::Context(this->beliefStateClient,
+						(*ev_it)->GetName(), (*ev_it)->GetClassNamespace(), (*ev_it)->GetClass(), (*ev_it)->GetStartTime() + TIME_OFFSET);
+
+				// get the objects of the event
+				std::vector<GzEventObj*> curr_objects = (*ev_it)->GetObjects();
+
+				// iterate through the objects
+				for(std::vector<GzEventObj*>::const_iterator ob_it = curr_objects.begin();
+						ob_it != curr_objects.end(); ob_it++)
+				{
+					// add object to the context
+					curr_ctx->addObject(this->nameToBsObject_M[(*ob_it)->GetName()],
+							(*ev_it)->GetPropertyNamespace() + (*ev_it)->GetProperty());
+				}
+
+				// end belief state context
+				curr_ctx->end(true, (*ev_it)->GetEndTime() + TIME_OFFSET);
+			}
+		}
+
+		// export belief state client
+		this->beliefStateClient->exportFiles("sim_data");
+	}
+	else if(this->logLocation == "mongo")
+	{
+		// all events
+		std::vector<BSONObj> events_objs;
+
+	    // insert document object into the database, use scoped connection
+		ScopedDbConnection scoped_connection("localhost");
+
+		// iterate through the map
+		for(std::map<std::string, std::list<postp::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
+				m_it != this->nameToEvents_M.end(); m_it++)
+		{
+			// current event
+			BSONObjBuilder event_bb;
+
+			// array of the times
+			std::vector<BSONObj> times_objs;
+
+			// iterate through the events with the same name
+			for(std::list<GzEvent*>::const_iterator ev_it = m_it->second.begin();
+					ev_it != m_it->second.end(); ev_it++)
+			{
+				// add to the time array
+				times_objs.push_back(BSON("start" << (*ev_it)->GetStartTime() << "end" << (*ev_it)->GetEndTime()));
 			}
 
-			// end belief state context
-			curr_ctx->end(true, (*ev_it)->GetEndTime());
+			// add name and times
+			event_bb.append("name", m_it->first);
+			event_bb.append("times", times_objs);
+
+			// add it to the events list
+			events_objs.push_back(event_bb.obj());
 		}
+
+		// insert document object into the database
+		scoped_connection->insert(this->dbName + "." + this->collName + "_ev",
+				BSON("events" << events_objs));
+
+		// let the pool know the connection is done
+		scoped_connection.done();
 	}
-
-	// export belief state client
-	this->beliefStateClient->exportFiles("sim_data");
-
 }
 
 //////////////////////////////////////////////////

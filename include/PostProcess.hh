@@ -73,7 +73,7 @@ class PostProcess : public SystemPlugin
 	protected: virtual void Init();
 
 	/// \brief Load config file
-	protected: void ReadConfigFile();
+	private: void ReadConfigFile();
 
 	/// \brief Call after the world connected event
 	private: void InitOnWorldConnect();
@@ -84,47 +84,17 @@ class PostProcess : public SystemPlugin
 	/// \brief Function having all the post processing threads
 	private: void ProcessCurrentData();
 
-	/// \brief Write semantic events to OWL files
-	private: void WriteSemanticData();
-
-	/// \brief Check current Grasp
-	private: bool CheckCurrentGrasp(
-			const double _timestamp_ms,
-			bool _fore_finger_contact,
-			bool _thumb_contact,
-			physics::Collision *_grasp_coll1,
-			physics::Collision *_grasp_coll2);
-
-	/// \brief Check current event collisions
-	private: bool CheckCurrentEventCollisions(
-			const double _timestamp_ms,
-			std::set<std::pair<std::string, std::string> > &_curr_ev_contact_model_pair_S);
-
-	/// \brief Check liquid transfer event
-	private: bool CheckFluidFlowTransEvent(
-			const double _timestamp_ms,
-			int _prev_poured_particle_nr);
-
-	/// \brief Contacts callback function, just to start the contacts in the physics engine
-	private: void DummyContactsCallback(ConstContactsPtr& _msg);
-
 	/// \brief Check if the log play has finished
-	private: void LogCheckWorker();
+	private: void CheckLoggingFinishedWorker();
 
 	/// \brief Terminate simulation
 	private: void TerminateSimulation();
 
-	/// \brief Join short disconnections in the events timeline
-	private: void JoinShortDisconnections();
+	/// \brief Contacts callback function, just to start the contacts in the physics engine
+	private: void DummyContactsCallback(ConstContactsPtr& _msg);
 
-	/// \brief End still active events
-	private: void EndActiveEvents();
-
-	/// \brief Write beliefstate contexts
-	private: void WriteContexts();
-
-	/// \brief Write timelines to file
-	private: void WriteTimelines();
+	/// \brief Thread for checking the end of a log
+	private: boost::thread* checkLogginFinishedThread;
 
 	/// \brief TF logger class
 	private: postp::LogTF* tfLogger;
@@ -132,8 +102,7 @@ class PostProcess : public SystemPlugin
 	/// \brief Event logger class
 	private: postp::LogEvents* eventsLogger;
 
-
-	/// \brief World name
+	/// \brief World name to be connected to
 	private: std::string worldName;
 
 	/// \brief Database name
@@ -148,29 +117,11 @@ class PostProcess : public SystemPlugin
 	/// \brief Gazebo communication node
 	private: transport::NodePtr gznode;
 
-	/// \brief Gazebo subscriber
+	/// \brief Gazebo subscriber to contacts
 	private: transport::SubscriberPtr contactSub;
-
-	/// \brief Connection to the database
-	private: mongo::DBClientConnection mongoDBClientConnection;
-
-	/// \brief Thread for checking the end of a log
-	private: boost::thread* checkLogEndThread;
-
-	/// \brief Flag used to set that initially pause mode is set, used of detecting the end of a Log
-	private: bool pauseMode;
-
-	/// \brief World Pointer
-	private: physics::WorldPtr world;
-
-	/// \brief Vector of the world models
-	private: physics::Model_V models;
 
 	/// \brief World created connection
 	private: event::ConnectionPtr worldCreatedConnection;
-
-	/// \brief Pause event connection
-	private: event::ConnectionPtr pauseConnection;
 
 	/// \brief World update connection
 	private: event::ConnectionPtr eventConnection;
@@ -178,66 +129,11 @@ class PostProcess : public SystemPlugin
 	/// \brief pointer of ContactManager, for getting contacts from physics engine
 	private: physics::ContactManager *contactManagerPtr;
 
-	/// \brief Mug top event collision
-	private: physics::Collision* eventCollisionMug;
+	/// \brief World Pointer
+	private: physics::WorldPtr world;
 
-	/// \brief Hit hand thumb and fore finger event collision
-	private: physics::Collision *eventCollisionForeFinger, *eventCollisionThumb;
-
-	/// \brief Event no contact collision vector
-	private: std::set<physics::Collision*> eventCollisions_S;
-
-	/// \brief Set with the event contact model names
-	private: std::set<std::pair<std::string, std::string> > prevEvContactModelPair_S;
-
-	// TODO remove maps
-	/// \brief map of event collisions to a set of all its contacts model names
-	private: std::map< physics::Collision*, std::set<std::string> > prevEvCollToModelNames_S_M;
-
-	/// \brief map of event collisions to a set of all its particle names
-	private: std::map< physics::Collision*, std::set<std::string> > eventCollToSetOfParticleNames_M;
-
-	/// \brief name of the grasped model
-	private: std::string prevGraspedModel;
-
-	/// \brief liquid model
-	private: physics::ModelPtr liquidSpheres;
-
-	/// \brief all particle collisions
-	private: std::set<physics::Collision*> allLiquidParticles_S;
-
-	/// \brief poured particle collisions
-	private: std::set<physics::Collision*> totalPouredParticles_S;
-
-	/// \brief particle collisions belonging to the pancake
-	private: std::set<physics::Collision*> pancakeCollision_S;
-
-	/// \brief flag for starting / finishing the pouring
-	private: bool pouringStarted, pouringFinished;
-
-	/// \brief flag for when the pancake is created
-	private: bool pancakeCreated;
-
-	/// \brief Beliefstate client
-	private: beliefstate_client::BeliefstateClient* beliefStateClient;
-
-	/// \brief Map of all the objects name from the simulation to beliefstate objects
-	private: std::map<std::string, beliefstate_client::Object*> nameToBsObject_M;
-
-	/// \brief Grasp flag
-	private: bool graspInit;
-
-	/// \brief Grasp GzEvent
-	private: postp::GzEvent* graspGzEvent;
-
-	/// \brief Map of event names to a stack of GzEvent
-	private: std::map<std::string, std::list<postp::GzEvent*> > nameToEvents_M;
-
-	// TODO remove this
-	/// \brief Model names to GzEventObj map
-	private: std::map<std::string, postp::GzEventObj*> nameToEventObj_M;
-
-
+	/// \brief Flag used to set that initially pause mode is set, used of detecting the end of a Log
+	private: bool pauseMode;
 };
 }
 
