@@ -54,6 +54,7 @@
 #include "GzEvent.hh"
 #include "LogTF.hh"
 #include "LogEvents.hh"
+#include "LogRaw.hh"
 
 namespace gazebo
 {
@@ -101,6 +102,9 @@ class PostProcess : public SystemPlugin
 
 	/// \brief Event logger class
 	private: postp::LogEvents* eventsLogger;
+
+	/// \brief Raw logger class
+	private: postp::LogRaw* rawLogger;
 
 	/// \brief World name to be connected to
 	private: std::string worldName;

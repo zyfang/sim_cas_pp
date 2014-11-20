@@ -126,8 +126,6 @@ class LogEvents
 	/// \brief Db collection name
 	private: const std::string collName;
 
-
-
 	/// \brief Set with the event contact model names
 	private: std::set<std::pair<std::string, std::string> > prevEvContactModelPair_S;
 

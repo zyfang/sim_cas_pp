@@ -160,6 +160,9 @@ void PostProcess::InitOnWorldConnect()
 
     // initialize the events logging class
     this->eventsLogger = new postp::LogEvents(this->world, this->dbName, this->collName);
+
+    // initialize the raw logging class
+    this->rawLogger = new postp::LogRaw(this->world, this->dbName, this->collName);
 }
 
 //////////////////////////////////////////////////
@@ -192,6 +195,10 @@ void PostProcess::ProcessCurrentData()
 	// events data
 	process_thread_group.create_thread(
 			boost::bind(&postp::LogEvents::CheckEvents, this->eventsLogger));
+
+	// raw data
+	process_thread_group.create_thread(
+			boost::bind(&postp::LogRaw::WriteRawData, this->rawLogger));
 
 	// wait for all the threads to finish work
 	process_thread_group.join_all();

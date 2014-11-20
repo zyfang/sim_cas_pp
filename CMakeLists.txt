@@ -50,6 +50,7 @@ add_library(
   src/GzEventObj.cc 
   src/LogTF.cc
   src/LogEvents.cc
+  src/LogRaw.cc
   )
 
 target_link_libraries(PostProcess ${catkin_LIBRARIES} ${MONGOCLIENT} config++)
