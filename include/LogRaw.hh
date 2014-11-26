@@ -37,15 +37,13 @@
 #ifndef LOG_RAW_HH
 #define LOG_RAW_HH
 
-#include "gazebo/gazebo.hh"
-#include "gazebo/physics/physics.hh"
-
-#include "mongo/client/dbclient.h"
-
+#include <gazebo/gazebo.hh>
+#include <gazebo/physics/physics.hh>
 #include <libconfig.h++>
+#include <mongo/client/dbclient.h>
 
 /// \brief Post Processing classes namespace
-namespace postp
+namespace kgpp
 {
 /// \brief class LogRaw
 class LogRaw

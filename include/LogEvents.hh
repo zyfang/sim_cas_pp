@@ -37,23 +37,18 @@
 #ifndef LOG_EVENTS_HH
 #define LOG_EVENTS_HH
 
-#include "gazebo/gazebo.hh"
-#include "gazebo/physics/physics.hh"
-
-#include "mongo/client/dbclient.h"
-
+#include <gazebo/gazebo.hh>
+#include <gazebo/physics/physics.hh>
 #include <ros/ros.h>
 #include <tf/transform_broadcaster.h>
-
 #include <beliefstate_client/BeliefstateClient.h>
 #include <beliefstate_client/Context.h>
-
 #include <libconfig.h++>
-
+#include "mongo/client/dbclient.h"
 #include "GzEvent.hh"
 
 /// \brief Post Processing classes namespace
-namespace postp
+namespace kgpp
 {
 /// \brief class LogEvents
 class LogEvents
@@ -126,6 +121,9 @@ class LogEvents
 	/// \brief Db collection name
 	private: const std::string collName;
 
+	/// \brief Event disconnection threshold limit
+	private: double eventDiscTresh;
+
 	/// \brief Set with the event contact model names
 	private: std::set<std::pair<std::string, std::string> > prevEvContactModelPair_S;
 
@@ -161,17 +159,17 @@ class LogEvents
 	private: std::string prevGraspedModel;
 
 	/// \brief Map of event names to a stack of GzEvent
-	private: std::map<std::string, std::list<postp::GzEvent*> > nameToEvents_M;
+	private: std::map<std::string, std::list<kgpp::GzEvent*> > nameToEvents_M;
 
 	/// \brief Map of all the objects name from the simulation to beliefstate objects
 	private: std::map<std::string, beliefstate_client::Object*> nameToBsObject_M;
 
 	// TODO remove this
 	/// \brief Model names to GzEventObj map
-	private: std::map<std::string, postp::GzEventObj*> nameToEventObj_M;
+	private: std::map<std::string, kgpp::GzEventObj*> nameToEventObj_M;
 
 	/// \brief Grasp GzEvent
-	private: postp::GzEvent* graspGzEvent;
+	private: kgpp::GzEvent* graspGzEvent;
 
 	/// \brief Flag for when the pancake is created
 	private: bool pancakeCreated;

@@ -43,7 +43,7 @@
 
 using namespace gazebo;
 using namespace mongo;
-using namespace postp;
+using namespace kgpp;
 
 // Register this plugin with the simulator
 GZ_REGISTER_SYSTEM_PLUGIN(PostProcess)
@@ -156,13 +156,13 @@ void PostProcess::InitOnWorldConnect()
             "~/physics/contacts", &PostProcess::DummyContactsCallback, this);
 
     // initialize the tf logging class
-    this->tfLogger = new postp::LogTF(this->world, this->dbName, this->collName);
+    this->tfLogger = new kgpp::LogTF(this->world, this->dbName, this->collName);
 
     // initialize the events logging class
-    this->eventsLogger = new postp::LogEvents(this->world, this->dbName, this->collName);
+    this->eventsLogger = new kgpp::LogEvents(this->world, this->dbName, this->collName);
 
     // initialize the raw logging class
-    this->rawLogger = new postp::LogRaw(this->world, this->dbName, this->collName);
+    this->rawLogger = new kgpp::LogRaw(this->world, this->dbName, this->collName);
 }
 
 //////////////////////////////////////////////////
@@ -190,15 +190,15 @@ void PostProcess::ProcessCurrentData()
 
 	// tf data
 	process_thread_group.create_thread(
-			boost::bind(&postp::LogTF::WriteAndPublishTF, this->tfLogger));
+			boost::bind(&kgpp::LogTF::WriteAndPublishTF, this->tfLogger));
 
 	// events data
 	process_thread_group.create_thread(
-			boost::bind(&postp::LogEvents::CheckEvents, this->eventsLogger));
+			boost::bind(&kgpp::LogEvents::CheckEvents, this->eventsLogger));
 
 	// raw data
 	process_thread_group.create_thread(
-			boost::bind(&postp::LogRaw::WriteRawData, this->rawLogger));
+			boost::bind(&kgpp::LogRaw::WriteRawData, this->rawLogger));
 
 	// wait for all the threads to finish work
 	process_thread_group.join_all();

@@ -36,7 +36,7 @@
 
 #include "LogRaw.hh"
 
-using namespace postp;
+using namespace kgpp;
 using namespace gazebo;
 using namespace mongo;
 

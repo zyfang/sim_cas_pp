@@ -36,7 +36,7 @@
 
 #include "LogEvents.hh"
 
-using namespace postp;
+using namespace kgpp;
 using namespace gazebo;
 using namespace mongo;
 
@@ -99,6 +99,9 @@ void LogEvents::ReadConfigFile()
 	// get the variables from the config file
 	this->logLocation = cfg.lookup("events.log_location").c_str();
 	std::cout << "LogEvents - log_location: " << this->logLocation << std::endl;
+
+	this->eventDiscTresh = cfg.lookup("events.ev_disc_thresh");
+	std::cout << "LogEvents - ev_disc_thresh: " << this->eventDiscTresh << std::endl;
 
 }
 
@@ -628,7 +631,7 @@ bool LogEvents::CheckCurrentEventCollisions(
 			if(!this->nameToEvents_M.count(contact_ev_name))
 			{
 				// create local contact GzEvent
-				postp::GzEvent* contact_event = new postp::GzEvent(
+				kgpp::GzEvent* contact_event = new kgpp::GzEvent(
 						contact_ev_name, "&knowrob_sim;", "TouchingSituation",
 						"knowrob_sim:", "inContact", _timestamp_ms);
 
@@ -651,7 +654,7 @@ bool LogEvents::CheckCurrentEventCollisions(
 				else
 				{
 					// create local contact GzEvent
-					postp::GzEvent* contact_event = new postp::GzEvent(
+					kgpp::GzEvent* contact_event = new kgpp::GzEvent(
 							contact_ev_name, "&knowrob_sim;", "TouchingSituation",
 							"knowrob_sim:", "inContact", _timestamp_ms);
 
@@ -689,7 +692,7 @@ bool LogEvents::CheckFluidFlowTransEvent(
 		    std::cout << "LogEvents - Creating FluidFlow-Translation event at " << _timestamp_ms << std::endl;
 
 			// add local event to the map
-			this->nameToEvents_M["FluidFlow-Translation"].push_back(new postp::GzEvent(
+			this->nameToEvents_M["FluidFlow-Translation"].push_back(new kgpp::GzEvent(
 					"FluidFlow-Translation", "&knowrob;", "FluidFlow-Translation", _timestamp_ms));
 		}
 		else // check if last particle left
@@ -710,7 +713,7 @@ bool LogEvents::CheckFluidFlowTransEvent(
 void LogEvents::EndActiveEvents()
 {
 	// iterate through the map
-	for(std::map<std::string, std::list<postp::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
+	for(std::map<std::string, std::list<kgpp::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
 			m_it != this->nameToEvents_M.end(); m_it++)
 	{
 		// iterate through the events with the same name
@@ -730,7 +733,7 @@ void LogEvents::EndActiveEvents()
 void LogEvents::JoinShortDisconnections()
 {
 	// iterate through the map
-	for(std::map<std::string, std::list<postp::GzEvent*> >::iterator m_it = this->nameToEvents_M.begin();
+	for(std::map<std::string, std::list<kgpp::GzEvent*> >::iterator m_it = this->nameToEvents_M.begin();
 			m_it != this->nameToEvents_M.end(); m_it++)
 	{
 		// iterate through the events with the same name
@@ -746,7 +749,7 @@ void LogEvents::JoinShortDisconnections()
 			// check that the next value is not the last
 			if(ev_it != m_it->second.end())
 			{
-				if((*ev_it)->GetStartTime() - (*curr_ev)->GetEndTime() < 0.2)
+				if((*ev_it)->GetStartTime() - (*curr_ev)->GetEndTime() < this->eventDiscTresh)
 				{
 					// set the next values start time
 					(*ev_it)->SetStartTime((*curr_ev)->GetStartTime());
@@ -762,6 +765,7 @@ void LogEvents::JoinShortDisconnections()
 //////////////////////////////////////////////////
 void LogEvents::WriteContexts()
 {
+	// Write to owl file
 	if(this->logLocation == "owl")
 	{
 		// initialize the beliefstate
@@ -771,11 +775,11 @@ void LogEvents::WriteContexts()
 		this->beliefStateClient->registerOWLNamespace("knowrob_sim", "http://knowrob.org/kb/knowrob_sim.owl#");
 
 		// iterate through the map
-		for(std::map<std::string, std::list<postp::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
+		for(std::map<std::string, std::list<kgpp::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
 				m_it != this->nameToEvents_M.end(); m_it++)
 		{
 			// iterate through the events with the same name
-			for(std::list<postp::GzEvent*>::const_iterator ev_it = m_it->second.begin();
+			for(std::list<kgpp::GzEvent*>::const_iterator ev_it = m_it->second.begin();
 					ev_it != m_it->second.end(); ev_it++)
 			{
 				// create local belief state context
@@ -805,6 +809,7 @@ void LogEvents::WriteContexts()
 		// export belief state client
 		this->beliefStateClient->exportFiles("sim_data");
 	}
+	// Write to mongodb
 	else if(this->logLocation == "mongo")
 	{
 		// all events
@@ -814,29 +819,19 @@ void LogEvents::WriteContexts()
 		ScopedDbConnection scoped_connection("localhost");
 
 		// iterate through the map
-		for(std::map<std::string, std::list<postp::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
+		for(std::map<std::string, std::list<kgpp::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
 				m_it != this->nameToEvents_M.end(); m_it++)
 		{
-			// current event
-			BSONObjBuilder event_bb;
-
-			// array of the times
-			std::vector<BSONObj> times_objs;
-
+			// TODO fix the grasp issue, (grasp event map includes the actual events with the right names)
 			// iterate through the events with the same name
 			for(std::list<GzEvent*>::const_iterator ev_it = m_it->second.begin();
 					ev_it != m_it->second.end(); ev_it++)
 			{
 				// add to the time array
-				times_objs.push_back(BSON("start" << (*ev_it)->GetStartTime() << "end" << (*ev_it)->GetEndTime()));
+				events_objs.push_back(BSON("name" << (*ev_it)->GetName()
+						<<  "start" << (*ev_it)->GetStartTime()
+						<< "end" << (*ev_it)->GetEndTime()));
 			}
-
-			// add name and times
-			event_bb.append("name", m_it->first);
-			event_bb.append("times", times_objs);
-
-			// add it to the events list
-			events_objs.push_back(event_bb.obj());
 		}
 
 		// insert document object into the database
@@ -876,7 +871,7 @@ void LogEvents::WriteTimelines()
 			"  dataTable.addRows([\n";
 
 	// iterate through the map
-	for(std::map<std::string, std::list<postp::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
+	for(std::map<std::string, std::list<kgpp::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
 			m_it != this->nameToEvents_M.end(); m_it++)
 	{
 		// iterate through the events with the same name

@@ -37,18 +37,15 @@
 #ifndef LOG_TF_HH
 #define LOG_TF_HH
 
-#include "gazebo/gazebo.hh"
-#include "gazebo/physics/physics.hh"
-
-#include "mongo/client/dbclient.h"
-
+#include <gazebo/gazebo.hh>
+#include <gazebo/physics/physics.hh>
 #include <ros/ros.h>
 #include <tf/transform_broadcaster.h>
-
 #include <libconfig.h++>
+#include "mongo/client/dbclient.h"
 
 /// \brief Post Processing classes namespace
-namespace postp
+namespace kgpp
 {
 /// \brief class LogTF
 class LogTF

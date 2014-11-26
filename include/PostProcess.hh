@@ -38,17 +38,10 @@
 #ifndef POST_PROCESS_PLUGIN_HH
 #define POST_PROCESS_PLUGIN_HH
 
-#include "gazebo/gazebo.hh"
-#include "gazebo/msgs/MessageTypes.hh"
-#include "gazebo/physics/Contact.hh"
-#include "gazebo/physics/physics.hh"
-#include "gazebo/physics/PhysicsTypes.hh"
-
-#include "mongo/client/dbclient.h"
-
+#include <gazebo/gazebo.hh>
+#include <mongo/client/dbclient.h>
 #include <beliefstate_client/BeliefstateClient.h>
 #include <beliefstate_client/Context.h>
-
 #include <libconfig.h++>
 
 #include "GzEvent.hh"
@@ -56,10 +49,10 @@
 #include "LogEvents.hh"
 #include "LogRaw.hh"
 
-namespace gazebo
+namespace kgpp
 {
 /// \brief class PostProcess
-class PostProcess : public SystemPlugin
+class PostProcess : public gazebo::SystemPlugin
 {
 	/// \brief Constructor
 	public: PostProcess();
@@ -98,13 +91,13 @@ class PostProcess : public SystemPlugin
 	private: boost::thread* checkLogginFinishedThread;
 
 	/// \brief TF logger class
-	private: postp::LogTF* tfLogger;
+	private: kgpp::LogTF* tfLogger;
 
 	/// \brief Event logger class
-	private: postp::LogEvents* eventsLogger;
+	private: kgpp::LogEvents* eventsLogger;
 
 	/// \brief Raw logger class
-	private: postp::LogRaw* rawLogger;
+	private: kgpp::LogRaw* rawLogger;
 
 	/// \brief World name to be connected to
 	private: std::string worldName;
@@ -119,22 +112,22 @@ class PostProcess : public SystemPlugin
 	private: std::string collSuffix;
 
 	/// \brief Gazebo communication node
-	private: transport::NodePtr gznode;
+	private: gazebo::transport::NodePtr gznode;
 
 	/// \brief Gazebo subscriber to contacts
-	private: transport::SubscriberPtr contactSub;
+	private: gazebo::transport::SubscriberPtr contactSub;
 
 	/// \brief World created connection
-	private: event::ConnectionPtr worldCreatedConnection;
+	private: gazebo::event::ConnectionPtr worldCreatedConnection;
 
 	/// \brief World update connection
-	private: event::ConnectionPtr eventConnection;
+	private: gazebo::event::ConnectionPtr eventConnection;
 
 	/// \brief pointer of ContactManager, for getting contacts from physics engine
-	private: physics::ContactManager *contactManagerPtr;
+	private: gazebo::physics::ContactManager *contactManagerPtr;
 
 	/// \brief World Pointer
-	private: physics::WorldPtr world;
+	private: gazebo::physics::WorldPtr world;
 
 	/// \brief Flag used to set that initially pause mode is set, used of detecting the end of a Log
 	private: bool pauseMode;

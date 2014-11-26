@@ -42,7 +42,7 @@
 #include <iostream>
 #include "GzEventObj.hh"
 
-namespace postp
+namespace kgpp
 {
 
 /// \brief class GzEvent
