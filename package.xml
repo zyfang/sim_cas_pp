@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>hand_sim_pp</name>
+  <name>kitchen_games_pp</name>
   <version>0.0.0</version>
-  <description>postprocessing logs from hand_sim</description>
+  <description>package for postprocessing kitchen games</description>
 
   <maintainer email="a_dot_haidu@gmail.com">Andrei Haidu</maintainer>
 
@@ -28,9 +28,6 @@
   <run_depend>mongodb-dev</run_depend>
   <run_depend>tf</run_depend>
   <run_depend>beliefstate_client</run_depend>
-
-
-
 
   <export>
   </export>

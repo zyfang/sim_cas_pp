@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(hand_sim_pp)
+project(kitchen_games_pp)
 
 ## TODO manually added
 set(MONGOCLIENT /home/haidu/bin/mongo-client-install/lib/libmongoclient.so)
