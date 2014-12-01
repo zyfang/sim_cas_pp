@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(hand_sim_pp)
+project(sim_games_pp)
 
 
 find_package(catkin REQUIRED COMPONENTS
