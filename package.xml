@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>kitchen_games_pp</name>
+  <name>sim_games_pp</name>
   <version>0.0.0</version>
-  <description>package for postprocessing kitchen games</description>
+  <description>package for postprocessing the sim games</description>
 
   <maintainer email="a_dot_haidu@gmail.com">Andrei Haidu</maintainer>
 
