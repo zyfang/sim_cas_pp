@@ -1,5 +1,24 @@
 #!/bin/bash
 
+# roslaunch the belief state
+## TODO not working
+#roslaunch sim_games_pp bs.launch &
+
+counter = 0;
+
 for d in logs/* ; do  
-  gzserver --verbose -s libPostProcess.so -p $d/gzserver/state.log --collsuffix ${d##*/}
+
+  # incerementing the counter
+  counter=$[$counter + 1]
+  
+  ## running the post processing using the counter as a suffix
+  echo "Processing episode: ${d##*/}, with suffix: $counter .."
+  gzserver --verbose -s libPostProcess.so -p $d/gzserver/state.log --suffix $counter  
+
+  
+  ## running the post processing using folder name
+  #echo "Processing episode ${d##*/}"
+  #gzserver --verbose -s libPostProcess.so -p $d/gzserver/state.log --suffix ${d##*/}
 done
+
+echo "Done.."

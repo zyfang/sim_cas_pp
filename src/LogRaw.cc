@@ -36,11 +36,10 @@
 
 #include "LogRaw.hh"
 
-using namespace kgpp;
+using namespace sg_pp;
 using namespace gazebo;
 using namespace mongo;
 
-#define TIME_OFFSET 100000
 
 //////////////////////////////////////////////////
 LogRaw::LogRaw(const gazebo::physics::WorldPtr _world,

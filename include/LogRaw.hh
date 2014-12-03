@@ -43,7 +43,7 @@
 #include <mongo/client/dbclient.h>
 
 /// \brief Post Processing classes namespace
-namespace kgpp
+namespace sg_pp
 {
 /// \brief class LogRaw
 class LogRaw
@@ -96,6 +96,7 @@ class LogRaw
 
 	/// \brief pointer of ContactManager, for getting contacts from physics engine
 	private: gazebo::physics::ContactManager *contactManagerPtr;
+
 
 };
 }

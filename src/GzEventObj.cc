@@ -36,7 +36,7 @@
 
 #include "GzEventObj.hh"
 
-using namespace kgpp;
+using namespace sg_pp;
 
 //////////////////////////////////////////////////
 GzEventObj::GzEventObj(const std::string _name) :

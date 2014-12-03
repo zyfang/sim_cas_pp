@@ -48,7 +48,7 @@
 #include "GzEvent.hh"
 
 /// \brief Post Processing classes namespace
-namespace kgpp
+namespace sg_pp
 {
 /// \brief class LogEvents
 class LogEvents
@@ -56,7 +56,8 @@ class LogEvents
 	/// \brief Constructor
 	public: LogEvents(const gazebo::physics::WorldPtr _world,
 			const std::string _db_name,
-			const std::string _coll_name);
+			const std::string _coll_name,
+			int _suffix);
 
 	/// \brief Destructor
 	public: virtual ~LogEvents();
@@ -76,10 +77,8 @@ class LogEvents
 	/// \brief Check current Grasp
 	private: bool CheckCurrentGrasp(
 			const double _timestamp_ms,
-			bool _fore_finger_contact,
-			bool _thumb_contact,
-			gazebo::physics::Collision *_grasp_coll1,
-			gazebo::physics::Collision *_grasp_coll2);
+			gazebo::physics::ModelPtr _ff_grasped_model,
+			gazebo::physics::ModelPtr _thumb_grasped_model);
 
 	/// \brief Check current event collisions
 	private: bool CheckCurrentEventCollisions(
@@ -92,7 +91,7 @@ class LogEvents
 			int _prev_poured_particle_nr);
 
 	/// \brief Join short disconnections in the events timeline
-	private: void JoinShortDisconnections();
+	private: void MergeEventDisconnections();
 
 	/// \brief End still active events
 	private: void EndActiveEvents();
@@ -134,6 +133,7 @@ class LogEvents
 	/// \brief map of event collisions to a set of all its particle names
 	private: std::map<gazebo::physics::Collision*, std::set<std::string> > eventCollToSetOfParticleNames_M;
 
+	// TODO rename all the event collisions to something like collision sensor
 	/// \brief Event no contact collision vector
 	private: std::set<gazebo::physics::Collision*> eventCollisions_S;
 
@@ -156,20 +156,20 @@ class LogEvents
 	private: std::set<gazebo::physics::Collision*> pancakeCollision_S;
 
 	/// \brief name of the grasped model
-	private: std::string prevGraspedModel;
+	private: gazebo::physics::ModelPtr prevGraspedModel;
 
 	/// \brief Map of event names to a stack of GzEvent
-	private: std::map<std::string, std::list<kgpp::GzEvent*> > nameToEvents_M;
+	private: std::map<std::string, std::list<sg_pp::GzEvent*> > nameToEvents_M;
 
 	/// \brief Map of all the objects name from the simulation to beliefstate objects
 	private: std::map<std::string, beliefstate_client::Object*> nameToBsObject_M;
 
 	// TODO remove this
 	/// \brief Model names to GzEventObj map
-	private: std::map<std::string, kgpp::GzEventObj*> nameToEventObj_M;
+	private: std::map<std::string, sg_pp::GzEventObj*> nameToEventObj_M;
 
 	/// \brief Grasp GzEvent
-	private: kgpp::GzEvent* graspGzEvent;
+	private: sg_pp::GzEvent* graspGzEvent;
 
 	/// \brief Flag for when the pancake is created
 	private: bool pancakeCreated;
@@ -182,6 +182,9 @@ class LogEvents
 
 	/// \brief Log location of the events
 	private: std::string logLocation;
+
+	// TODO for adding time offset to the simulation times
+	private: int suffixTime;
 
 };
 }

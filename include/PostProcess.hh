@@ -49,7 +49,7 @@
 #include "LogEvents.hh"
 #include "LogRaw.hh"
 
-namespace kgpp
+namespace sg_pp
 {
 /// \brief class PostProcess
 class PostProcess : public gazebo::SystemPlugin
@@ -91,13 +91,13 @@ class PostProcess : public gazebo::SystemPlugin
 	private: boost::thread* checkLogginFinishedThread;
 
 	/// \brief TF logger class
-	private: kgpp::LogTF* tfLogger;
+	private: sg_pp::LogTF* tfLogger;
 
 	/// \brief Event logger class
-	private: kgpp::LogEvents* eventsLogger;
+	private: sg_pp::LogEvents* eventsLogger;
 
 	/// \brief Raw logger class
-	private: kgpp::LogRaw* rawLogger;
+	private: sg_pp::LogRaw* rawLogger;
 
 	/// \brief World name to be connected to
 	private: std::string worldName;
@@ -131,6 +131,15 @@ class PostProcess : public gazebo::SystemPlugin
 
 	/// \brief Flag used to set that initially pause mode is set, used of detecting the end of a Log
 	private: bool pauseMode;
+
+	/// \brief Check what to process
+	private: bool processTf;
+
+	/// \brief Check what to process
+	private: bool processRaw;
+
+	/// \brief Check what to process
+	private: bool processEvents;
 };
 }
 

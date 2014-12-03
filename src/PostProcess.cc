@@ -43,7 +43,7 @@
 
 using namespace gazebo;
 using namespace mongo;
-using namespace kgpp;
+using namespace sg_pp;
 
 // Register this plugin with the simulator
 GZ_REGISTER_SYSTEM_PLUGIN(PostProcess)
@@ -133,6 +133,15 @@ void PostProcess::ReadConfigFile()
 
 	this->worldName = cfg.lookup("sim.world_name").c_str();
 	std::cout << "PostProcess - world_name: " << this->worldName << std::endl;
+
+	this->processRaw = cfg.lookup("pp.raw");
+	std::cout << "PostProcess - processing raw data " << this->processRaw << std::endl;
+
+	this->processTf = cfg.lookup("pp.tf");
+	std::cout << "PostProcess - processing tf data " << this->processTf << std::endl;
+
+	this->processEvents = cfg.lookup("pp.events");
+	std::cout << "PostProcess - processing events data " << this->processEvents << std::endl;
 }
 
 //////////////////////////////////////////////////
@@ -156,13 +165,13 @@ void PostProcess::InitOnWorldConnect()
             "~/physics/contacts", &PostProcess::DummyContactsCallback, this);
 
     // initialize the tf logging class
-    this->tfLogger = new kgpp::LogTF(this->world, this->dbName, this->collName);
+    this->tfLogger = new sg_pp::LogTF(this->world, this->dbName, this->collName, std::atoi(this->collSuffix.c_str()));
 
     // initialize the events logging class
-    this->eventsLogger = new kgpp::LogEvents(this->world, this->dbName, this->collName);
+    this->eventsLogger = new sg_pp::LogEvents(this->world, this->dbName, this->collName, std::atoi(this->collSuffix.c_str()));
 
     // initialize the raw logging class
-    this->rawLogger = new kgpp::LogRaw(this->world, this->dbName, this->collName);
+    this->rawLogger = new sg_pp::LogRaw(this->world, this->dbName, this->collName);
 }
 
 //////////////////////////////////////////////////
@@ -189,16 +198,25 @@ void PostProcess::ProcessCurrentData()
 	boost::thread_group process_thread_group;
 
 	// tf data
-	process_thread_group.create_thread(
-			boost::bind(&kgpp::LogTF::WriteAndPublishTF, this->tfLogger));
+	if (this->processTf)
+	{
+		process_thread_group.create_thread(
+				boost::bind(&sg_pp::LogTF::WriteAndPublishTF, this->tfLogger));
+	}
 
 	// events data
-	process_thread_group.create_thread(
-			boost::bind(&kgpp::LogEvents::CheckEvents, this->eventsLogger));
+	if (this->processEvents)
+	{
+		process_thread_group.create_thread(
+				boost::bind(&sg_pp::LogEvents::CheckEvents, this->eventsLogger));
+	}
 
 	// raw data
-	process_thread_group.create_thread(
-			boost::bind(&kgpp::LogRaw::WriteRawData, this->rawLogger));
+	if (this->processRaw)
+	{
+		process_thread_group.create_thread(
+				boost::bind(&sg_pp::LogRaw::WriteRawData, this->rawLogger));
+	}
 
 	// wait for all the threads to finish work
 	process_thread_group.join_all();

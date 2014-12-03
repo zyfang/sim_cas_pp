@@ -36,7 +36,7 @@
 
 #include "LogTF.hh"
 
-using namespace kgpp;
+using namespace sg_pp;
 using namespace gazebo;
 using namespace mongo;
 
@@ -45,7 +45,8 @@ using namespace mongo;
 //////////////////////////////////////////////////
 LogTF::LogTF(const gazebo::physics::WorldPtr _world,
 		const std::string _db_name,
-		const std::string _coll_name)
+		const std::string _coll_name,
+		int _suffix)
 	: world(_world)
 	, dbName(_db_name)
 	, collName(_coll_name)
@@ -58,6 +59,9 @@ LogTF::LogTF(const gazebo::physics::WorldPtr _world,
 
 	// get values from the config file
 	LogTF::ReadConfigFile();
+
+	// TODO for adding time offset to the simulation times
+	this->suffixTime = _suffix;
 }
 
 //////////////////////////////////////////////////
@@ -200,7 +204,7 @@ void LogTF::WriteTFData(const std::vector<tf::StampedTransform>& _stamped_transf
 	std::vector<BSONObj> transforms_bo;
 
 	// get the timestamp im ms and date format
-	Date_t stamp_ms = this->world->GetSimTime().nsec / 1000000.0 + this->world->GetSimTime().sec * 1000.0  + TIME_OFFSET;
+	Date_t stamp_ms = this->world->GetSimTime().nsec / 1000000.0 + this->world->GetSimTime().sec * 1000.0  + (TIME_OFFSET * this->suffixTime);
 
 	// iterate through the stamped tranforms
 	for (std::vector<tf::StampedTransform>::const_iterator st_iter = _stamped_transforms.begin();

@@ -45,7 +45,7 @@
 #include "mongo/client/dbclient.h"
 
 /// \brief Post Processing classes namespace
-namespace kgpp
+namespace sg_pp
 {
 /// \brief class LogTF
 class LogTF
@@ -53,7 +53,8 @@ class LogTF
 	/// \brief Constructor
 	public: LogTF(const gazebo::physics::WorldPtr _world,
 			const std::string _db_name,
-			const std::string _coll_name);
+			const std::string _coll_name,
+			int _suffix);
 
 	/// \brief Destructor
 	public: virtual ~LogTF();
@@ -102,6 +103,9 @@ class LogTF
 
 	/// \brief Duration threshold between tf transformation in order to be logged or not
 	private: int tfDurationThresh;
+
+	// TODO for adding time offset to the simulation times
+	private: int suffixTime;
 };
 }
 #endif

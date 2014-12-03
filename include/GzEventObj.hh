@@ -39,7 +39,7 @@
 
 #include <string>
 
-namespace kgpp
+namespace sg_pp
 {
 /// \brief class GzEventObj
 class GzEventObj
