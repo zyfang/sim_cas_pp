@@ -1,4 +1,4 @@
-# hand_sim catkin package for post processing data
+# game_sim_pp catkin package for post processing data from sim_games
 
 
 ### Run example:
