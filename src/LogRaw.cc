@@ -207,7 +207,6 @@ void LogRaw::WriteRawData()
     // create the document object
     _doc_bo = BSON("models" << _bson_model_arr << "timestamp" << timestamp_ms);
 
-
 	// Create scoped connection
 	ScopedDbConnection scoped_connection("localhost");
 
