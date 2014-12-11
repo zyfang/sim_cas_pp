@@ -34,6 +34,10 @@ include_directories(
   ${OGRE-Terrain_INCLUDE_DIRS}
 )
 
+link_directories(
+  ${GAZEBO_LIBRARY_DIRS}
+)
+
 
 add_library(
   PostProcess SHARED 
@@ -43,11 +47,11 @@ add_library(
   src/LogTF.cc
   src/LogEvents.cc
   src/LogRaw.cc
-  )
+)
 
 target_link_libraries(PostProcess
   ${catkin_LIBRARIES}
   ${MONGOCLIENT}
   ${GAZEBO_LIBRARIES}
   config++
-  )
+)
