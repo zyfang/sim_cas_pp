@@ -55,3 +55,15 @@ target_link_libraries(PostProcess
   ${GAZEBO_LIBRARIES}
   config++
 )
+
+add_library(
+  VisPlugin SHARED 
+  src/VisPlugin.cc 
+)
+
+target_link_libraries(VisPlugin
+  ${catkin_LIBRARIES}
+  ${MONGOCLIENT}
+  ${GAZEBO_LIBRARIES}
+  config++
+)
