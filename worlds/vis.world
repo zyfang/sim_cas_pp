@@ -24,11 +24,6 @@
 	  </sky>
 	</scene>
 
-    <!--include>
-        <uri>model://oculus</uri>
-        <pose>-0.3 0.1 1.3 0 0.3 0</pose>
-    </include-->
-
     <include>
       <uri>model://sun_vertical</uri>
     </include>
@@ -56,6 +51,7 @@
 			<transparency>1</transparency>
 
 			<plugin name='VisPlugin' filename='libVisPlugin.so'/>
+
 		  </visual>
 		</link>
 	</model>

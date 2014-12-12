@@ -35,6 +35,7 @@
  *********************************************************************/
 
 #include "VisPlugin.hh"
+#include <boost/make_shared.hpp>
 
 using namespace sim_games;
 using namespace gazebo;
@@ -57,51 +58,230 @@ void VisPlugin::Load(rendering::VisualPtr _parent, sdf::ElementPtr _sdf)
 {
 	std::cout << "******** VIS PLUGIN LOADED *********" << std::endl;
 
+	// get scene
+	this->scene = _parent->GetScene();
+
 	// set scene manager
 	this->sceneManager = _parent->GetScene()->GetManager();
 
-	Ogre::Entity *min_entity;
-	Ogre::Entity *max_entity;
+	// read config file
+	VisPlugin::ReadConfigFile();
 
-	Ogre::SceneNode *min_node;
-	Ogre::SceneNode *max_node;
+	// get the trajectory
+	VisPlugin::GetTraj();
+
+	// draw the trajectory
+	VisPlugin::DrawTraj();
+
+	this->traj = new VisTraj();
+}
+
+//////////////////////////////////////////////////
+void VisPlugin::ReadConfigFile()
+{
+	// create the config
+	libconfig::Config cfg;
+
+	// read config file
+	try
+	{
+		cfg.readFile("config.cfg");
+	}
+	catch(const libconfig::FileIOException &fioex)
+	{
+		std::cerr << "I/O error while reading file." << std::endl;
+	}
+	catch(const libconfig::ParseException &pex)
+	{
+		std::cerr << "Parse error at " << pex.getFile() << ":" << pex.getLine()
+		            				  << " - " << pex.getError() << std::endl;
+	}
+
+	// get the variables from the config file
+	this->dbName = cfg.lookup("vis.db_name").c_str();
+	std::cout << "*VisPlugin* - db_name: " << this->dbName << std::endl;
+
+	// set the collection name
+	this->collName = cfg.lookup("vis.coll_name").c_str();
+	std::cout << "*VisPlugin* - coll_name: " << this->collName << std::endl;
+
+	// set step size
+	this->stepSize = cfg.lookup("vis.step_size");
+	std::cout << "*VisPlugin* - step_size: " << this->stepSize << std::endl;
+}
+
+//////////////////////////////////////////////////
+void VisPlugin::GetTraj()
+{
+	// mongodb connection
+	mongo::DBClientConnection conn;
+
+	// connecto to the host
+	conn.connect("localhost");
+
+	// query the db
+	mongo::BSONObj query = mongo::BSONObj();
+
+	// mongodb projection
+	mongo::BSONObj projection = BSON("_id" << 0);
+
+	// query the given collection
+	std::auto_ptr<mongo::DBClientCursor> cursor = conn.query(
+			this->dbName + "." + this->collName, query, 0, 0, &projection);
+
+	// init prev_ts
+	double prev_ts = 0;
+
+	// loop through the results to get the trajectory
+	while (cursor->more())
+	{
+		// get the current bo
+		mongo::BSONObj curr_doc = cursor->next();
+
+		const double curr_ts = curr_doc.getField("timestamp").Number();
+
+		// add the pose to the traj if the stepsize is larger than the limit
+		if(curr_ts - prev_ts > this->stepSize)
+		{
+			// set the prev_ts to the current one
+			prev_ts = curr_ts;
+
+			// add the timestamps
+			this->timestamps.push_back(curr_ts);
+
+			// get the current position
+			const math::Vector3 pos = math::Vector3(
+					curr_doc.getFieldDotted("pos.x").Number(),
+					curr_doc.getFieldDotted("pos.y").Number(),
+					curr_doc.getFieldDotted("pos.z").Number());
+
+			// get the current orientation
+			const math::Quaternion rot = math::Quaternion(curr_doc.getFieldDotted("rot.x").Number(),
+					curr_doc.getFieldDotted("rot.y").Number(),
+					curr_doc.getFieldDotted("rot.z").Number());
+
+			// add pose to the traj
+			this->poses.push_back(math::Pose(pos, rot));
+
+			// TODo try setters getters?
+//			this->traj->poses.push_back(math::Pose(pos, rot));
 
 
-	// set scene node
-	min_node = this->sceneManager->getRootSceneNode()->createChildSceneNode(
-			"MinSceneNode");
+		}
 
-	max_node = this->sceneManager->getRootSceneNode()->createChildSceneNode(
-			"MaxSceneNode");
+	}
+}
 
-	min_entity = this->sceneManager->createEntity("MinSphere",
-			Ogre::SceneManager::PT_SPHERE);
+//////////////////////////////////////////////////
+void VisPlugin::DrawTraj()
+{
+	// ogre entities
+	std::vector<Ogre::Entity*> entities;
 
-	max_entity = this->sceneManager->createEntity("MaxSphere",
-			Ogre::SceneManager::PT_SPHERE);
+	// ogre scene nodes
+	std::vector<Ogre::SceneNode*> scene_nodes;
 
-	min_entity->setMaterialName("Gazebo/Red");
+	// index for unique naming
+	unsigned int i = 0;
 
-	max_entity->setMaterialName("Gazebo/Red");
+	// loop through the traj points
+	for(std::vector<math::Pose>::const_iterator it = this->poses.begin();
+			it != this->poses.end(); ++it)
+	{
+		// stringstream for unique naming
+		std::ostringstream ss;
+		ss << i;
 
-	min_entity->setVisible(true);
+		// create current entity
+		entities.push_back(
+				this->sceneManager->createEntity("TrajEntity" + ss.str(),Ogre::SceneManager::PT_SPHERE));
 
-	max_entity->setVisible(true);
+		// set the color
+		entities.back()->setMaterialName("Gazebo/Red");
 
-	min_node->setScale(0.001, 0.001, 0.001);
+		// make it visible
+		entities.back()->setVisible(true);
 
-	max_node->setScale(0.001, 0.001, 0.001);
+		// create current scene node
+		scene_nodes.push_back(
+				this->sceneManager->getRootSceneNode()->createChildSceneNode("TrajNode" + ss.str()));
 
-	min_node->setPosition(-0.1, -0.3, 0.0);
-	max_node->setPosition(0.9, -1.2, 2.0);
+		// set node scale
+		scene_nodes.back()->setScale(0.0001, 0.0001, 0.0001);
 
-	min_node->attachObject(min_entity);
-	max_node->attachObject(max_entity);
+		// ogre position
+		const Ogre::Vector3 node_pos = Ogre::Vector3((*it).pos.x, (*it).pos.y, (*it).pos.z);
 
-	min_node->setVisible(true);
-	max_node->setVisible(true);
+		// set node positon
+		scene_nodes.back()->setPosition(node_pos);
+
+		// attach entity to node
+		scene_nodes.back()->attachObject(entities.back());
+
+		// make node visible
+		scene_nodes.back()->setVisible(true);
+
+		// increment node nr
+		i++;
+	};
+
+	std::cout << "*VisPlugin* - " << scene_nodes.size() << " markers drawn" << std::endl;
+
+	VisArrow* visarrow = new VisArrow();
+
+	visarrow->Load(this->sceneManager);
+
+
+//	Ogre::SceneNode* shaftNode;
+//
+//	Ogre::SceneNode* headNode;
+//
+//	Ogre::MovableObject *shaftObj = (Ogre::MovableObject*)(
+//			this->sceneManager->createEntity("axis_shaft"));
+//
+//	Ogre::MovableObject *headObj = (Ogre::MovableObject*)(
+//			this->sceneManager->createEntity("axis_head"));
+//
+//    if (dynamic_cast<Ogre::Entity*>(shaftObj))
+//      ((Ogre::Entity*)shaftObj)->setMaterialName("Gazebo/Blue");
+//
+//    if (dynamic_cast<Ogre::Entity*>(headObj))
+//      ((Ogre::Entity*)headObj)->setMaterialName("Gazebo/Green");
+//
+//
+//	shaftNode = this->sceneManager->getRootSceneNode()->createChildSceneNode("shaft_node");
+//	shaftNode->attachObject(shaftObj);
+//	shaftNode->setPosition(0, 0, 0.1);
+//
+//
+//	headNode = this->sceneManager->getRootSceneNode()->createChildSceneNode("head_node");
+//	headNode->attachObject(headObj);
+//	headNode->setPosition(0, 0, 0.24);
+//
+//
+//	shaftNode->setVisible(true);
+//	headNode->setVisible(true);
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

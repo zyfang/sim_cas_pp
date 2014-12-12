@@ -40,10 +40,105 @@
 #include "gazebo/gazebo.hh"
 #include "gazebo/gui/GuiIface.hh"
 #include "gazebo/rendering/rendering.hh"
-
+#include "mongo/client/dbclient.h"
+#include <libconfig.h++>
 
 namespace sim_games
 {
+/// \brief class VisPlugin
+class VisTraj
+{
+	/// \brief Constructor
+	public: VisTraj()
+	{
+
+	}
+
+	/// \brief Destructor
+	public: virtual ~VisTraj()
+	{
+
+	}
+
+	/// \brief Trajectory pose
+	public: std::vector<gazebo::math::Pose> poses;
+
+	/// \brief Trajectory timestamps
+	public: std::vector<double> timestamps;
+
+	// TODO add entities scene nodes as well here ?
+};
+
+/// \brief class VisArrow
+class VisArrow
+{
+	/// \brief Constructor
+	public: VisArrow()
+	{
+		this->shaftNode = NULL;
+		this->headNode = NULL;
+		this->shaftObj = NULL;
+		this->headObj = NULL;
+	}
+
+	/// \brief Destructor
+	public: virtual ~VisArrow()
+	{
+		delete this->shaftNode;
+		delete this->headNode;
+		delete this->shaftObj;
+		delete this->headObj;
+	}
+
+	/// \brief Load
+	public: void Load(Ogre::SceneManager* _sceneManager)
+	{
+		// set the objects
+		this->shaftObj = (Ogre::MovableObject*)(
+				_sceneManager->createEntity("axis_shaft"));
+
+		this->headObj = (Ogre::MovableObject*)(
+				_sceneManager->createEntity("axis_head"));
+
+		// set the obj materials
+	    if (dynamic_cast<Ogre::Entity*>(this->shaftObj))
+	      ((Ogre::Entity*)shaftObj)->setMaterialName("Gazebo/Blue");
+
+	    if (dynamic_cast<Ogre::Entity*>(this->headObj))
+	      ((Ogre::Entity*)headObj)->setMaterialName("Gazebo/Green");
+
+	    // create the scene nodes
+	    this->shaftNode = _sceneManager->getRootSceneNode()->createChildSceneNode("shaft_node");
+	    this->headNode = _sceneManager->getRootSceneNode()->createChildSceneNode("head_node");
+
+	    // attach objects to the scene nodes
+		shaftNode->attachObject(shaftObj);
+		headNode->attachObject(headObj);
+
+		// set positions
+		shaftNode->setPosition(0, 1, 0.1 + 2);
+		headNode->setPosition(0, 1, 0.24 + 2);
+
+		// set visible
+		shaftNode->setVisible(true);
+		headNode->setVisible(true);
+	}
+
+	/// \brief Arrow shaft Ogre movable obj
+	private: Ogre::MovableObject *shaftObj;
+
+	/// \brief Arrow head Ogre movable obj
+	private: Ogre::MovableObject *headObj;
+
+	/// \brief Arrow shaft Ogre scene node
+	private: Ogre::SceneNode* shaftNode;
+
+	/// \brief Arrow head Ogre scene node
+	private: Ogre::SceneNode* headNode;
+
+};
+
+
 /// \brief class VisPlugin
 class VisPlugin : public gazebo::VisualPlugin
 {
@@ -56,6 +151,15 @@ class VisPlugin : public gazebo::VisualPlugin
 	/// \brief Load plugin
 	protected: virtual void Load(gazebo::rendering::VisualPtr _parent, sdf::ElementPtr _sdf);
 
+	/// \brief Load config file
+	private: void ReadConfigFile();
+
+	/// \brief Get traj from mongo
+	private: void GetTraj();
+
+	/// \brief Draw the trajectory
+	private: void DrawTraj();
+
 	/// \brief Ogre scene node.
 	public: Ogre::SceneNode *sceneNode;
 
@@ -65,7 +169,30 @@ class VisPlugin : public gazebo::VisualPlugin
 	/// \brief Ogre scene manager.
 	public: Ogre::SceneManager *sceneManager;
 
+	/// \brief Ogre scene
+	public: gazebo::rendering::ScenePtr scene;
+
+	/// \brief Database name
+	private: std::string dbName;
+
+	/// \brief Db collection name
+	private: std::string collName;
+
+	/// \brief Db collection name
+	private: double stepSize;
+
+	// TODO use as diff class, see issue with push back
+	/// \brief Trajectory
+	private: VisTraj* traj;
+
+	/// \brief Trajectory pose
+	public: std::vector<gazebo::math::Pose> poses;
+
+	/// \brief Trajectory timestamps
+	public: std::vector<double> timestamps;
+
 };
+
 }
 
 #endif

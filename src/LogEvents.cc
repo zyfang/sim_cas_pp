@@ -102,17 +102,17 @@ void LogEvents::ReadConfigFile()
 
 	// get the variables from the config file
 	this->logLocation = cfg.lookup("events.log_location").c_str();
-	std::cout << "LogEvents - log_location: " << this->logLocation << std::endl;
+	std::cout << "*LogEvents* - log_location: " << this->logLocation << std::endl;
 
 	this->eventDiscTresh = cfg.lookup("events.ev_disc_thresh");
-	std::cout << "LogEvents - ev_disc_thresh: " << this->eventDiscTresh << std::endl;
+	std::cout << "*LogEvents* - ev_disc_thresh: " << this->eventDiscTresh << std::endl;
 
 }
 
 //////////////////////////////////////////////////
 void LogEvents::InitEvents()
 {
-	std::cout << "LogEvents - Sim start: " << this->world->GetSimTime().Double() << std::endl;
+	std::cout << "*LogEvents* - Sim start: " << this->world->GetSimTime().Double() << std::endl;
 
 	// open the main GzEvent
 	this->nameToEvents_M["Main"].push_back(
@@ -575,7 +575,7 @@ bool LogEvents::CheckCurrentGrasp(
     			// add grasped object
     			this->graspGzEvent->AddObject(this->nameToEventObj_M[curr_grasped_model->GetName()]);
 
-    			std::cout << "LogEvents - Start - \t" << grasp_ev_name << "\t\t at " << _timestamp_ms  << std::endl;
+    			std::cout << "*LogEvents* - Start - \t" << grasp_ev_name << "\t\t at " << _timestamp_ms  << std::endl;
     		}
     		// init first grasp
     		else
@@ -588,7 +588,7 @@ bool LogEvents::CheckCurrentGrasp(
         		// add grasped object
         		this->graspGzEvent->AddObject(this->nameToEventObj_M[curr_grasped_model->GetName()]);
 
-        		std::cout << "LogEvents - Init - \t" << grasp_ev_name << "\t\t at " << _timestamp_ms  << std::endl;
+        		std::cout << "*LogEvents* - Init - \t" << grasp_ev_name << "\t\t at " << _timestamp_ms  << std::endl;
     		}
     	}
     	else
@@ -598,7 +598,7 @@ bool LogEvents::CheckCurrentGrasp(
     		// end grasping event
 			this->graspGzEvent->End(_timestamp_ms);
 
-			std::cout << "LogEvents - End - \t" << this->graspGzEvent->GetName() << "\t\t at " << _timestamp_ms  << std::endl;
+			std::cout << "*LogEvents* - End - \t" << this->graspGzEvent->GetName() << "\t\t at " << _timestamp_ms  << std::endl;
 
 			// add grasp event to the map of all events
 			this->nameToEvents_M[this->graspGzEvent->GetName()].push_back(this->graspGzEvent);
@@ -668,7 +668,7 @@ bool LogEvents::CheckCurrentEventCollisions(
 				// add local event to the map
 				this->nameToEvents_M[contact_ev_name].push_back(contact_event);
 
-			    std::cout << "LogEvents - Start - \t" << contact_ev_name << "\t\t at " << _timestamp_ms << std::endl;
+			    std::cout << "*LogEvents* - Start - \t" << contact_ev_name << "\t\t at " << _timestamp_ms << std::endl;
 			}
 			else
 			{
@@ -678,7 +678,7 @@ bool LogEvents::CheckCurrentEventCollisions(
 					// end contact event
 					this->nameToEvents_M[contact_ev_name].back()->End(_timestamp_ms);
 
-				    std::cout << "LogEvents - End - \t" << contact_ev_name << "\t\t at " << _timestamp_ms << std::endl;
+				    std::cout << "*LogEvents* - End - \t" << contact_ev_name << "\t\t at " << _timestamp_ms << std::endl;
 				}
 				else
 				{
@@ -695,7 +695,7 @@ bool LogEvents::CheckCurrentEventCollisions(
 					// add local event to the map
 					this->nameToEvents_M[contact_ev_name].push_back(contact_event);				}
 
-			    std::cout << "LogEvents - Start - \t" << contact_ev_name << "\t\t at " << _timestamp_ms << std::endl;
+			    std::cout << "*LogEvents* - Start - \t" << contact_ev_name << "\t\t at " << _timestamp_ms << std::endl;
 			}
 		}
 	}
@@ -720,7 +720,7 @@ bool LogEvents::CheckFluidFlowTransEvent(
         // check if the event doesn't exist (first particles leaving)
 		if(!this->nameToEvents_M.count("FluidFlow-Translation"))
 		{
-		    std::cout << "LogEvents - Start - \t FluidFlow-Translation \t\t at " << _timestamp_ms << std::endl;
+		    std::cout << "*LogEvents* - Start - \t FluidFlow-Translation \t\t at " << _timestamp_ms << std::endl;
 
 			// add local event to the map
 			this->nameToEvents_M["FluidFlow-Translation"].push_back(new sg_pp::GzEvent(
@@ -730,7 +730,7 @@ bool LogEvents::CheckFluidFlowTransEvent(
 		{
 			if(this->totalPouredParticles_S.size() == this->allLiquidParticles_S.size())
 			{
-			    std::cout << "LogEvents - End - \t FluidFlow-Translation \t\t at " << _timestamp_ms << std::endl;
+			    std::cout << "*LogEvents* - End - \t FluidFlow-Translation \t\t at " << _timestamp_ms << std::endl;
 
 				// end liquid transfer event
 				this->nameToEvents_M["FluidFlow-Translation"].back()->End(_timestamp_ms);
@@ -764,7 +764,7 @@ void LogEvents::EndActiveEvents()
 //////////////////////////////////////////////////
 void LogEvents::MergeEventDisconnections()
 {
-    std::cout << "LogEvents - Merging event disconnections:" << std::endl;
+    std::cout << "*LogEvents* - Merging event disconnections:" << std::endl;
 
 	// iterate through the map
 	for(std::map<std::string, std::list<sg_pp::GzEvent*> >::iterator m_it = this->nameToEvents_M.begin();
@@ -850,7 +850,7 @@ void LogEvents::WriteContexts()
 		}
 
 		// export belief state client
-		this->beliefStateClient->exportFiles("sim_data");
+		this->beliefStateClient->exportFiles(this->collName);
 	}
 
 	// Write to mongodb

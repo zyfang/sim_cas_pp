@@ -121,7 +121,7 @@ void PostProcess::ReadConfigFile()
 
 	// get the variables from the config file
 	this->dbName = cfg.lookup("mongo.db_name").c_str();
-	std::cout << "PostProcess - db_name: " << this->dbName << std::endl;
+	std::cout << "*PostProcess* - db_name: " << this->dbName << std::endl;
 
 	// set the collection name
 	this->collName = cfg.lookup("mongo.coll_name").c_str();
@@ -129,19 +129,19 @@ void PostProcess::ReadConfigFile()
 	if(this->collSuffix != NULL){
 		this->collName += this->collSuffix;
 	}
-	std::cout << "PostProcess - coll_name: " << this->collName << std::endl;
+	std::cout << "*PostProcess* - coll_name: " << this->collName << std::endl;
 
 	this->worldName = cfg.lookup("sim.world_name").c_str();
-	std::cout << "PostProcess - world_name: " << this->worldName << std::endl;
+	std::cout << "*PostProcess* - world_name: " << this->worldName << std::endl;
 
 	this->processRaw = cfg.lookup("pp.raw");
-	std::cout << "PostProcess - processing raw data " << this->processRaw << std::endl;
+	std::cout << "*PostProcess* - processing raw data " << this->processRaw << std::endl;
 
 	this->processTf = cfg.lookup("pp.tf");
-	std::cout << "PostProcess - processing tf data " << this->processTf << std::endl;
+	std::cout << "*PostProcess* - processing tf data " << this->processTf << std::endl;
 
 	this->processEvents = cfg.lookup("pp.events");
-	std::cout << "PostProcess - processing events data " << this->processEvents << std::endl;
+	std::cout << "*PostProcess* - processing events data " << this->processEvents << std::endl;
 }
 
 //////////////////////////////////////////////////
@@ -245,12 +245,12 @@ void PostProcess::CheckLoggingFinishedWorker()
 			if(!util::LogPlay::Instance()->Step(sdfString))
 			{
 				log_play_finished = true;
-				std::cout << "PostProcess - Last recorded step at " << this->world->GetSimTime().Double()
+				std::cout << "*PostProcess* - Last recorded step at " << this->world->GetSimTime().Double()
 						<< ", terminating simulation.."<< std::endl;
 			}
 			else
 			{
-				std::cout << "PostProcess - Manual pause, every time this msg appears one simulation step is lost.. "  << std::endl;
+				std::cout << "*PostProcess* - Manual pause, every time this msg appears one simulation step is lost.. "  << std::endl;
 			}
 		}
 	}
