@@ -75,67 +75,88 @@ class VisArrow
 	/// \brief Constructor
 	public: VisArrow()
 	{
-		this->shaftNode = NULL;
-		this->headNode = NULL;
-		this->shaftObj = NULL;
-		this->headObj = NULL;
+		this->arrowNode = NULL;
+	}
+
+	/// \brief Constructor
+	public: VisArrow(Ogre::SceneManager* _sceneManager,
+			const gazebo::math::Vector3 _position,
+			const gazebo::math::Quaternion _orientation,
+			const gazebo::math::Vector3 _scale,
+			const std::string _head_color,
+			const std::string _shaft_color)
+	{
+	    // init the arrow scene node
+	    this->arrowNode = _sceneManager->getRootSceneNode()->createChildSceneNode();
+
+	    // arrow head mesh from the gazebo paths
+	    Ogre::Entity* head_entity = _sceneManager->createEntity("axis_head");
+
+	    // arrow shaft mesh from the gazebo paths
+	    Ogre::Entity* shaft_entity = _sceneManager->createEntity("axis_shaft");
+
+	    // attach objects to the scene nodes
+	    this->arrowNode->attachObject(shaft_entity);
+
+	    // offset node for the arrow head, child of the arrow node
+	    Ogre::SceneNode* offset_node = this->arrowNode->createChildSceneNode();
+
+	    // attach head entity to the offseted node
+	    offset_node->attachObject(head_entity);
+
+	    // offset the node
+	    offset_node->setPosition(0,0,0.1);
+
+	    // set materials of the entities
+	    head_entity->setMaterialName("Gazebo/" + _head_color);
+	    shaft_entity->setMaterialName("Gazebo/" + _shaft_color);
+
+	    // set positions
+	    this->SetPosition(_position);
+
+		// set orientation
+	    this->SetOrientation(_orientation);
+
+	    // set the arrow scale
+	    this->SetScale(_scale);
+
+		// set visible
+	    this->SetVisible(true);
 	}
 
 	/// \brief Destructor
 	public: virtual ~VisArrow()
 	{
-		delete this->shaftNode;
-		delete this->headNode;
-		delete this->shaftObj;
-		delete this->headObj;
+		delete this->arrowNode;
 	}
 
-	/// \brief Load
-	public: void Load(Ogre::SceneManager* _sceneManager)
+	/// \brief Set the 3d scale of the arrow
+	public: void SetScale(const gazebo::math::Vector3 _scale)
 	{
-		// set the objects
-		this->shaftObj = (Ogre::MovableObject*)(
-				_sceneManager->createEntity("axis_shaft"));
-
-		this->headObj = (Ogre::MovableObject*)(
-				_sceneManager->createEntity("axis_head"));
-
-		// set the obj materials
-	    if (dynamic_cast<Ogre::Entity*>(this->shaftObj))
-	      ((Ogre::Entity*)shaftObj)->setMaterialName("Gazebo/Blue");
-
-	    if (dynamic_cast<Ogre::Entity*>(this->headObj))
-	      ((Ogre::Entity*)headObj)->setMaterialName("Gazebo/Green");
-
-	    // create the scene nodes
-	    this->shaftNode = _sceneManager->getRootSceneNode()->createChildSceneNode("shaft_node");
-	    this->headNode = _sceneManager->getRootSceneNode()->createChildSceneNode("head_node");
-
-	    // attach objects to the scene nodes
-		shaftNode->attachObject(shaftObj);
-		headNode->attachObject(headObj);
-
-		// set positions
-		shaftNode->setPosition(0, 1, 0.1 + 2);
-		headNode->setPosition(0, 1, 0.24 + 2);
-
-		// set visible
-		shaftNode->setVisible(true);
-		headNode->setVisible(true);
+		this->arrowNode->setScale(_scale.x, _scale.y, _scale.z);
 	}
 
-	/// \brief Arrow shaft Ogre movable obj
-	private: Ogre::MovableObject *shaftObj;
+	/// \brief Set position of the arrow
+	public: void SetPosition(const gazebo::math::Vector3 _pos)
+	{
+		this->arrowNode->setPosition(_pos.x, _pos.y, _pos.z);
+	}
 
-	/// \brief Arrow head Ogre movable obj
-	private: Ogre::MovableObject *headObj;
+	/// \brief Set the orientation of the arrow
+	public: void SetOrientation(const gazebo::math::Quaternion _quat)
+	{
+		this->arrowNode->setOrientation(_quat.w, _quat.x, _quat.y, _quat.z);
+	}
+
+	/// \brief Set position of the arrow
+	public: void SetVisible(const bool _flag)
+	{
+		this->arrowNode->setVisible(_flag);
+	}
+
 
 	/// \brief Arrow shaft Ogre scene node
-	private: Ogre::SceneNode* shaftNode;
-
-	/// \brief Arrow head Ogre scene node
-	private: Ogre::SceneNode* headNode;
-
+	private: Ogre::SceneNode* arrowNode;
 };
 
 
@@ -183,13 +204,19 @@ class VisPlugin : public gazebo::VisualPlugin
 
 	// TODO use as diff class, see issue with push back
 	/// \brief Trajectory
-	private: VisTraj* traj;
+//	private: VisTraj* traj;
 
 	/// \brief Trajectory pose
-	public: std::vector<gazebo::math::Pose> poses;
+	private: std::vector<gazebo::math::Pose> poses;
 
 	/// \brief Trajectory timestamps
-	public: std::vector<double> timestamps;
+	private: std::vector<double> timestamps;
+
+
+	// todo super class with vis
+	/// \brief Trajectory timestamps
+	private: std::vector<VisArrow*> visArrows;
+
 
 };
 

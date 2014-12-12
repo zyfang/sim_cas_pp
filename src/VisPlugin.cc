@@ -72,8 +72,6 @@ void VisPlugin::Load(rendering::VisualPtr _parent, sdf::ElementPtr _sdf)
 
 	// draw the trajectory
 	VisPlugin::DrawTraj();
-
-	this->traj = new VisTraj();
 }
 
 //////////////////////////////////////////////////
@@ -184,83 +182,58 @@ void VisPlugin::DrawTraj()
 	// index for unique naming
 	unsigned int i = 0;
 
+//	// loop through the traj points
+//	for(std::vector<math::Pose>::const_iterator it = this->poses.begin();
+//			it != this->poses.end(); ++it)
+//	{
+//		// stringstream for unique naming
+//		std::ostringstream ss;
+//		ss << i;
+//
+//		// create current entity
+//		entities.push_back(
+//				this->sceneManager->createEntity("TrajEntity" + ss.str(),Ogre::SceneManager::PT_SPHERE));
+//
+//		// set the color
+//		entities.back()->setMaterialName("Gazebo/Red");
+//
+//		// make it visible
+//		entities.back()->setVisible(true);
+//
+//		// create current scene node
+//		scene_nodes.push_back(
+//				this->sceneManager->getRootSceneNode()->createChildSceneNode("TrajNode" + ss.str()));
+//
+//		// set node scale
+//		scene_nodes.back()->setScale(0.0001, 0.0001, 0.0001);
+//
+//		// ogre position
+//		const Ogre::Vector3 node_pos = Ogre::Vector3((*it).pos.x, (*it).pos.y, (*it).pos.z);
+//
+//		// set node positon
+//		scene_nodes.back()->setPosition(node_pos);
+//
+//		// attach entity to node
+//		scene_nodes.back()->attachObject(entities.back());
+//
+//		// make node visible
+//		scene_nodes.back()->setVisible(true);
+//
+//		// increment node nr
+//		i++;
+//	};
+
+	std::cout << "*VisPlugin* - " << scene_nodes.size() << " markers drawn" << std::endl;
+
+	const math::Vector3 scale = math::Vector3(0.1, 0.1, 0.05);
+
 	// loop through the traj points
 	for(std::vector<math::Pose>::const_iterator it = this->poses.begin();
 			it != this->poses.end(); ++it)
 	{
-		// stringstream for unique naming
-		std::ostringstream ss;
-		ss << i;
-
-		// create current entity
-		entities.push_back(
-				this->sceneManager->createEntity("TrajEntity" + ss.str(),Ogre::SceneManager::PT_SPHERE));
-
-		// set the color
-		entities.back()->setMaterialName("Gazebo/Red");
-
-		// make it visible
-		entities.back()->setVisible(true);
-
-		// create current scene node
-		scene_nodes.push_back(
-				this->sceneManager->getRootSceneNode()->createChildSceneNode("TrajNode" + ss.str()));
-
-		// set node scale
-		scene_nodes.back()->setScale(0.0001, 0.0001, 0.0001);
-
-		// ogre position
-		const Ogre::Vector3 node_pos = Ogre::Vector3((*it).pos.x, (*it).pos.y, (*it).pos.z);
-
-		// set node positon
-		scene_nodes.back()->setPosition(node_pos);
-
-		// attach entity to node
-		scene_nodes.back()->attachObject(entities.back());
-
-		// make node visible
-		scene_nodes.back()->setVisible(true);
-
-		// increment node nr
-		i++;
-	};
-
-	std::cout << "*VisPlugin* - " << scene_nodes.size() << " markers drawn" << std::endl;
-
-	VisArrow* visarrow = new VisArrow();
-
-	visarrow->Load(this->sceneManager);
-
-
-//	Ogre::SceneNode* shaftNode;
-//
-//	Ogre::SceneNode* headNode;
-//
-//	Ogre::MovableObject *shaftObj = (Ogre::MovableObject*)(
-//			this->sceneManager->createEntity("axis_shaft"));
-//
-//	Ogre::MovableObject *headObj = (Ogre::MovableObject*)(
-//			this->sceneManager->createEntity("axis_head"));
-//
-//    if (dynamic_cast<Ogre::Entity*>(shaftObj))
-//      ((Ogre::Entity*)shaftObj)->setMaterialName("Gazebo/Blue");
-//
-//    if (dynamic_cast<Ogre::Entity*>(headObj))
-//      ((Ogre::Entity*)headObj)->setMaterialName("Gazebo/Green");
-//
-//
-//	shaftNode = this->sceneManager->getRootSceneNode()->createChildSceneNode("shaft_node");
-//	shaftNode->attachObject(shaftObj);
-//	shaftNode->setPosition(0, 0, 0.1);
-//
-//
-//	headNode = this->sceneManager->getRootSceneNode()->createChildSceneNode("head_node");
-//	headNode->attachObject(headObj);
-//	headNode->setPosition(0, 0, 0.24);
-//
-//
-//	shaftNode->setVisible(true);
-//	headNode->setVisible(true);
+		this->visArrows.push_back(new VisArrow(
+				this->sceneManager,(*it).pos, (*it).rot, scale, "Green", "Blue"));
+	}
 
 }
 
