@@ -15,18 +15,29 @@ find_package(catkin REQUIRED COMPONENTS
   beliefstate_client
 )
 
+catkin_package()
+
 ## Gazebo
 include (FindPkgConfig)
 if (PKG_CONFIG_FOUND)
   find_package(GAZEBO REQUIRED)
+  ###pkg_check_modules(GAZEBO gazebo)
   pkg_check_modules(OGRE OGRE)
   pkg_check_modules(OGRE-Terrain OGRE-Terrain)
 endif()
 
-catkin_package()
+
+find_package (Qt4)
+
+find_package(Protobuf REQUIRED)
+
+include (${QT_USE_FILE})
+add_definitions(${QT_DEFINITIONS})
+
 
 include_directories(
   include
+  SYSTEM
   ${catkin_INCLUDE_DIRS}
   ${MONGO_INCLUDE_DIR}
   ${GAZEBO_INCLUDE_DIRS}
@@ -36,6 +47,8 @@ include_directories(
 
 link_directories(
   ${GAZEBO_LIBRARY_DIRS}
+  ${OGRE_LIBRARY_DIRS}
+  ${OGRE-Terrain_LIBRARY_DIRS}
 )
 
 
@@ -50,18 +63,6 @@ add_library(
 )
 
 target_link_libraries(PostProcess
-  ${catkin_LIBRARIES}
-  ${MONGOCLIENT}
-  ${GAZEBO_LIBRARIES}
-  config++
-)
-
-add_library(
-  VisPlugin SHARED 
-  src/VisPlugin.cc 
-)
-
-target_link_libraries(VisPlugin
   ${catkin_LIBRARIES}
   ${MONGOCLIENT}
   ${GAZEBO_LIBRARIES}

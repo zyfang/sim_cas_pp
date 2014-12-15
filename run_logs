@@ -6,7 +6,7 @@
 
 counter = 0;
 
-for d in pour26_openease/* ; do  
+for d in logs/20x_pf/* ; do  
 
   # incerementing the counter
   counter=$[$counter + 1]

@@ -14,6 +14,7 @@
 	  <camera name="kitchen_camera">
 		<pose>-1 0.1 1.5 0 0.4 0</pose>
 	  </camera>
+      <plugin name="sample" filename="libgui_example_spawn_widget.so"/>
 	</gui>
 
 	<scene>
