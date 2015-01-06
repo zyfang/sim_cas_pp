@@ -40,7 +40,7 @@ using namespace sg_pp;
 using namespace gazebo;
 using namespace mongo;
 
-#define TIME_OFFSET 100
+#define TIME_OFFSET 0
 
 //////////////////////////////////////////////////
 LogEvents::LogEvents(const gazebo::physics::WorldPtr _world,
