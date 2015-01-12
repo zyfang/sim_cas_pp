@@ -114,6 +114,9 @@ class PostProcess : public gazebo::SystemPlugin
 	/// \brief Gazebo communication node
 	private: gazebo::transport::NodePtr gznode;
 
+	/// \brief Server control publisher for shutting down the server when pp terminated
+	private: gazebo::transport::PublisherPtr serverControlPub;
+
 	/// \brief Gazebo subscriber to contacts
 	private: gazebo::transport::SubscriberPtr contactSub;
 

@@ -135,13 +135,13 @@ void PostProcess::ReadConfigFile()
 	std::cout << "*PostProcess* - world_name: " << this->worldName << std::endl;
 
 	this->processRaw = cfg.lookup("pp.raw");
-	std::cout << "*PostProcess* - processing raw data " << this->processRaw << std::endl;
+	std::cout << "*PostProcess* - processing raw data: " << this->processRaw << std::endl;
 
 	this->processTf = cfg.lookup("pp.tf");
-	std::cout << "*PostProcess* - processing tf data " << this->processTf << std::endl;
+	std::cout << "*PostProcess* - processing tf data: " << this->processTf << std::endl;
 
 	this->processEvents = cfg.lookup("pp.events");
-	std::cout << "*PostProcess* - processing events data " << this->processEvents << std::endl;
+	std::cout << "*PostProcess* - processing events data: " << this->processEvents << std::endl;
 }
 
 //////////////////////////////////////////////////
@@ -158,6 +158,9 @@ void PostProcess::InitOnWorldConnect()
 
 	// Initialize gazebo node, just to start the contacts in the physics engine
 	this->gznode->Init();
+
+	// publisher for shutting down the server
+	serverControlPub = this->gznode->Advertise<msgs::ServerControl>("/gazebo/server/control");
 
 	// subscribing to the contacts topic, just to start the contacts in the physics engine
 	// if no subscription is done to the contacts topic the contact manager does not run
@@ -265,17 +268,18 @@ void PostProcess::TerminateSimulation()
 	// finish the events
 	this->eventsLogger->FiniEvents();
 
-	this->eventsLogger->~LogEvents();
-
-	this->tfLogger->~LogTF();
-
 	// shutdown ros
 	ros::shutdown();
 
-	// finish the simulation
-	gazebo::shutdown();
+    std::cout << "Shutting down server.." << std::endl;
 
-	this->~PostProcess();
+    // send server control msg to terminate the server (does not apply when client is running)
+    msgs::ServerControl server_msg;
+    server_msg.set_stop(true);
+    serverControlPub->Publish(server_msg);
+
+    // finish the simulation
+//	gazebo::shutdown();
 }
 
 //////////////////////////////////////////////////

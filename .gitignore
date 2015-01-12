@@ -3,3 +3,4 @@ logs/
 build/
 *.pyc
 *.html
+logs

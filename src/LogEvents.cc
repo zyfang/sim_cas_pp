@@ -720,7 +720,7 @@ bool LogEvents::CheckFluidFlowTransEvent(
         // check if the event doesn't exist (first particles leaving)
 		if(!this->nameToEvents_M.count("FluidFlow-Translation"))
 		{
-		    std::cout << "*LogEvents* - Start - \t FluidFlow-Translation \t\t at " << _timestamp_ms << std::endl;
+		    std::cout << "*LogEvents* - Start - \tFluidFlow-Translation \t\t at " << _timestamp_ms << std::endl;
 
 			// add local event to the map
 			this->nameToEvents_M["FluidFlow-Translation"].push_back(new sg_pp::GzEvent(
@@ -764,7 +764,7 @@ void LogEvents::EndActiveEvents()
 //////////////////////////////////////////////////
 void LogEvents::MergeEventDisconnections()
 {
-    std::cout << "*LogEvents* - Merging event disconnections:" << std::endl;
+    std::cout << "*LogEvents* - Merging event disconnections" << std::endl;
 
 	// iterate through the map
 	for(std::map<std::string, std::list<sg_pp::GzEvent*> >::iterator m_it = this->nameToEvents_M.begin();
@@ -802,6 +802,8 @@ void LogEvents::MergeEventDisconnections()
 //////////////////////////////////////////////////
 void LogEvents::WriteContexts()
 {
+    std::cout << "*LogEvents* - Writing contexts" << std::endl;
+
 	// Write to owl file
 	if(this->logLocation == "owl" || this->logLocation == "all")
 	{
@@ -890,6 +892,8 @@ void LogEvents::WriteContexts()
 //////////////////////////////////////////////////
 void LogEvents::WriteTimelines()
 {
+    std::cout << "*LogEvents* - Writing timelines" << std::endl;
+
 	std::ofstream timeline_file;
 
 	std::stringstream ss;
