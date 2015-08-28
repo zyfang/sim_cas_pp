@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(sim_games_pp)
+project(sim_cas_pp)
 
 ## TODO manually added
-set(MONGOCLIENT /home/haidu/bin/mongo-client-install/lib/libmongoclient.so)
-set(MONGO_INCLUDE_DIR /home/haidu/bin/mongo-client-install/include)
+set(MONGOCLIENT /home/yfang/bin/mongo-client-install/lib/libmongoclient.so)
+set(MONGO_INCLUDE_DIR /home/yfang/bin/mongo-client-install/include)
 
 
 find_package(catkin REQUIRED COMPONENTS
@@ -12,7 +12,6 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   message_generation
   tf
-  beliefstate_client
 )
 
 catkin_package()

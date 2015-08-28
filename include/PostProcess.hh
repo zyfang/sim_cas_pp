@@ -40,8 +40,6 @@
 
 #include <gazebo/gazebo.hh>
 #include <mongo/client/dbclient.h>
-#include <beliefstate_client/BeliefstateClient.h>
-#include <beliefstate_client/Context.h>
 #include <libconfig.h++>
 
 #include "GzEvent.hh"

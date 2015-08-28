@@ -2,7 +2,7 @@
 
 # roslaunch the belief state
 ## TODO not working
-#roslaunch sim_games_pp bs.launch &
+#roslaunch sim_cas_pp bs.launch &
 
 counter = 0;
 

@@ -126,8 +126,8 @@ void LogEvents::InitEvents()
 		this->nameToEventObj_M[m_iter->get()->GetName()] = new GzEventObj(m_iter->get()->GetName());
 
 		// map model name to the beliefstate object
-		this->nameToBsObject_M[m_iter->get()->GetName()] =
-				new beliefstate_client::Object("&knowrob;", m_iter->get()->GetName());
+		// this->nameToBsObject_M[m_iter->get()->GetName()] =
+		// 		new beliefstate_client::Object("&knowrob;", m_iter->get()->GetName());
 
 
 		// get the links vector from the current model
@@ -526,8 +526,8 @@ void LogEvents::FiniEvents()
 	// Concatenate timelines with short disconnections
 	LogEvents::MergeEventDisconnections();
 
-	// write events as belief state contexts
-	LogEvents::WriteContexts();
+	// // write events as belief state contexts
+	// LogEvents::WriteContexts();
 
 	// write events to timeline file
 	LogEvents::WriteTimelines();
@@ -800,94 +800,94 @@ void LogEvents::MergeEventDisconnections()
 }
 
 //////////////////////////////////////////////////
-void LogEvents::WriteContexts()
-{
-    std::cout << "*LogEvents* - Writing contexts" << std::endl;
+// void LogEvents::WriteContexts()
+// {
+//     std::cout << "*LogEvents* - Writing contexts" << std::endl;
 
-	// Write to owl file
-	if(this->logLocation == "owl" || this->logLocation == "all")
-	{
-		// initialize the beliefstate
-		this->beliefStateClient = new beliefstate_client::BeliefstateClient("bs_client");
+// 	// Write to owl file
+// 	if(this->logLocation == "owl" || this->logLocation == "all")
+// 	{
+// 		// initialize the beliefstate
+// 		this->beliefStateClient = new beliefstate_client::BeliefstateClient("bs_client");
 
-		// starting new experiment
-		this->beliefStateClient->startNewExperiment();
+// 		// starting new experiment
+// 		this->beliefStateClient->startNewExperiment();
 
-		// adding experiment name to the meta data
-		this->beliefStateClient->setMetaDataField("experiment", this->collName);
+// 		// adding experiment name to the meta data
+// 		this->beliefStateClient->setMetaDataField("experiment", this->collName);
 
-		// register the OWL namespace
-		this->beliefStateClient->registerOWLNamespace("knowrob_sim", "http://knowrob.org/kb/knowrob_sim.owl#");
+// 		// register the OWL namespace
+// 		this->beliefStateClient->registerOWLNamespace("knowrob_sim", "http://knowrob.org/kb/knowrob_sim.owl#");
 
-		// iterate through the map
-		for(std::map<std::string, std::list<sg_pp::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
-				m_it != this->nameToEvents_M.end(); m_it++)
-		{
-			// iterate through the events with the same name
-			for(std::list<sg_pp::GzEvent*>::const_iterator ev_it = m_it->second.begin();
-					ev_it != m_it->second.end(); ev_it++)
-			{
-				// create local belief state context
-				beliefstate_client::Context* curr_ctx;
+// 		// iterate through the map
+// 		for(std::map<std::string, std::list<sg_pp::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
+// 				m_it != this->nameToEvents_M.end(); m_it++)
+// 		{
+// 			// iterate through the events with the same name
+// 			for(std::list<sg_pp::GzEvent*>::const_iterator ev_it = m_it->second.begin();
+// 					ev_it != m_it->second.end(); ev_it++)
+// 			{
+// 				// create local belief state context
+// 				beliefstate_client::Context* curr_ctx;
 
-				// open belief state context
-				curr_ctx = new beliefstate_client::Context(this->beliefStateClient,
-						(*ev_it)->GetName(), (*ev_it)->GetClassNamespace(), (*ev_it)->GetClass(), (*ev_it)->GetStartTime() + (TIME_OFFSET * this->suffixTime));
+// 				// open belief state context
+// 				curr_ctx = new beliefstate_client::Context(this->beliefStateClient,
+// 						(*ev_it)->GetName(), (*ev_it)->GetClassNamespace(), (*ev_it)->GetClass(), (*ev_it)->GetStartTime() + (TIME_OFFSET * this->suffixTime));
 
-				// get the objects of the event
-				std::vector<GzEventObj*> curr_objects = (*ev_it)->GetObjects();
+// 				// get the objects of the event
+// 				std::vector<GzEventObj*> curr_objects = (*ev_it)->GetObjects();
 
-				// iterate through the objects
-				for(std::vector<GzEventObj*>::const_iterator ob_it = curr_objects.begin();
-						ob_it != curr_objects.end(); ob_it++)
-				{
-					// add object to the context
-					curr_ctx->addObject(this->nameToBsObject_M[(*ob_it)->GetName()],
-							(*ev_it)->GetPropertyNamespace() + (*ev_it)->GetProperty());
-				}
+// 				// iterate through the objects
+// 				for(std::vector<GzEventObj*>::const_iterator ob_it = curr_objects.begin();
+// 						ob_it != curr_objects.end(); ob_it++)
+// 				{
+// 					// add object to the context
+// 					curr_ctx->addObject(this->nameToBsObject_M[(*ob_it)->GetName()],
+// 							(*ev_it)->GetPropertyNamespace() + (*ev_it)->GetProperty());
+// 				}
 
-				// end belief state context
-				curr_ctx->end(true, (*ev_it)->GetEndTime() + (TIME_OFFSET * this->suffixTime));
-			}
-		}
+// 				// end belief state context
+// 				curr_ctx->end(true, (*ev_it)->GetEndTime() + (TIME_OFFSET * this->suffixTime));
+// 			}
+// 		}
 
-		// export belief state client
-		this->beliefStateClient->exportFiles(this->collName);
-	}
+// 		// export belief state client
+// 		this->beliefStateClient->exportFiles(this->collName);
+// 	}
 
-	// Write to mongodb
-	if(this->logLocation == "mongo" || this->logLocation == "all")
-	{
-		// all events
-		std::vector<BSONObj> events_objs;
+// 	// Write to mongodb
+// 	if(this->logLocation == "mongo" || this->logLocation == "all")
+// 	{
+// 		// all events
+// 		std::vector<BSONObj> events_objs;
 
-	    // insert document object into the database, use scoped connection
-		ScopedDbConnection scoped_connection("localhost");
+// 	    // insert document object into the database, use scoped connection
+// 		ScopedDbConnection scoped_connection("localhost");
 
-		// iterate through the map
-		for(std::map<std::string, std::list<sg_pp::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
-				m_it != this->nameToEvents_M.end(); m_it++)
-		{
-			// TODO fix the grasp issue, (grasp event map includes the actual events with the right names)
-			// iterate through the events with the same name
-			for(std::list<GzEvent*>::const_iterator ev_it = m_it->second.begin();
-					ev_it != m_it->second.end(); ev_it++)
-			{
-				// add to the time array
-				events_objs.push_back(BSON("name" << (*ev_it)->GetName()
-						<<  "start" << (*ev_it)->GetStartTime()
-						<< "end" << (*ev_it)->GetEndTime()));
-			}
-		}
+// 		// iterate through the map
+// 		for(std::map<std::string, std::list<sg_pp::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
+// 				m_it != this->nameToEvents_M.end(); m_it++)
+// 		{
+// 			// TODO fix the grasp issue, (grasp event map includes the actual events with the right names)
+// 			// iterate through the events with the same name
+// 			for(std::list<GzEvent*>::const_iterator ev_it = m_it->second.begin();
+// 					ev_it != m_it->second.end(); ev_it++)
+// 			{
+// 				// add to the time array
+// 				events_objs.push_back(BSON("name" << (*ev_it)->GetName()
+// 						<<  "start" << (*ev_it)->GetStartTime()
+// 						<< "end" << (*ev_it)->GetEndTime()));
+// 			}
+// 		}
 
-		// insert document object into the database
-		scoped_connection->insert(this->dbName + "." + this->collName + "_ev",
-				BSON("events" << events_objs));
+// 		// insert document object into the database
+// 		scoped_connection->insert(this->dbName + "." + this->collName + "_ev",
+// 				BSON("events" << events_objs));
 
-		// let the pool know the connection is done
-		scoped_connection.done();
-	}
-}
+// 		// let the pool know the connection is done
+// 		scoped_connection.done();
+// 	}
+// }
 
 //////////////////////////////////////////////////
 void LogEvents::WriteTimelines()

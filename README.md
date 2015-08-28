@@ -1,4 +1,4 @@
-# sim_games_pp catkin package for post processing data from sim_games
+# sim_cas_pp catkin package for post processing data from sim_games
 
 
 ### Run example:
