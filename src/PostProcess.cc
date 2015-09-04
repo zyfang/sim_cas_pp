@@ -68,11 +68,25 @@ PostProcess::~PostProcess()
 void PostProcess::Load(int _argc, char ** _argv)
 {
     for (unsigned int i = 0; i < _argc; ++i){
-    	// look for '--suffix' characters
+    	// look for '-db' characters
+        if(std::string(_argv[i]) == "--db"){
+            // set the next argument as the name of the db
+            this->dbName = _argv[++i];
+            }
+        
+
+        if(std::string(_argv[i]) == "--collection"){
+            // set the next argument as the name of the collection
+            this->collName = _argv[++i];
+            }
+        
+
+        // look for '--suffix' characters
     	if(std::string(_argv[i]) == "--suffix"){
             // set the next argument as the name of the db and collection
     		this->collSuffix = _argv[++i];
-    	}
+    	   }
+
     }
 
     // read config file
@@ -120,11 +134,18 @@ void PostProcess::ReadConfigFile()
 	}
 
 	// get the variables from the config file
-	this->dbName = cfg.lookup("mongo.db_name").c_str();
+
+    // if no db name has been added, use default
+    if (this->dbName.empty()){
+        this->dbName = cfg.lookup("mongo.db_name").c_str();
+    }	
 	std::cout << "*PostProcess* - db_name: " << this->dbName << std::endl;
 
-	// set the collection name
-	this->collName = cfg.lookup("mongo.coll_name").c_str();
+	// if no collection name has been added, use default
+    if (this->collName.empty()){
+        this->collName = cfg.lookup("mongo.coll_name").c_str();
+    }   
+
 	// if a suffix has been added append it to the collection name
 	if(this->collSuffix != NULL){
 		this->collName += this->collSuffix;

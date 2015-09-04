@@ -168,9 +168,6 @@ void LogParticles::WriteParticleData()
     // get all the contacts from the physics engine
     const std::vector<physics::Contact*> _contacts = this->contactManagerPtr->GetContacts();
 
-	// get all the contacts from the physics engine
-    const std::vector<physics::Contact*> _contacts = this->contactManagerPtr->GetContacts();
-
     // current map of event collisions to set of models names
     std::map< physics::Collision*, std::set<std::string> > event_coll_to_set_of_model_names_M;
 
@@ -518,14 +515,14 @@ void LogParticles::WriteParticleData()
 
             pancake_builder.append("pancake supports", pancake_support_builder.obj());
         }
-        std::cout <<"-------------------------------------------------------------------ts: "<< _timestamp << std::endl;
+        std::cout <<"-------------------------------------------------------------------ts: "<< timestamp_ms << std::endl;
 
     // TODO Pour Pancake events
         doc_bo_builder.append("pour", pour_builder.obj());
         doc_bo_builder.append("pancake", pancake_builder.obj());
 
         // create the document object
-        doc_bo_builder.append("timestamp", _timestamp);
+        doc_bo_builder.append("timestamp", timestamp_ms);
 
         // insert document object into the database
 //            this->mongoDBClientConnection.insert(this->dbCollName + ".particles", doc_bo_builder.obj());
@@ -535,7 +532,7 @@ void LogParticles::WriteParticleData()
         ScopedDbConnection scoped_connection("localhost");
 
         // insert document object into the database
-        scoped_connection->insert(this->dbCollName + "." + this->collName + "_particles", doc_bo_builder.obj());
+        scoped_connection->insert(this->dbName + "." + this->collName + "_particles", doc_bo_builder.obj());
 
         // let the pool know the connection is done
         scoped_connection.done();

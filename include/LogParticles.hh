@@ -39,8 +39,13 @@
 
 #include <gazebo/gazebo.hh>
 #include <gazebo/physics/physics.hh>
+#include <gazebo/physics/Contact.hh>
+#include <gazebo/physics/PhysicsTypes.hh>
 #include <libconfig.h++>
 #include <mongo/client/dbclient.h>
+
+#include <ros/ros.h>
+#include <tf/transform_broadcaster.h>
 
 /// \brief Post Processing classes namespace
 namespace sg_pp
@@ -80,6 +85,35 @@ class LogParticles
 	/// \brief pointer of ContactManager, for getting contacts from physics engine
 	private: gazebo::physics::ContactManager *contactManagerPtr;
 
+	/// \brief Mug top event collision
+    private: gazebo::physics::Collision* eventCollisionMug;
+
+    /// \brief Hit hand thumb and fore finger event collision
+    private: gazebo::physics::Collision *eventCollisionForeFinger, *eventCollisionThumb;
+
+    /// \brief Event no contact collision vector
+    private: std::set<gazebo::physics::Collision*> eventCollisions_S;
+
+	/// \brief all particle collisions
+    private: std::set<gazebo::physics::Collision*> allLiquidCollisions_S;
+
+    /// \brief poured particle collisions
+    private: std::set<gazebo::physics::Collision*> pouredLiquidCollisions_S;
+
+    /// \brief particle collisions belonging to the pancake
+    private: std::set<gazebo::physics::Collision*> pancakeCollision_S;
+
+	/// \brief map of event collisions to a set of all its contacts model names
+    private: std::map<gazebo::physics::Collision*, std::set<std::string> > eventCollToSetOfModelNames_M;
+
+    /// \brief map of event collisions to a set of all its particle names
+    private: std::map<gazebo::physics::Collision*, std::set<std::string> > eventCollToSetOfParticleNames_M;
+
+    /// \brief name of the grasped model
+    private: std::string graspedModelName;
+
+    /// \brief flag for when the pancake is created
+    private: bool pancakeCreated;
 };
 }
 #endif
