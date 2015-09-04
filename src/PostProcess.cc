@@ -142,6 +142,9 @@ void PostProcess::ReadConfigFile()
 
 	this->processEvents = cfg.lookup("pp.events");
 	std::cout << "*PostProcess* - processing events data: " << this->processEvents << std::endl;
+
+    this->processParticle = cfg.lookup("pp.particles");
+    std::cout << "*PostProcess* - processing particle data: " << this->processParticle << std::endl;
 }
 
 //////////////////////////////////////////////////
@@ -175,6 +178,9 @@ void PostProcess::InitOnWorldConnect()
 
     // initialize the raw logging class
     this->rawLogger = new sg_pp::LogRaw(this->world, this->dbName, this->collName);
+
+    // initialize the particle logging class
+    this->particleLogger = new sg_pp::LogParticles(this->world, this->dbName, this->collName);
 }
 
 //////////////////////////////////////////////////
@@ -185,6 +191,9 @@ void PostProcess::FirstSimulationStepInit()
 
     // Initialize events
     this->eventsLogger->InitEvents();
+
+    // Initialize particles
+    this->particleLogger->InitParticles();
 
 	// Run the post processing threads once so the first step is not skipped
 	PostProcess::ProcessCurrentData();
@@ -220,6 +229,13 @@ void PostProcess::ProcessCurrentData()
 		process_thread_group.create_thread(
 				boost::bind(&sg_pp::LogRaw::WriteRawData, this->rawLogger));
 	}
+
+    // particles data
+    if (this->processParticle)
+    {
+        process_thread_group.create_thread(
+                boost::bind(&sg_pp::LogParticles::WriteParticleData, this->particleLogger));
+    }
 
 	// wait for all the threads to finish work
 	process_thread_group.join_all();

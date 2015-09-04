@@ -59,6 +59,7 @@ add_library(
   src/LogTF.cc
   src/LogEvents.cc
   src/LogRaw.cc
+  src/LogParticles.cc
 )
 
 target_link_libraries(PostProcess
