@@ -39,7 +39,7 @@
 
 #include <gazebo/gazebo.hh>
 #include <gazebo/physics/physics.hh>
-//#include <mongo/client/dbclient.h>
+#include <mongo/client/dbclient.h>
 #include <giskard/giskard.hpp>
 
 namespace sg_pp
@@ -59,31 +59,82 @@ namespace sg_pp
     private:
       void ReadConfigFile();
       void ReadMotionExpressions();
+      double GetTimestamp();
+      const std::vector<double>& GetExpressionValues();
+      std::vector<double> GetObservables();
  
-//      /// \brief Return a contact bson object
-//  	private: mongo::BSONObj CreateBSONContactObject(
-//  			const gazebo::physics::Contact* _contact,
-//  			const gazebo::physics::Collision* _collision);
-//  
-//  	/// \brief Return a collision bson object
-//  	private: mongo::BSONObj CreateBSONCollisionObject(
-//  			const gazebo::physics::CollisionPtr _collision,
-//  			const mongo::BSONArray _contact_arr);
-//  
-//  	/// \brief Return a link bson object
-//  	private: mongo::BSONObj CreateBSONLinkObject(
-//  			const gazebo::physics::LinkPtr _link,
-//  			const mongo::BSONArray _collision_arr);
-//  
-//  	/// \brief Return a link bson object
-//  	private: mongo::BSONObj CreateBSONModelObject(
-//  			const gazebo::physics::ModelPtr _model,
-//  			const mongo::BSONArray _link_arr);
-  
       gazebo::physics::WorldPtr world_;
+      gazebo::physics::ModelPtr controlled_model_, observed_model_;
       std::string db_name_, coll_name_, motion_file_;
       std::vector<std::string> expression_names_;
       std::vector< KDL::Expression<double>::Ptr > expressions_;
+      std::vector<double> expression_values_;
   };
+
+  //
+  // various utility functions
+  //
+
+  inline mongo::BSONObj to_bson(const std::string& name, double value)
+  {
+    using namespace mongo;
+    return BSON("name" << name << "value" << value);
+  }
+
+  inline mongo::BSONObj to_bson(const std::vector<std::string>& names,
+      const std::vector<double>& values, double timestamp)
+  {
+    assert(names.size() == values.size());
+
+    using namespace mongo;
+
+    BSONArrayBuilder ab;
+    for(size_t i=0; i<names.size(); ++i)
+      ab.append(to_bson(names[i], values[i]));
+
+    BSONArray a = ab.arr();
+    
+    return BSON("expressions" << a << "timestamp" << timestamp);
+  }
+
+  inline KDL::Rotation toKDL(const gazebo::math::Quaternion& rot)
+  {
+    return KDL::Rotation::Quaternion(rot.x, rot.y, rot.z, rot.w);
+  }
+
+  inline std::vector<double> toSTL(const gazebo::math::Vector3& v)
+  {
+    std::vector<double> result;
+    result.push_back(v.x);
+    result.push_back(v.y);
+    result.push_back(v.z);
+    return result;
+  }
+
+  inline std::vector<double> toSTL(const gazebo::math::Quaternion& q) 
+  {
+    double alpha, beta, gamma;
+    toKDL(q).GetEulerZYX(alpha, beta, gamma);
+
+    std::vector<double> result;
+    result.push_back(alpha);
+    result.push_back(beta);
+    result.push_back(gamma);
+
+    return result;
+  }
+
+  inline std::vector<double> conc(const std::vector<double>& a, const std::vector<double>& b)
+  {
+    std::vector<double> result = a;
+    for(size_t i=0; i<b.size(); ++i)
+      result.push_back(b[i]);
+    return result;
+  }
+
+  inline std::vector<double> toSTL(const gazebo::math::Pose& p)
+  {
+    return conc(toSTL(p.pos), toSTL(p.rot));
+  }
 }
 #endif

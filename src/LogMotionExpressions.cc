@@ -38,7 +38,7 @@
 
 using namespace sg_pp;
 using namespace gazebo;
-//using namespace mongo;
+using namespace mongo;
 
 LogMotionExpressions::LogMotionExpressions(const gazebo::physics::WorldPtr& world, 
     const std::string& db_name, const std::string& coll_name) :
@@ -54,17 +54,22 @@ LogMotionExpressions::LogMotionExpressions(const gazebo::physics::WorldPtr& worl
   expression_names_.push_back("mug-behind-itself");
   expression_names_.push_back("mug-left-itself");
   expression_names_.push_back("mug-above-itself");
+
+  expression_values_.resize(expression_names_.size());
 }
 
 void LogMotionExpressions::Init()
 {
   ReadConfigFile();
   ReadMotionExpressions();
-
 } 
   
 void LogMotionExpressions::WriteRawData()
 {
+  ScopedDbConnection scoped_connection("localhost");
+  scoped_connection->insert(this->db_name_ + "." + this->coll_name_ + "_motion_expressions", 
+      to_bson(expression_names_, GetExpressionValues(), GetTimestamp()));
+  scoped_connection.done();
 }
   
 void LogMotionExpressions::ReadConfigFile()
@@ -87,6 +92,16 @@ void LogMotionExpressions::ReadConfigFile()
 
   this->motion_file_ = cfg.lookup("motion_expressions.motion_file").c_str();
   std::cout << "*LogMotionExpressions* - motion file: " << this->motion_file_ << std::endl;
+
+  std::string controlled_model_name = cfg.lookup("motion_expressions.controlled_model").c_str();
+  std::cout << "*LogMotionExpressions* - controlled model: " << controlled_model_name << std::endl;
+  controlled_model_ = world_->GetModel(controlled_model_name);
+  assert(controlled_model_.get());
+
+  std::string observed_model_name = cfg.lookup("motion_expressions.observed_model").c_str();
+  std::cout << "*LogMotionExpressions* - observed model: " << observed_model_name << std::endl;
+  observed_model_ = world_->GetModel(observed_model_name);
+  assert(observed_model_.get());
 }
 
 void LogMotionExpressions::ReadMotionExpressions()
@@ -102,252 +117,27 @@ void LogMotionExpressions::ReadMotionExpressions()
     expressions_.push_back(scope.find_double_expression(expression_names_[i]));
 }
 
-////////////////////////////////////////////////////
-//LogRaw::LogRaw(const gazebo::physics::WorldPtr _world,
-//		const std::string _db_name,
-//		const std::string _coll_name)
-//	: world(_world)
-//	, dbName(_db_name)
-//	, collName(_coll_name)
-//{
-//	// get the world models
-//	this->models = this->world->GetModels();
-//
-//	// get the world models
-//	this->contactManagerPtr = this->world->GetPhysicsEngine()->GetContactManager();
-//
-//	// get values from the config file
-//	LogRaw::ReadConfigFile();
-//}
-//
-////////////////////////////////////////////////////
-//LogRaw::~LogRaw()
-//{
-//
-//}
-//
-////////////////////////////////////////////////////
-//void LogRaw::ReadConfigFile()
-//{
-//	// create the config
-//	libconfig::Config cfg;
-//
-//	// read config file
-//	try
-//	{
-//		cfg.readFile("config.cfg");
-//	}
-//	catch(const libconfig::FileIOException &fioex)
-//	{
-//		std::cerr << "I/O error while reading file." << std::endl;
-//	}
-//	catch(const libconfig::ParseException &pex)
-//	{
-//		std::cerr << "Parse error at " << pex.getFile() << ":" << pex.getLine()
-//		            		  << " - " << pex.getError() << std::endl;
-//	}
-//
-//
-////	this->publishTF = cfg.lookup("tf.publish");
-////	std::cout << "LogRaw - publish TF: " << this->publishTF << std::endl;
-//
-//
-//}
-//
-////////////////////////////////////////////////////
-//void LogRaw::WriteRawData()
-//{
-//    // compute simulation time in milliseconds
-//    const double timestamp_ms = this->world->GetSimTime().Double();
-//
-//    // get all the contacts from the physics engine
-//    const std::vector<physics::Contact*> _contacts = this->contactManagerPtr->GetContacts();
-//
-//    // document bson object
-//    BSONObj _doc_bo;
-//
-//    // bson array model builder
-//    BSONArrayBuilder _bson_model_arr_builder;
-//
-//    //////////////////////////////////////////////////
-//    // loop trough all the models
-//    for (unsigned int i = 0; i < this->models.size(); i++ )
-//    {
-//        // get the links vector from the current model
-//        const physics::Link_V _links = this->models.at(i)->GetLinks();
-//
-//        // bson array builder
-//        BSONArrayBuilder _link_arr_builder;
-//
-//        //////////////////////////////////////////////////
-//        // loop through the links
-//        for (unsigned int j = 0; j < _links.size(); j++)
-//        {
-//            // get the collisions of the current link
-//            const physics::Collision_V _collisions = _links.at(j)->GetCollisions();
-//
-//            // bson array builder
-//            BSONArrayBuilder _collision_arr_builder;
-//
-//
-//            //////////////////////////////////////////////////
-//            // loop through the collisions
-//            for (unsigned int k = 0; k < _collisions.size(); k++)
-//            {
-//                // bson array builder
-//                BSONArrayBuilder _contacts_arr_builder;
-//
-//                //////////////////////////////////////////////////
-//                // loop through all the global contacts to check if they match the collision
-//                // TODO not the most effective way?
-//                for (unsigned int l = 0; l < _contacts.size(); l++)
-//                {
-//                    //std::cout << "\t" << _contacts.at(l)->collision1->GetName() << " --> "
-//                    //		<< _contacts.at(l)->collision2->GetName() << std::endl;
-//
-//                    // check if the current collision equals the contact collision1
-//                    if (_collisions.at(k)->GetName() ==
-//                            _contacts.at(l)->collision1->GetName())
-//                    {
-//                        // create BSON contact object with opposite coll: collision2
-//                        BSONObj _contact_bo = LogRaw::CreateBSONContactObject(
-//                                _contacts.at(l), _contacts.at(l)->collision2);
-//
-//                        // append collision obj to array
-//                        _contacts_arr_builder.append(_contact_bo);
-//
-//                    }
-//                    // if the current collision equals the contact collision2
-//                    else if(_collisions.at(k)->GetName() ==
-//                            _contacts.at(l)->collision2->GetName())
-//                    {
-//                        // create BSON contact object with the opposite coll: collision1
-//                        BSONObj _contact_bo = LogRaw::CreateBSONContactObject(
-//                                _contacts.at(l), _contacts.at(l)->collision1);
-//
-//                        // append collision obj to array
-//                        _contacts_arr_builder.append(_contact_bo);
-//                    }
-//
-//                }
-//
-//                // create the bson contacts array
-//                BSONArray _contact_arr = _contacts_arr_builder.arr();
-//
-//                // collision bson obj
-//                BSONObj _collision_bo = LogRaw::CreateBSONCollisionObject(_collisions.at(k), _contact_arr);
-//
-//                // append collision obj to array
-//                _collision_arr_builder.append(_collision_bo);
-//            }
-//
-//            // bson array
-//            BSONArray _collision_arr = _collision_arr_builder.arr();
-//
-//            // link bson object
-//            BSONObj _link_bo = LogRaw::CreateBSONLinkObject(_links.at(j), _collision_arr);
-//
-//            // append link object to array
-//            _link_arr_builder.append(_link_bo);
-//        }
-//
-//        // create the bson link array
-//        BSONArray _link_arr = _link_arr_builder.arr();
-//
-//        // model bson object
-//        BSONObj _model_bo = LogRaw::CreateBSONModelObject(this->models.at(i), _link_arr);
-//
-//        // append model object to array
-//        _bson_model_arr_builder.append(_model_bo);
-//    }
-//
-//
-//    // create the bson model array
-//    BSONArray _bson_model_arr = _bson_model_arr_builder.arr();
-//
-//    // create the document object
-//    _doc_bo = BSON("models" << _bson_model_arr << "timestamp" << timestamp_ms);
-//
-//	// Create scoped connection
-//	ScopedDbConnection scoped_connection("localhost");
-//
-//	// insert document object into the database
-//	scoped_connection->insert(this->dbName + "." + this->collName + "_raw",	_doc_bo);
-//
-//	// let the pool know the connection is done
-//	scoped_connection.done();
-//}
-//
-//
-////////////////////////////////////////////////////
-//BSONObj LogRaw::CreateBSONContactObject(const physics::Contact* _contact, const physics::Collision* _collision)
-//{
-//	return BSON ("name" << _collision->GetName()
-//			<< "coll_model_name" << _collision->GetParent()->GetParent()->GetName()
-//			<< "coll_link_name" << _collision->GetParent()->GetName()
-//			// TODO if all contact points are needed loop through all the values
-//			// only first contact point is used
-//			<< "pos" << BSON ("x" << _contact->positions[0].x
-//							<< "y" << _contact->positions[0].y
-//							<< "z" << _contact->positions[0].z)
-//			<< "normal" << BSON ("x" << _contact->normals[0].x
-//							<< "y" << _contact->normals[0].y
-//							<< "z" << _contact->normals[0].z));
-//}
-//
-////////////////////////////////////////////////////
-//BSONObj LogRaw::CreateBSONCollisionObject(const physics::CollisionPtr _collision, const BSONArray _contact_arr)
-//{
-//	return 	BSON ("name" << _collision->GetName()
-//			<< "pos" << BSON(  "x" << _collision->GetWorldPose().pos.x
-//							<< "y" << _collision->GetWorldPose().pos.y
-//							<< "z" << _collision->GetWorldPose().pos.z)
-//			<< "rot" << BSON(  "x" << _collision->GetWorldPose().rot.GetAsEuler().x
-//							<< "y" << _collision->GetWorldPose().rot.GetAsEuler().y
-//							<< "z" << _collision->GetWorldPose().rot.GetAsEuler().z)
-//			<< "bbox" << BSON( "min" << BSON(  "x" << _collision->GetBoundingBox().min.x
-//											<< "y" << _collision->GetBoundingBox().min.y
-//											<< "z" << _collision->GetBoundingBox().min.z)
-//							<< "max" << BSON(  "x" << _collision->GetBoundingBox().max.x
-//											<< "y" << _collision->GetBoundingBox().max.y
-//											<< "z" << _collision->GetBoundingBox().max.z))
-//			<< "contacts" << _contact_arr);
-//}
-//
-////////////////////////////////////////////////////
-//BSONObj LogRaw::CreateBSONLinkObject(const physics::LinkPtr _link, const BSONArray _collision_arr)
-//{
-//	return BSON("name" << _link->GetName()
-//			<< "pos" << BSON(  "x" << _link->GetWorldPose().pos.x
-//							<< "y" << _link->GetWorldPose().pos.y
-//							<< "z" << _link->GetWorldPose().pos.z)
-//			<< "rot" << BSON(  "x" << _link->GetWorldPose().rot.GetAsEuler().x
-//							<< "y" << _link->GetWorldPose().rot.GetAsEuler().y
-//							<< "z" << _link->GetWorldPose().rot.GetAsEuler().z)
-//			<< "bbox" << BSON( "min" << BSON(  "x" << _link->GetBoundingBox().min.x
-//											<< "y" << _link->GetBoundingBox().min.y
-//											<< "z" << _link->GetBoundingBox().min.z)
-//							<< "max" << BSON(  "x" << _link->GetBoundingBox().max.x
-//											<< "y" << _link->GetBoundingBox().max.y
-//											<< "z" << _link->GetBoundingBox().max.z))
-//			<< "collisions" << _collision_arr);
-//}
-//
-////////////////////////////////////////////////////
-//BSONObj LogRaw::CreateBSONModelObject(const physics::ModelPtr _model, const BSONArray _link_arr)
-//{
-//	return BSON("name" << _model->GetName()
-//		<< "pos" << BSON(  "x"  << _model->GetWorldPose().pos.x
-//						<< "y"  << _model->GetWorldPose().pos.y
-//						<< "z"  << _model->GetWorldPose().pos.z)
-//		<< "rot" << BSON(  "x"  << _model->GetWorldPose().rot.GetAsEuler().x
-//						<< "y"  << _model->GetWorldPose().rot.GetAsEuler().y
-//						<< "z"  << _model->GetWorldPose().rot.GetAsEuler().z)
-//		<< "bbox" << BSON( "min" << BSON(  "x" << _model->GetBoundingBox().min.x
-//										<< "y" << _model->GetBoundingBox().min.y
-//										<< "z" << _model->GetBoundingBox().min.z)
-//						<< "max" << BSON(  "x" << _model->GetBoundingBox().max.x
-//										<< "y" << _model->GetBoundingBox().max.y
-//										<< "z" << _model->GetBoundingBox().max.z))
-//		<< "links" << _link_arr);
-//}
+double LogMotionExpressions::GetTimestamp()
+{
+  return world_->GetSimTime().Double();
+}
+
+const std::vector<double>& LogMotionExpressions::GetExpressionValues()
+{
+  assert(expressions_.size() == expression_values_.size());
+  
+  std::vector<double> observables = GetObservables();
+  for(size_t i=0; i<expressions_.size(); ++i)
+  {
+    expressions_[i]->setInputValues(observables);
+    expression_values_[i] = expressions_[i]->value();
+  }
+
+  return expression_values_;
+}
+
+std::vector<double> LogMotionExpressions::GetObservables()
+{
+  return conc(toSTL(controlled_model_->GetLinks()[0]->GetWorldPose()),
+              toSTL(observed_model_->GetLinks()[0]->GetWorldPose()));
+}

@@ -47,4 +47,4 @@
 - mug-top-above-maker: {z-coord: mug-top-to-maker-top}
 - mug-behind-itself: {x-coord: mug-top-to-mug-bottom}
 - mug-left-itself: {y-coord: mug-top-to-mug-bottom}
-- mug-upright-itself: {z-coord: mug-top-to-mug-bottom}
+- mug-above-itself: {z-coord: mug-top-to-mug-bottom}
