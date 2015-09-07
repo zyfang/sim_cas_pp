@@ -46,6 +46,7 @@
 #include "LogTF.hh"
 #include "LogEvents.hh"
 #include "LogRaw.hh"
+#include "LogParticles.hh"
 
 namespace sg_pp
 {
@@ -97,6 +98,9 @@ class PostProcess : public gazebo::SystemPlugin
 	/// \brief Raw logger class
 	private: sg_pp::LogRaw* rawLogger;
 
+	/// \brief Particle logger class
+	private: sg_pp::LogParticles* particleLogger;
+
 	/// \brief World name to be connected to
 	private: std::string worldName;
 
@@ -141,6 +145,9 @@ class PostProcess : public gazebo::SystemPlugin
 
 	/// \brief Check what to process
 	private: bool processEvents;
+
+	/// \brief Check what to process
+	private: bool processParticle;
 };
 }
 

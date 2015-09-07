@@ -94,6 +94,9 @@ class LogEvents
 	/// \brief End still active events
 	private: void EndActiveEvents();
 
+	/// \brief Write beliefstate (owl) contexts
+	private: void WriteContexts();
+
 	/// \brief Write timelines to file
 	private: void WriteTimelines();
 

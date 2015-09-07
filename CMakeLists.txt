@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 2.8.3)
 project(sim_cas_pp)
 
 ## TODO manually added
-set(MONGOCLIENT /home/yfang/bin/mongo-client-install/lib/libmongoclient.so)
-set(MONGO_INCLUDE_DIR /home/yfang/bin/mongo-client-install/include)
+set(MONGOCLIENT /opt/mongo-client-install/lib/libmongoclient.so)
+set(MONGO_INCLUDE_DIR /opt/mongo-client-install/include)
 
 
 find_package(catkin REQUIRED COMPONENTS
@@ -59,6 +59,7 @@ add_library(
   src/LogTF.cc
   src/LogEvents.cc
   src/LogRaw.cc
+  src/LogParticles.cc
 )
 
 target_link_libraries(PostProcess
