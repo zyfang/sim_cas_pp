@@ -51,7 +51,8 @@ class LogRaw
 	/// \brief Constructor
 	public: LogRaw(const gazebo::physics::WorldPtr _world,
 			const std::string _db_name,
-			const std::string _coll_name);
+			const std::string _coll_name,
+			const std::string _connection_name);
 
 	/// \brief Destructor
 	public: virtual ~LogRaw();
@@ -87,6 +88,9 @@ class LogRaw
 
 	/// \brief Vector of the world models
 	private: gazebo::physics::Model_V models;
+
+	/// \brief which connection to log to
+	private: const std::string connName;
 
 	/// \brief Database name
 	private: const std::string dbName;

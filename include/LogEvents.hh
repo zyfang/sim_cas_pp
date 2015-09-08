@@ -55,7 +55,8 @@ class LogEvents
 	public: LogEvents(const gazebo::physics::WorldPtr _world,
 			const std::string _db_name,
 			const std::string _coll_name,
-			int _suffix);
+			int _suffix,
+			const std::string _connection_name);
 
 	/// \brief Destructor
 	public: virtual ~LogEvents();
@@ -112,6 +113,9 @@ class LogEvents
 	/// \brief pointer of ContactManager, for getting contacts from physics engine
 	private: gazebo::physics::ContactManager *contactManagerPtr;
 
+	/// \brief which connection to log to
+	private: const std::string connName;
+	
 	/// \brief Database name
 	private: const std::string dbName;
 

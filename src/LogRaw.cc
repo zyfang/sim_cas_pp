@@ -42,12 +42,14 @@ using namespace mongo;
 
 
 //////////////////////////////////////////////////
-LogRaw::LogRaw(const gazebo::physics::WorldPtr _world,
+LogRaw::LogRaw(const gazebo::physics::WorldPtr _world, 
 		const std::string _db_name,
-		const std::string _coll_name)
+		const std::string _coll_name,
+		const std::string _connection_name)
 	: world(_world)
 	, dbName(_db_name)
 	, collName(_coll_name)
+	, connName(_connection_name)
 {
 	// get the world models
 	this->models = this->world->GetModels();
@@ -209,7 +211,7 @@ void LogRaw::WriteRawData()
     _doc_bo = BSON("models" << _bson_model_arr << "timestamp" << timestamp_ms);
 
 	// Create scoped connection
-	ScopedDbConnection scoped_connection("localhost");
+	ScopedDbConnection scoped_connection(this->connName);
 
 	// insert document object into the database
 	scoped_connection->insert(this->dbName + "." + this->collName + "_raw",	_doc_bo);

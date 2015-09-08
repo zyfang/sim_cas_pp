@@ -46,10 +46,12 @@ using namespace mongo;
 LogEvents::LogEvents(const gazebo::physics::WorldPtr _world,
 		const std::string _db_name,
 		const std::string _coll_name,
-		int _suffix)
+		int _suffix,
+        const std::string _connection_name)
 	: world(_world)
 	, dbName(_db_name)
 	, collName(_coll_name)
+    , connName(_connection_name)
 {
 	// get the world models
 	this->models = this->world->GetModels();
@@ -863,7 +865,7 @@ void LogEvents::WriteContexts()
 		std::vector<BSONObj> events_objs;
 
 	    // insert document object into the database, use scoped connection
-		ScopedDbConnection scoped_connection("localhost");
+		ScopedDbConnection scoped_connection(this->connName);
 
 		// iterate through the map
 		for(std::map<std::string, std::list<sg_pp::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();

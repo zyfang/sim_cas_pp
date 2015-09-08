@@ -48,7 +48,7 @@ namespace sg_pp
   {
     public:
       LogMotionExpressions(const gazebo::physics::WorldPtr& world, const std::string& db_name,
-          const std::string& coll_name);
+          const std::string& coll_name, const std::string connection_name);
 
       void Init();
   
@@ -65,7 +65,7 @@ namespace sg_pp
  
       gazebo::physics::WorldPtr world_;
       gazebo::physics::ModelPtr controlled_model_, observed_model_;
-      std::string db_name_, coll_name_, motion_file_;
+      std::string db_name_, coll_name_, motion_file_,conn_name_;
       std::vector<std::string> expression_names_;
       std::vector< KDL::Expression<double>::Ptr > expressions_;
       std::vector<double> expression_values_;

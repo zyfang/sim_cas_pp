@@ -54,7 +54,8 @@ class LogTF
 	public: LogTF(const gazebo::physics::WorldPtr _world,
 			const std::string _db_name,
 			const std::string _coll_name,
-			int _suffix);
+			int _suffix,
+			const std::string _connection_name);
 
 	/// \brief Destructor
 	public: virtual ~LogTF();
@@ -77,6 +78,9 @@ class LogTF
 	/// \brief Vector of the world models
 	private: gazebo::physics::Model_V models;
 
+	/// \brief which connection to log to
+	private: const std::string connName;
+	
 	/// \brief Database name
 	private: const std::string dbName;
 

@@ -56,7 +56,8 @@ class LogParticles
 	/// \brief Constructor
 	public: LogParticles(const gazebo::physics::WorldPtr _world,
 			const std::string _db_name,
-			const std::string _coll_name);
+			const std::string _coll_name,
+			const std::string _connection_name);
 
 	/// \brief Destructor
 	public: virtual ~LogParticles();
@@ -76,6 +77,9 @@ class LogParticles
 	/// \brief Vector of the world models
 	private: gazebo::physics::Model_V models;
 
+	/// \brief which connection to log to
+	private: const std::string connName;
+	
 	/// \brief Database name
 	private: const std::string dbName;
 

@@ -46,10 +46,12 @@ using namespace mongo;
 LogTF::LogTF(const gazebo::physics::WorldPtr _world,
 		const std::string _db_name,
 		const std::string _coll_name,
-		int _suffix)
+		int _suffix,
+		const std::string _connection_name)
 	: world(_world)
 	, dbName(_db_name)
 	, collName(_coll_name)
+	, connName(_connection_name)
 {
 	// get the world models
 	this->models = this->world->GetModels();
@@ -244,7 +246,7 @@ void LogTF::WriteTFData(const std::vector<tf::StampedTransform>& _stamped_transf
 	this->tfSeq++;
 
     // insert document object into the database, use scoped connection
-	ScopedDbConnection scoped_connection("localhost");
+	ScopedDbConnection scoped_connection(this->connName);
 
 	// insert document object into the database
 	scoped_connection->insert(this->dbName + "." + this->collName + "_tf", BSON("transforms" << transforms_bo

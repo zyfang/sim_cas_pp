@@ -174,6 +174,9 @@ void PostProcess::ReadConfigFile()
 //////////////////////////////////////////////////
 void PostProcess::InitOnWorldConnect()
 {
+	//specify to which port the database should be written. default ("localhost") is 27017
+	const std::string connection_name = "localhost:27019";
+
 	// get the world
 	this->world = physics::get_world(this->worldName);
 
@@ -195,19 +198,19 @@ void PostProcess::InitOnWorldConnect()
             "~/physics/contacts", &PostProcess::DummyContactsCallback, this);
 
     // initialize the tf logging class
-    this->tfLogger = new sg_pp::LogTF(this->world, this->dbName, this->collName, std::atoi(this->collSuffix.c_str()));
+    this->tfLogger = new sg_pp::LogTF(this->world, this->dbName, this->collName, std::atoi(this->collSuffix.c_str()), connection_name);
 
     // initialize the events logging class
-    this->eventsLogger = new sg_pp::LogEvents(this->world, this->dbName, this->collName, std::atoi(this->collSuffix.c_str()));
+    this->eventsLogger = new sg_pp::LogEvents(this->world, this->dbName, this->collName, std::atoi(this->collSuffix.c_str()), connection_name);
 
     // initialize the motion expressions logging class
-    this->motionExpressionsLogger = new sg_pp::LogMotionExpressions(this->world, this->dbName, this->collName);
+    this->motionExpressionsLogger = new sg_pp::LogMotionExpressions(this->world, this->dbName, this->collName,connection_name);
 
     // initialize the raw logging class
-    this->rawLogger = new sg_pp::LogRaw(this->world, this->dbName, this->collName);
+    this->rawLogger = new sg_pp::LogRaw(this->world, this->dbName, this->collName, connection_name);
 
     // initialize the particle logging class
-    this->particleLogger = new sg_pp::LogParticles(this->world, this->dbName, this->collName);
+    this->particleLogger = new sg_pp::LogParticles(this->world, this->dbName, this->collName, connection_name);
 }
 
 //////////////////////////////////////////////////

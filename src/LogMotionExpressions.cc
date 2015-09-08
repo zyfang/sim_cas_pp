@@ -41,8 +41,8 @@ using namespace gazebo;
 using namespace mongo;
 
 LogMotionExpressions::LogMotionExpressions(const gazebo::physics::WorldPtr& world, 
-    const std::string& db_name, const std::string& coll_name) :
-  world_( world ), db_name_( db_name ), coll_name_( coll_name )
+    const std::string& db_name, const std::string& coll_name, const std::string connection_name) :
+  world_( world ), db_name_( db_name ), coll_name_( coll_name ), conn_name_( connection_name)
 {
   expression_names_.clear();
   expression_names_.push_back("mug-bottom-behind-maker");
@@ -66,7 +66,7 @@ void LogMotionExpressions::Init()
   
 void LogMotionExpressions::WriteRawData()
 {
-  ScopedDbConnection scoped_connection("localhost");
+  ScopedDbConnection scoped_connection(this->conn_name_);
   scoped_connection->insert(this->db_name_ + "." + this->coll_name_ + "_motion_expressions", 
       to_bson(expression_names_, GetExpressionValues(), GetTimestamp()));
   scoped_connection.done();
