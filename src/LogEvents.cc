@@ -184,7 +184,8 @@ void LogEvents::InitEvents()
 void LogEvents::CheckEvents()
 {
     // compute simulation time in milliseconds
-    const double timestamp_ms = this->world->GetSimTime().Double();
+    // const double timestamp_ms = this->world->GetSimTime().Double();
+    double timestamp_ms = this->world->GetSimTime().nsec / 1000000.0 + this->world->GetSimTime().sec * 1000.0;
 
     // get all the contacts from the physics engine
     const std::vector<physics::Contact*> all_contacts = this->contactManagerPtr->GetContacts();

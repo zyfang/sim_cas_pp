@@ -97,7 +97,8 @@ void LogRaw::ReadConfigFile()
 void LogRaw::WriteRawData()
 {
     // compute simulation time in milliseconds
-    const double timestamp_ms = this->world->GetSimTime().Double();
+    // const double timestamp_ms = this->world->GetSimTime().Double()*1000;
+    const double timestamp_ms = this->world->GetSimTime().nsec / 1000000.0 + this->world->GetSimTime().sec * 1000.0;
 
     // get all the contacts from the physics engine
     const std::vector<physics::Contact*> _contacts = this->contactManagerPtr->GetContacts();

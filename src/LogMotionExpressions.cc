@@ -119,7 +119,9 @@ void LogMotionExpressions::ReadMotionExpressions()
 
 double LogMotionExpressions::GetTimestamp()
 {
-  return world_->GetSimTime().Double();
+  // return world_->GetSimTime().Double();
+  return world_->GetSimTime().nsec / 1000000.0 + this->world_->GetSimTime().sec * 1000.0;
+
 }
 
 const std::vector<double>& LogMotionExpressions::GetExpressionValues()
