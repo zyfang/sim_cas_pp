@@ -45,6 +45,7 @@
 #include "GzEvent.hh"
 #include "LogTF.hh"
 #include "LogEvents.hh"
+#include "LogMotionExpressions.hh"
 #include "LogRaw.hh"
 #include "LogParticles.hh"
 
@@ -94,6 +95,9 @@ class PostProcess : public gazebo::SystemPlugin
 
 	/// \brief Event logger class
 	private: sg_pp::LogEvents* eventsLogger;
+
+	/// \brief Motion Expressions logger class
+	private: sg_pp::LogMotionExpressions* motionExpressionsLogger;
 
 	/// \brief Raw logger class
 	private: sg_pp::LogRaw* rawLogger;
@@ -145,6 +149,9 @@ class PostProcess : public gazebo::SystemPlugin
 
 	/// \brief Check what to process
 	private: bool processEvents;
+
+	/// \brief Check what to process
+	private: bool processMotionExpressions;
 
 	/// \brief Check what to process
 	private: bool processParticle;

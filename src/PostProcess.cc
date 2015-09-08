@@ -155,6 +155,9 @@ void PostProcess::ReadConfigFile()
 	this->worldName = cfg.lookup("sim.world_name").c_str();
 	std::cout << "*PostProcess* - world_name: " << this->worldName << std::endl;
 
+	this->processMotionExpressions = cfg.lookup("pp.motion_expressions");
+	std::cout << "*PostProcess* - processing motion expressions: " << this->processMotionExpressions << std::endl;
+
 	this->processRaw = cfg.lookup("pp.raw");
 	std::cout << "*PostProcess* - processing raw data: " << this->processRaw << std::endl;
 
@@ -197,6 +200,9 @@ void PostProcess::InitOnWorldConnect()
     // initialize the events logging class
     this->eventsLogger = new sg_pp::LogEvents(this->world, this->dbName, this->collName, std::atoi(this->collSuffix.c_str()));
 
+    // initialize the motion expressions logging class
+    this->motionExpressionsLogger = new sg_pp::LogMotionExpressions(this->world, this->dbName, this->collName);
+
     // initialize the raw logging class
     this->rawLogger = new sg_pp::LogRaw(this->world, this->dbName, this->collName);
 
@@ -215,6 +221,8 @@ void PostProcess::FirstSimulationStepInit()
 
     // Initialize particles
     this->particleLogger->InitParticles();
+
+    this->motionExpressionsLogger->Init();
 
 	// Run the post processing threads once so the first step is not skipped
 	PostProcess::ProcessCurrentData();
@@ -249,6 +257,13 @@ void PostProcess::ProcessCurrentData()
 	{
 		process_thread_group.create_thread(
 				boost::bind(&sg_pp::LogRaw::WriteRawData, this->rawLogger));
+	}
+
+	// motion expressions
+	if (this->processMotionExpressions)
+	{
+		process_thread_group.create_thread(
+				boost::bind(&sg_pp::LogMotionExpressions::WriteRawData, this->motionExpressionsLogger));
 	}
 
     // particles data

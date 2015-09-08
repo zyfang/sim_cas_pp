@@ -17,6 +17,8 @@
   <build_depend>geometry_msgs</build_depend>
   <build_depend>mongodb-dev</build_depend>
   <build_depend>tf</build_depend>
+  <build_depend>giskard</build_depend>
+  <build_depend>yaml_cpp</build_depend>
 
   <run_depend>message_runtime</run_depend>
   <run_depend>roscpp</run_depend>
@@ -25,6 +27,8 @@
   <run_depend>geometry_msgs</run_depend>
   <run_depend>mongodb-dev</run_depend>
   <run_depend>tf</run_depend>
+  <run_depend>giskard</run_depend>
+  <run_depend>yaml_cpp</run_depend>
 
   <export>
   </export>
