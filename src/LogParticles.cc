@@ -405,29 +405,29 @@ void LogParticles::WriteParticleData()
         {
             BSONArrayBuilder support_arr_builder;
 
-            std::cout << m_iter->first->GetParentModel()->GetName() << " --> ";
+            // std::cout << m_iter->first->GetParentModel()->GetName() << " --> ";
             for(std::set<std::string>::const_iterator s_iter = m_iter->second.begin();
                 s_iter != m_iter->second.end(); s_iter++)
             {
-                std::cout << *s_iter << "; ";
+                // std::cout << *s_iter << "; ";
 
                 support_arr_builder.append(*s_iter);
             }
-            std::cout << std::endl;
+            // std::cout << std::endl;
 
             doc_bo_builder.append(m_iter->first->GetParentModel()->GetName(), support_arr_builder.arr());
         }
 
         ////////////////////////////
         // Grasped model
-        std::cout << "grasp --> " << grasped_model_name<< ";" << std::endl;
+        // std::cout << "grasp --> " << grasped_model_name<< ";" << std::endl;
 
         doc_bo_builder.append("grasp", grasped_model_name);
 
         ////////////////////////////
         // Poured particles
-        std::cout << "poured --> " << this->pouredLiquidCollisions_S.size() <<
-                     "/" << this->allLiquidCollisions_S.size() << ";" << std::endl;
+        // std::cout << "poured --> " << this->pouredLiquidCollisions_S.size() <<
+                     // "/" << this->allLiquidCollisions_S.size() << ";" << std::endl;
 
         BSONObjBuilder pour_builder;
 
@@ -439,7 +439,7 @@ void LogParticles::WriteParticleData()
 
         ////////////////////////////
         // Pancake size
-        std::cout << "pancake size --> " << this->pancakeCollision_S.size() << " particles" << std::endl;
+        // std::cout << "pancake size --> " << this->pancakeCollision_S.size() << " particles" << std::endl;
 
         pancake_builder.append("nr pancake particles", (int) this->pancakeCollision_S.size());
 
@@ -469,10 +469,10 @@ void LogParticles::WriteParticleData()
             {
                 BSONArrayBuilder support_arr_builder;
 
-                std::cout << "\t" << m_iter->first->GetParentModel()->GetName() << " --> ";
+                // std::cout << "\t" << m_iter->first->GetParentModel()->GetName() << " --> ";
 
                 // Write only nr of particles at the moment
-                std::cout << m_iter->second.size() << " particles;" <<std::endl;
+                // std::cout << m_iter->second.size() << " particles;" <<std::endl;
                 for(std::set<std::string>::const_iterator s_iter = m_iter->second.begin();
                     s_iter != m_iter->second.end(); s_iter++)
                 {
@@ -499,10 +499,10 @@ void LogParticles::WriteParticleData()
             {
                 BSONArrayBuilder pancake_arr_builder;
 
-                std::cout << "\t" << m_iter->first->GetParentModel()->GetName() << " --> ";
+                // std::cout << "\t" << m_iter->first->GetParentModel()->GetName() << " --> ";
 
                 // Write only nr of particles at the moment
-                std::cout << m_iter->second.size() << " pancake particles;" <<std::endl;
+                // std::cout << m_iter->second.size() << " pancake particles;" <<std::endl;
                 for(std::set<std::string>::const_iterator s_iter = m_iter->second.begin();
                     s_iter != m_iter->second.end(); s_iter++)
                 {
@@ -516,7 +516,7 @@ void LogParticles::WriteParticleData()
 
             pancake_builder.append("pancake supports", pancake_support_builder.obj());
         }
-        std::cout <<"-------------------------------------------------------------------ts: "<< timestamp_ms << std::endl;
+        // std::cout <<"-------------------------------------------------------------------ts: "<< timestamp_ms << std::endl;
 
     // TODO Pour Pancake events
         doc_bo_builder.append("pour", pour_builder.obj());

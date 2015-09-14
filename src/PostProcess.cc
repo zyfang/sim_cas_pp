@@ -91,6 +91,35 @@ void PostProcess::Load(int _argc, char ** _argv)
 
     // read config file
     PostProcess::ReadConfigFile();
+
+    //set the flag that postprocessing shouldn't start yet
+    startedpostprocess = false;
+    //delay post-processing
+    delay_postprocess_start_thread_ = 
+    	new boost::thread(&PostProcess::DelayPostprocessStart, this);
+}
+
+//////////////////////////////////////////////////
+
+void PostProcess::DelayPostprocessStart()
+{
+	std::cout << "Starting postprocessing when simtime exceeds 2 seconds " << std::endl;
+	while(!this->world || this->world->GetSimTime()<2.0)
+	{
+		usleep(1000);
+	}
+	std::cout << "starting now" << std::endl;
+	if(!startedpostprocess)
+	{
+			// get the event collisions, only called once, the connection is then changed
+	    this->eventConnection = event::Events::ConnectWorldUpdateBegin(
+	        boost::bind(&PostProcess::FirstSimulationStepInit, this));
+
+	    // thread for checking if the log has finished playing
+		this->checkLogginFinishedThread =
+				new boost::thread(&PostProcess::CheckLoggingFinishedWorker, this);
+		startedpostprocess=true;
+	}
 }
 
 //////////////////////////////////////////////////
@@ -103,13 +132,15 @@ void PostProcess::Init()
     this->worldCreatedConnection =  event::Events::ConnectWorldCreated(
             boost::bind(&PostProcess::InitOnWorldConnect, this));
 
-    // get the event collisions, only called once, the connection is then changed
-    this->eventConnection = event::Events::ConnectWorldUpdateBegin(
-        boost::bind(&PostProcess::FirstSimulationStepInit, this));
+ //    // get the event collisions, only called once, the connection is then changed
+ //    this->eventConnection = event::Events::ConnectWorldUpdateBegin(
+ //        boost::bind(&PostProcess::FirstSimulationStepInit, this));
 
-    // thread for checking if the log has finished playing
-	this->checkLogginFinishedThread =
-			new boost::thread(&PostProcess::CheckLoggingFinishedWorker, this);
+ //    // thread for checking if the log has finished playing
+	// this->checkLogginFinishedThread =
+	// 		new boost::thread(&PostProcess::CheckLoggingFinishedWorker, this);
+
+	//SELF NOTE: I'd move these threads out of init and into updateOnCallBack and then only call it once if the flag is true (set it to false after starting the processes, and then it should never be set to true again). Cannot test this without also changing the header file and everything. Test after dinner.
 }
 
 //////////////////////////////////////////////////

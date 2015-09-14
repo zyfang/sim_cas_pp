@@ -66,6 +66,9 @@ class PostProcess : public gazebo::SystemPlugin
 	/// \brief Init plugin (Load called first, then Init)
 	protected: virtual void Init();
 
+	// Delay writing away for a specified amount of time
+	private: void DelayPostprocessStart();
+
 	/// \brief Load config file
 	private: void ReadConfigFile();
 
@@ -89,6 +92,8 @@ class PostProcess : public gazebo::SystemPlugin
 
 	/// \brief Thread for checking the end of a log
 	private: boost::thread* checkLogginFinishedThread;
+
+	private: boost::thread* delay_postprocess_start_thread_;
 
 	/// \brief TF logger class
 	private: sg_pp::LogTF* tfLogger;
@@ -155,6 +160,9 @@ class PostProcess : public gazebo::SystemPlugin
 
 	/// \brief Check what to process
 	private: bool processParticle;
+
+	//flag to wait with postprocessing until a certain point
+	private: bool startedpostprocess;
 };
 }
 
