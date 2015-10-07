@@ -1,4 +1,4 @@
-# sim_cas_pp catkin package for post processing data from sim_games
+# sim_cas_pp catkin package for post processing data from sim_cas
 
 ## Installation
 
@@ -12,6 +12,6 @@ Make sure to set the path the installation of the C++ Client for MongoDB in the 
 
 ### Run example:
 ~~~
-gazebo -u --verbose -s libPostProcess.so -p <path>/state.log --suffix 69
+gazebo -u --verbose -s libPostProcess.so -p <path>/state.log
 ~~~
 

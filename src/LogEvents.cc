@@ -40,39 +40,39 @@ using namespace sg_pp;
 using namespace gazebo;
 using namespace mongo;
 
-#define TIME_OFFSET 0
+#define TIME_OFFSET 5000
 
 //////////////////////////////////////////////////
 LogEvents::LogEvents(const gazebo::physics::WorldPtr _world,
-		const std::string _db_name,
-		const std::string _coll_name,
-		int _suffix,
+        const std::string _db_name,
+        const std::string _coll_name,
+        int _suffix,
         const std::string _connection_name)
-	: world(_world)
-	, dbName(_db_name)
-	, collName(_coll_name)
+    : world(_world)
+    , dbName(_db_name)
+    , collName(_coll_name)
     , connName(_connection_name)
 {
-	// get the world models
-	this->models = this->world->GetModels();
+    // get the world models
+    this->models = this->world->GetModels();
 
     // get the liquid model
     this->liquidSpheres = this->world->GetModel("LiquidTangibleThing");
 
-	// get the world models
-	this->contactManagerPtr = this->world->GetPhysicsEngine()->GetContactManager();
+    // get the world models
+    this->contactManagerPtr = this->world->GetPhysicsEngine()->GetContactManager();
 
-	// get values from the config file
-	LogEvents::ReadConfigFile();
+    // get values from the config file
+    LogEvents::ReadConfigFile();
 
-	// set the grasp init flag to false
-	this->graspInit = false;
+    // set the grasp init flag to false
+    this->graspInit = false;
 
     // set the pouring started flag to false
     this->pancakeCreated = false;
 
-	// TODO for adding time offset to the simulation times
-	this->suffixTime = _suffix;
+    // TODO for adding time offset to the simulation times
+    this->suffixTime = _suffix;
 }
 
 //////////////////////////////////////////////////
@@ -84,102 +84,101 @@ LogEvents::~LogEvents()
 //////////////////////////////////////////////////
 void LogEvents::ReadConfigFile()
 {
-	// create the config
-	libconfig::Config cfg;
+    // create the config
+    libconfig::Config cfg;
 
-	// read config file
-	try
-	{
-		cfg.readFile("config.cfg");
-	}
-	catch(const libconfig::FileIOException &fioex)
-	{
-		std::cerr << "I/O error while reading file." << std::endl;
-	}
-	catch(const libconfig::ParseException &pex)
-	{
-		std::cerr << "Parse error at " << pex.getFile() << ":" << pex.getLine()
-		            		  << " - " << pex.getError() << std::endl;
-	}
+    // read config file
+    try
+    {
+        cfg.readFile("config.cfg");
+    }
+    catch(const libconfig::FileIOException &fioex)
+    {
+        std::cerr << "I/O error while reading file." << std::endl;
+    }
+    catch(const libconfig::ParseException &pex)
+    {
+        std::cerr << "Parse error at " << pex.getFile() << ":" << pex.getLine()
+                              << " - " << pex.getError() << std::endl;
+    }
 
-	// get the variables from the config file
-	this->logLocation = cfg.lookup("events.log_location").c_str();
-	std::cout << "*LogEvents* - log_location: " << this->logLocation << std::endl;
+    // get the variables from the config file
+    this->logLocation = cfg.lookup("events.log_location").c_str();
+    std::cout << "*LogEvents* - log_location: " << this->logLocation << std::endl;
 
-	this->eventDiscTresh = cfg.lookup("events.ev_disc_thresh");
-	std::cout << "*LogEvents* - ev_disc_thresh: " << this->eventDiscTresh << std::endl;
+    this->eventDiscTresh = cfg.lookup("events.ev_disc_thresh");
+    std::cout << "*LogEvents* - ev_disc_thresh: " << this->eventDiscTresh << std::endl;
 
 }
 
 //////////////////////////////////////////////////
 void LogEvents::InitEvents()
 {
-	std::cout << "*LogEvents* - Sim start: " << this->world->GetSimTime().Double() << std::endl;
+    std::cout << "*LogEvents* - Sim start: " << this->world->GetSimTime().Double() << std::endl;
 
-	// open the main GzEvent
-	this->nameToEvents_M["Main"].push_back(
-			new GzEvent("Main","&knowrob_sim;", "PancakeEpisode", this->world->GetSimTime().Double()));
+    // open the main GzEvent
+    this->nameToEvents_M["Main"].push_back(
+            new GzEvent("Main","&knowrob_sim;", "PancakeEpisode", this->world->GetSimTime().Double()));
 
-	// loop through all the models to see which have event collisions
-	for(physics::Model_V::const_iterator m_iter = this->models.begin();
-			m_iter != this->models.end(); m_iter++)
-	{
-		// map model name to the GzEventObj object
-		this->nameToEventObj_M[m_iter->get()->GetName()] = new GzEventObj(m_iter->get()->GetName());
+    // loop through all the models to see which have event collisions
+    for(physics::Model_V::const_iterator m_iter = this->models.begin();
+            m_iter != this->models.end(); m_iter++)
+    {
+        // map model name to the GzEventObj object
+        this->nameToEventObj_M[m_iter->get()->GetName()] = new GzEventObj(m_iter->get()->GetName());
 
-		// map model name to the beliefstate object
-		// this->nameToBsObject_M[m_iter->get()->GetName()] =
-		// 		new beliefstate_client::Object("&knowrob;", m_iter->get()->GetName());
+        // map model name to the beliefstate object
+         this->nameToBsObject_M[m_iter->get()->GetName()] =
+                new beliefstate_client::Object("&knowrob;", m_iter->get()->GetName());
 
+        // get the links vector from the current model
+        const physics::Link_V links = m_iter->get()->GetLinks();
 
-		// get the links vector from the current model
-		const physics::Link_V links = m_iter->get()->GetLinks();
-
-		// loop through the links
-		for (physics::Link_V::const_iterator l_iter = links.begin();
-				l_iter != links.end(); l_iter++)
-		{
-			// get the collisions of the current link
+        // loop through the links
+        for (physics::Link_V::const_iterator l_iter = links.begin();
+                l_iter != links.end(); l_iter++)
+        {
+            // get the collisions of the current link
             const physics::Collision_V collisions = l_iter->get()->GetCollisions();
 
-			// loop through all the collision
-			for (physics::Collision_V::const_iterator c_iter = collisions.begin();
-					c_iter != collisions.end(); c_iter++)
+            // loop through all the collision
+            for (physics::Collision_V::const_iterator c_iter = collisions.begin();
+                    c_iter != collisions.end(); c_iter++)
             {
-				// check if collision belongs to the liquid model
-				if ((*m_iter) == this->liquidSpheres)
-				{
-					this->allLiquidParticles_S.insert(c_iter->get());
-				}
+                // check if collision belongs to the liquid model
+                if ((*m_iter) == this->liquidSpheres)
+                {
+                    this->allLiquidParticles_S.insert(c_iter->get());
+                }
 
-				// if the collision is without physical contact then add it to the map
-				if (c_iter->get()->GetSurface()->collideWithoutContact)
-				{
-					// specific no-contact collision
-					if (c_iter->get()->GetName() == "mug_event_collision")
-					{
-						this->eventCollisionMug = c_iter->get();
-					}
-					else if (c_iter->get()->GetName() == "fore_finger_event_collision")
-					{
-						this->eventCollisionForeFinger = c_iter->get();
-					}
-					else if (c_iter->get()->GetName() == "thumb_event_collision")
-					{
-						this->eventCollisionThumb = c_iter->get();
-					}
-					else
+                // if the collision is without physical contact then add it to the map
+                if (c_iter->get()->GetSurface()->collideWithoutContact)
+                {
+                    // specific no-contact collision
+                    if (c_iter->get()->GetName() == "mug_event_collision")
                     {
-						// insert collision into set
+                        this->eventCollisionMug = c_iter->get();
+                    }
+                    else if (c_iter->get()->GetName() == "fore_finger_event_collision")
+                    {
+                        this->eventCollisionForeFinger = c_iter->get();
+                    }
+                    else if (c_iter->get()->GetName() == "thumb_event_collision")
+                    {
+                        this->eventCollisionThumb = c_iter->get();
+                    }
+                    else
+                    {
+                        // insert collision into set
                         this->eventCollisions_S.insert(c_iter->get());
 
                         // init the event coll to particle names map with empty sets of strings
                         this->eventCollToSetOfParticleNames_M[c_iter->get()] = std::set<std::string>();
-					}
-				}
-			}
-		}
-	}
+                    }
+                }
+            }
+        }
+    }
 }
 
 //////////////////////////////////////////////////
@@ -192,8 +191,8 @@ void LogEvents::CheckEvents()
     // get all the contacts from the physics engine
     const std::vector<physics::Contact*> all_contacts = this->contactManagerPtr->GetContacts();
 
-	// marks if there is a difference between the previous and current step
-	bool diff_detected = false;
+    // marks if there is a difference between the previous and current step
+    bool diff_detected = false;
 
     // set finger contacts flags to false
     bool fore_finger_contact = false;
@@ -248,7 +247,7 @@ void LogEvents::CheckEvents()
             curr_ev_coll_to_model_names_S_M[curr_coll1].insert(curr_coll2->GetParentModel()->GetName());
 
             curr_ev_contact_model_pair_S.insert(std::pair<std::string, std::string>(
-            		curr_coll1->GetParentModel()->GetName(), curr_coll2->GetParentModel()->GetName()));
+                    curr_coll1->GetParentModel()->GetName(), curr_coll2->GetParentModel()->GetName()));
         }
         // check if collision 2 belongs to the event collision set
         else if(this->eventCollisions_S.find(curr_coll2) != this->eventCollisions_S.end())
@@ -257,7 +256,7 @@ void LogEvents::CheckEvents()
             curr_ev_coll_to_model_names_S_M[curr_coll2].insert(curr_coll1->GetParentModel()->GetName());
 
             curr_ev_contact_model_pair_S.insert(std::pair<std::string, std::string>(
-            		curr_coll2->GetParentModel()->GetName(), curr_coll1->GetParentModel()->GetName()));
+                    curr_coll2->GetParentModel()->GetName(), curr_coll1->GetParentModel()->GetName()));
         }
 
 
@@ -272,13 +271,13 @@ void LogEvents::CheckEvents()
             // (these vary randomly, coll1 might be self or the one in contact with)
             if (curr_coll1->GetParentModel() == this->eventCollisionForeFinger->GetModel())
             {
-            	// coll1 is self, meaning the grasped model is coll2
-            	ff_grasped_model = curr_coll2->GetParentModel();
+                // coll1 is self, meaning the grasped model is coll2
+                ff_grasped_model = curr_coll2->GetParentModel();
             }
             else
             {
-            	// coll1 is not self, implies that it's the grasped model
-            	ff_grasped_model = curr_coll1->GetParentModel();
+                // coll1 is not self, implies that it's the grasped model
+                ff_grasped_model = curr_coll1->GetParentModel();
             }
 
         }
@@ -291,13 +290,13 @@ void LogEvents::CheckEvents()
             // (these vary randomly, coll1 might be self or the one in contact with)
             if (curr_coll1->GetParentModel() == this->eventCollisionForeFinger->GetModel())
             {
-            	// coll1 is self, meaning the grasped model is coll2
-            	thumb_grasped_model = curr_coll2->GetParentModel();
+                // coll1 is self, meaning the grasped model is coll2
+                thumb_grasped_model = curr_coll2->GetParentModel();
             }
             else
             {
-            	// coll1 is not self, implies that it's the grasped model
-            	thumb_grasped_model = curr_coll1->GetParentModel();
+                // coll1 is not self, implies that it's the grasped model
+                thumb_grasped_model = curr_coll1->GetParentModel();
             }
         }
 
@@ -376,15 +375,15 @@ void LogEvents::CheckEvents()
 
     // Check if the current grasp has changed
     diff_detected = LogEvents::CheckCurrentGrasp(
-    		timestamp_ms, ff_grasped_model, thumb_grasped_model);
+            timestamp_ms, ff_grasped_model, thumb_grasped_model);
 
     // Check if difference between the event collisions have appeared
     diff_detected = LogEvents::CheckCurrentEventCollisions(
-    		timestamp_ms, curr_ev_contact_model_pair_S);
+            timestamp_ms, curr_ev_contact_model_pair_S);
 
-	// Check if diff between particles leaving the mug appeared
-	diff_detected = LogEvents::CheckFluidFlowTransEvent(
-			timestamp_ms, prev_poured_particles_nr);
+    // Check if diff between particles leaving the mug appeared
+    diff_detected = LogEvents::CheckFluidFlowTransEvent(
+            timestamp_ms, prev_poured_particles_nr);
 
 
 //    // TODO Pour Pancake events
@@ -520,92 +519,92 @@ void LogEvents::CheckEvents()
 //////////////////////////////////////////////////
 void LogEvents::FiniEvents()
 {
-	// close main GzEvent
-	this->nameToEvents_M["Main"].back()->End(this->world->GetSimTime().Double());
+    // close main GzEvent
+    this->nameToEvents_M["Main"].back()->End(this->world->GetSimTime().Double());
 
-	// close all open events
-	LogEvents::EndActiveEvents();
+    // close all open events
+    LogEvents::EndActiveEvents();
 
-	// Concatenate timelines with short disconnections
-	LogEvents::MergeEventDisconnections();
+    // Concatenate timelines with short disconnections
+    LogEvents::MergeEventDisconnections();
 
-	// write events as belief state contexts
-	LogEvents::WriteContexts();
+    // write events as belief state contexts
+    LogEvents::WriteContexts();
 
-	// write events to timeline file
-	LogEvents::WriteTimelines();
+    // write events to timeline file
+    LogEvents::WriteTimelines();
 }
 
 //////////////////////////////////////////////////
 bool LogEvents::CheckCurrentGrasp(
-		const double _timestamp_ms,
-		gazebo::physics::ModelPtr _ff_grasped_model,
-		gazebo::physics::ModelPtr _thumb_grasped_model)
+        const double _timestamp_ms,
+        gazebo::physics::ModelPtr _ff_grasped_model,
+        gazebo::physics::ModelPtr _thumb_grasped_model)
 {
-	// marks if there is a difference between the previous and current step
-	bool diff_detected = false;
+    // marks if there is a difference between the previous and current step
+    bool diff_detected = false;
 
     // current grasped model
-	physics::ModelPtr curr_grasped_model;
+    physics::ModelPtr curr_grasped_model;
 
     // check for grasp / both fingers are in contact with the same model
     if(_ff_grasped_model == _thumb_grasped_model && _ff_grasped_model != NULL)
     {
-    	curr_grasped_model = _ff_grasped_model;
+        curr_grasped_model = _ff_grasped_model;
     }
 
     // check for difference between current and prev grasp
     if (curr_grasped_model != this->prevGraspedModel)
     {
-    	// set diff flat to true
-    	diff_detected = true;
+        // set diff flat to true
+        diff_detected = true;
 
-    	if (curr_grasped_model != NULL)
-    	{
-    		this->prevGraspedModel = curr_grasped_model;
+        if (curr_grasped_model != NULL)
+        {
+            this->prevGraspedModel = curr_grasped_model;
 
-    		// the name of the grasping event
-			std::string grasp_ev_name = "Grasp" + curr_grasped_model->GetName();
+            // the name of the grasping event
+            std::string grasp_ev_name = "Grasp" + curr_grasped_model->GetName();
 
-    		// check if the grasp event has been initialized
-    		if(this->graspGzEvent != NULL)
-    		{
-    			// create the contact GzEvent
-    			this->graspGzEvent = new GzEvent(
-    					grasp_ev_name, "&knowrob;", "GraspingSomething",
-    					"knowrob:", "objectActedOn", _timestamp_ms);
+            // check if the grasp event has been initialized
+            if(this->graspGzEvent != NULL)
+            {
+                // create the contact GzEvent
+                this->graspGzEvent = new GzEvent(
+                        grasp_ev_name, "&knowrob;", "GraspingSomething",
+                        "knowrob:", "objectActedOn", _timestamp_ms);
 
-    			// add grasped object
-    			this->graspGzEvent->AddObject(this->nameToEventObj_M[curr_grasped_model->GetName()]);
+                // add grasped object
+                this->graspGzEvent->AddObject(this->nameToEventObj_M[curr_grasped_model->GetName()]);
 
-    			std::cout << "*LogEvents* - Start - \t" << grasp_ev_name << "\t\t at " << _timestamp_ms  << std::endl;
-    		}
-    		// init first grasp
-    		else
-    		{
-        		// create first grasp GzEvent
-        		this->graspGzEvent = new GzEvent(
-        				grasp_ev_name, "&knowrob;", "GraspingSomething",
-        				"knowrob:", "objectActedOn", _timestamp_ms);
+                std::cout << "*LogEvents* - Start - \t" << grasp_ev_name << "\t\t at " << _timestamp_ms  << std::endl;
+            }
+            // init first grasp
+            else
+            {
+                // create first grasp GzEvent
+                this->graspGzEvent = new GzEvent(
+                        grasp_ev_name, "&knowrob;", "GraspingSomething",
+                        "knowrob:", "objectActedOn", _timestamp_ms);
 
-        		// add grasped object
-        		this->graspGzEvent->AddObject(this->nameToEventObj_M[curr_grasped_model->GetName()]);
+                // add grasped object
+                this->graspGzEvent->AddObject(this->nameToEventObj_M[curr_grasped_model->GetName()]);
 
-        		std::cout << "*LogEvents* - Init - \t" << grasp_ev_name << "\t\t at " << _timestamp_ms  << std::endl;
-    		}
-    	}
-    	else
-    	{
-    		this->prevGraspedModel.reset();
+                std::cout << "*LogEvents* - Init - \t" << grasp_ev_name << "\t\t at " << _timestamp_ms  << std::endl;
+            }
+        }
+        else
+        {
+            this->prevGraspedModel.reset();
 
-    		// end grasping event
-			this->graspGzEvent->End(_timestamp_ms);
+            // end grasping event
+            this->graspGzEvent->End(_timestamp_ms);
 
-			std::cout << "*LogEvents* - End - \t" << this->graspGzEvent->GetName() << "\t\t at " << _timestamp_ms  << std::endl;
+            std::cout << "*LogEvents* - End - \t" << this->graspGzEvent->GetName() << "\t\t at " << _timestamp_ms  << std::endl;
 
-			// add grasp event to the map of all events
-			this->nameToEvents_M[this->graspGzEvent->GetName()].push_back(this->graspGzEvent);
-    	}
+            // add grasp event to the map of all events
+            this->nameToEvents_M[this->graspGzEvent->GetName()].push_back(this->graspGzEvent);
+        }
 
     }
 
@@ -614,105 +613,105 @@ bool LogEvents::CheckCurrentGrasp(
 
 //////////////////////////////////////////////////
 bool LogEvents::CheckCurrentEventCollisions(
-		const double _timestamp_ms,
-		std::set<std::pair<std::string, std::string> > &_curr_ev_contact_model_pair_S)
+        const double _timestamp_ms,
+        std::set<std::pair<std::string, std::string> > &_curr_ev_contact_model_pair_S)
 {
-	// marks if there is a difference between the previous and current step
-	bool diff_detected = false;
+    // marks if there is a difference between the previous and current step
+    bool diff_detected = false;
 
-	// the symmetric difference will be added to this set
-	std::set<std::pair<std::string, std::string> > symmetric_diff_S;
+    // the symmetric difference will be added to this set
+    std::set<std::pair<std::string, std::string> > symmetric_diff_S;
 
-	// computing the symmetric diff between the curr and prev set
-	std::set_symmetric_difference(
-			_curr_ev_contact_model_pair_S.begin(),
-			_curr_ev_contact_model_pair_S.end(),
-			this->prevEvContactModelPair_S.begin(),
-			this->prevEvContactModelPair_S.end(),
-			std::inserter(symmetric_diff_S,symmetric_diff_S.end()));
+    // computing the symmetric diff between the curr and prev set
+    std::set_symmetric_difference(
+            _curr_ev_contact_model_pair_S.begin(),
+            _curr_ev_contact_model_pair_S.end(),
+            this->prevEvContactModelPair_S.begin(),
+            this->prevEvContactModelPair_S.end(),
+            std::inserter(symmetric_diff_S,symmetric_diff_S.end()));
 
-	// check if there are any differences
-	if (symmetric_diff_S.size() > 0)
-	{
-		// set diff flag to true and set the prev values to the current one
-		bool diff_detected = true;
-		this->prevEvContactModelPair_S = _curr_ev_contact_model_pair_S;
+    // check if there are any differences
+    if (symmetric_diff_S.size() > 0)
+    {
+        // set diff flag to true and set the prev values to the current one
+        bool diff_detected = true;
+        this->prevEvContactModelPair_S = _curr_ev_contact_model_pair_S;
 
-		// iterate through all the collising event models
-		for(std::set<std::pair<std::string, std::string> >::const_iterator m_iter = symmetric_diff_S.begin();
-				m_iter != symmetric_diff_S.end(); m_iter++)
-		{
+        // iterate through all the collising event models
+        for(std::set<std::pair<std::string, std::string> >::const_iterator m_iter = symmetric_diff_S.begin();
+                m_iter != symmetric_diff_S.end(); m_iter++)
+        {
 
-			// TODO hardcoded check for duplicates of spatula<->pancake maker,
-			// aka ignore spatula->pancakemaker, use pancakemaker->spatula
-			if(m_iter->first == "Spatula" && m_iter->second == "PancakeMaker")
-			{
-				continue;
-			}
+            // TODO hardcoded check for duplicates of spatula<->pancake maker,
+            // aka ignore spatula->pancakemaker, use pancakemaker->spatula
+            if(m_iter->first == "Spatula" && m_iter->second == "PancakeMaker")
+            {
+                continue;
+            }
 
-			// set name of the context first models + second model in contact
-			std::string contact_ev_name = "Contact" + m_iter->first + m_iter->second;
+            // set name of the context first models + second model in contact
+            std::string contact_ev_name = "Contact" + m_iter->first + m_iter->second;
 
 
-			// if event does not exist
-			// TODO add two way detection of contacts, store somewhere the pairs in contact
-			if(!this->nameToEvents_M.count(contact_ev_name))
-			{
-				// create local contact GzEvent
-				sg_pp::GzEvent* contact_event = new sg_pp::GzEvent(
-						contact_ev_name, "&knowrob_sim;", "TouchingSituation",
-						"knowrob_sim:", "inContact", _timestamp_ms);
+            // if event does not exist
+            // TODO add two way detection of contacts, store somewhere the pairs in contact
+            if(!this->nameToEvents_M.count(contact_ev_name))
+            {
+                // create local contact GzEvent
+                sg_pp::GzEvent* contact_event = new sg_pp::GzEvent(
+                        contact_ev_name, "&knowrob_sim;", "TouchingSituation",
+                        "knowrob_sim:", "inContact", _timestamp_ms);
 
-				// add the two objects in contact
-				contact_event->AddObject(this->nameToEventObj_M[m_iter->first]);
+                // add the two objects in contact
+                contact_event->AddObject(this->nameToEventObj_M[m_iter->first]);
 
-				contact_event->AddObject(this->nameToEventObj_M[m_iter->second]);
+                contact_event->AddObject(this->nameToEventObj_M[m_iter->second]);
 
-				// add local event to the map
-				this->nameToEvents_M[contact_ev_name].push_back(contact_event);
+                // add local event to the map
+                this->nameToEvents_M[contact_ev_name].push_back(contact_event);
 
-			    std::cout << "*LogEvents* - Start - \t" << contact_ev_name << "\t\t at " << _timestamp_ms << std::endl;
-			}
-			else
-			{
-				// if the contact exists and it is open, end it
-				if(this->nameToEvents_M[contact_ev_name].back()->IsOpen())
-				{
-					// end contact event
-					this->nameToEvents_M[contact_ev_name].back()->End(_timestamp_ms);
+                std::cout << "*LogEvents* - Start - \t" << contact_ev_name << "\t\t at " << _timestamp_ms << std::endl;
+            }
+            else
+            {
+                // if the contact exists and it is open, end it
+                if(this->nameToEvents_M[contact_ev_name].back()->IsOpen())
+                {
+                    // end contact event
+                    this->nameToEvents_M[contact_ev_name].back()->End(_timestamp_ms);
 
-				    std::cout << "*LogEvents* - End - \t" << contact_ev_name << "\t\t at " << _timestamp_ms << std::endl;
-				}
-				else
-				{
-					// create local contact GzEvent
-					sg_pp::GzEvent* contact_event = new sg_pp::GzEvent(
-							contact_ev_name, "&knowrob_sim;", "TouchingSituation",
-							"knowrob_sim:", "inContact", _timestamp_ms);
+                    std::cout << "*LogEvents* - End - \t" << contact_ev_name << "\t\t at " << _timestamp_ms << std::endl;
+                }
+                else
+                {
+                    // create local contact GzEvent
+                    sg_pp::GzEvent* contact_event = new sg_pp::GzEvent(
+                            contact_ev_name, "&knowrob_sim;", "TouchingSituation",
+                            "knowrob_sim:", "inContact", _timestamp_ms);
 
-					// add the two objects in contact
-					contact_event->AddObject(this->nameToEventObj_M[m_iter->first]);
+                    // add the two objects in contact
+                    contact_event->AddObject(this->nameToEventObj_M[m_iter->first]);
 
-					contact_event->AddObject(this->nameToEventObj_M[m_iter->second]);
+                    contact_event->AddObject(this->nameToEventObj_M[m_iter->second]);
 
-					// add local event to the map
-					this->nameToEvents_M[contact_ev_name].push_back(contact_event);				}
+                    // add local event to the map
+                    this->nameToEvents_M[contact_ev_name].push_back(contact_event);				}
 
-			    std::cout << "*LogEvents* - Start - \t" << contact_ev_name << "\t\t at " << _timestamp_ms << std::endl;
-			}
-		}
-	}
+                std::cout << "*LogEvents* - Start - \t" << contact_ev_name << "\t\t at " << _timestamp_ms << std::endl;
+            }
+        }
+    }
 
-	return diff_detected;
+    return diff_detected;
 }
 
 //////////////////////////////////////////////////
 bool LogEvents::CheckFluidFlowTransEvent(
-		const double _timestamp_ms,
-		int _prev_poured_particle_nr)
+        const double _timestamp_ms,
+        int _prev_poured_particle_nr)
 {
-	// marks if there is a difference between the previous and current step
-	bool diff_detected = false;
+    // marks if there is a difference between the previous and current step
+    bool diff_detected = false;
 
 
     // Check if new particle has been poured
@@ -721,47 +720,47 @@ bool LogEvents::CheckFluidFlowTransEvent(
         diff_detected = true;
 
         // check if the event doesn't exist (first particles leaving)
-		if(!this->nameToEvents_M.count("FluidFlow-Translation"))
-		{
-		    std::cout << "*LogEvents* - Start - \tFluidFlow-Translation \t\t at " << _timestamp_ms << std::endl;
+        if(!this->nameToEvents_M.count("FluidFlow-Translation"))
+        {
+            std::cout << "*LogEvents* - Start - \tFluidFlow-Translation \t\t at " << _timestamp_ms << std::endl;
 
-			// add local event to the map
-			this->nameToEvents_M["FluidFlow-Translation"].push_back(new sg_pp::GzEvent(
-					"FluidFlow-Translation", "&knowrob;", "FluidFlow-Translation", _timestamp_ms));
-		}
-		else // check if last particle left
-		{
-			if(this->totalPouredParticles_S.size() == this->allLiquidParticles_S.size())
-			{
-			    std::cout << "*LogEvents* - End - \t FluidFlow-Translation \t\t at " << _timestamp_ms << std::endl;
+            // add local event to the map
+            this->nameToEvents_M["FluidFlow-Translation"].push_back(new sg_pp::GzEvent(
+                    "FluidFlow-Translation", "&knowrob;", "FluidFlow-Translation", _timestamp_ms));
+        }
+        else // check if last particle left
+        {
+            if(this->totalPouredParticles_S.size() == this->allLiquidParticles_S.size())
+            {
+                std::cout << "*LogEvents* - End - \t FluidFlow-Translation \t\t at " << _timestamp_ms << std::endl;
 
-				// end liquid transfer event
-				this->nameToEvents_M["FluidFlow-Translation"].back()->End(_timestamp_ms);
-			}
-		}
+                // end liquid transfer event
+                this->nameToEvents_M["FluidFlow-Translation"].back()->End(_timestamp_ms);
+            }
+        }
     }
 
-	return diff_detected;
+    return diff_detected;
 }
 
 //////////////////////////////////////////////////
 void LogEvents::EndActiveEvents()
 {
-	// iterate through the map
-	for(std::map<std::string, std::list<sg_pp::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
-			m_it != this->nameToEvents_M.end(); m_it++)
-	{
-		// iterate through the events with the same name
-		for(std::list<GzEvent*>::const_iterator ev_it = m_it->second.begin();
-				ev_it != m_it->second.end(); ev_it++)
-		{
-			// if event still open end it at the end time
-			if((*ev_it)->IsOpen())
-			{
-				(*ev_it)->End(this->world->GetSimTime().Double());
-			}
-		}
-	}
+    // iterate through the map
+    for(std::map<std::string, std::list<sg_pp::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
+            m_it != this->nameToEvents_M.end(); m_it++)
+    {
+        // iterate through the events with the same name
+        for(std::list<GzEvent*>::const_iterator ev_it = m_it->second.begin();
+                ev_it != m_it->second.end(); ev_it++)
+        {
+            // if event still open end it at the end time
+            if((*ev_it)->IsOpen())
+            {
+                (*ev_it)->End(this->world->GetSimTime().Double());
+            }
+        }
+    }
 }
 
 //////////////////////////////////////////////////
@@ -769,37 +768,37 @@ void LogEvents::MergeEventDisconnections()
 {
     std::cout << "*LogEvents* - Merging event disconnections" << std::endl;
 
-	// iterate through the map
-	for(std::map<std::string, std::list<sg_pp::GzEvent*> >::iterator m_it = this->nameToEvents_M.begin();
-			m_it != this->nameToEvents_M.end(); m_it++)
-	{
-		// iterate through the events with the same name
-		for(std::list<GzEvent*>::iterator ev_it = m_it->second.begin();
-				ev_it != m_it->second.end(); /*increment in the loop*/)
-		{
-			// save current event for comparison
-			std::list<GzEvent*>::iterator curr_ev = ev_it;
+    // iterate through the map
+    for(std::map<std::string, std::list<sg_pp::GzEvent*> >::iterator m_it = this->nameToEvents_M.begin();
+            m_it != this->nameToEvents_M.end(); m_it++)
+    {
+        // iterate through the events with the same name
+        for(std::list<GzEvent*>::iterator ev_it = m_it->second.begin();
+                ev_it != m_it->second.end(); /*increment in the loop*/)
+        {
+            // save current event for comparison
+            std::list<GzEvent*>::iterator curr_ev = ev_it;
 
-			// increment current iteration (next event)
-			ev_it++;
+            // increment current iteration (next event)
+            ev_it++;
 
-			// check that the next value is not the last
-			if(ev_it != m_it->second.end())
-			{
-				if((*ev_it)->GetStartTime() - (*curr_ev)->GetEndTime() < this->eventDiscTresh)
-				{
-					std::cout << "\t merging " <<  (*ev_it)->GetName()
-							<< "\t" << (*curr_ev)->GetEndTime() << " --><-- " << (*ev_it)->GetStartTime() << std::endl;
+            // check that the next value is not the last
+            if(ev_it != m_it->second.end())
+            {
+                if((*ev_it)->GetStartTime() - (*curr_ev)->GetEndTime() < this->eventDiscTresh)
+                {
+                    std::cout << "\t merging " <<  (*ev_it)->GetName()
+                            << "\t" << (*curr_ev)->GetEndTime() << " --><-- " << (*ev_it)->GetStartTime() << std::endl;
 
-					// set the next values start time
-					(*ev_it)->SetStartTime((*curr_ev)->GetStartTime());
+                    // set the next values start time
+                    (*ev_it)->SetStartTime((*curr_ev)->GetStartTime());
 
-					// remove current value from list
-					m_it->second.erase(curr_ev);
-				}
-			}
-		}
-	}
+                    // remove current value from list
+                    m_it->second.erase(curr_ev);
+                }
+            }
+        }
+    }
 }
 
 //////////////////////////////////////////////////
@@ -807,89 +806,89 @@ void LogEvents::WriteContexts()
 {
     std::cout << "*LogEvents* - Writing contexts" << std::endl;
 
-	// // Write to owl file
-	// if(this->logLocation == "owl" || this->logLocation == "all")
-	// {
-	// 	// initialize the beliefstate
-	// 	this->beliefStateClient = new beliefstate_client::BeliefstateClient("bs_client");
+     // Write to owl file
+     if(this->logLocation == "owl" || this->logLocation == "all")
+     {
+        // initialize the beliefstate
+        this->beliefStateClient = new beliefstate_client::BeliefstateClient("bs_client");
 
-	// 	// starting new experiment
-	// 	this->beliefStateClient->startNewExperiment();
+        // starting new experiment
+        this->beliefStateClient->startNewExperiment();
 
-	// 	// adding experiment name to the meta data
-	// 	this->beliefStateClient->setMetaDataField("experiment", this->collName);
+        // adding experiment name to the meta data
+        this->beliefStateClient->setMetaDataField("experiment", this->collName);
 
-	// 	// register the OWL namespace
-	// 	this->beliefStateClient->registerOWLNamespace("knowrob_sim", "http://knowrob.org/kb/knowrob_sim.owl#");
+        // register the OWL namespace
+        this->beliefStateClient->registerOWLNamespace("knowrob_sim", "http://knowrob.org/kb/knowrob_sim.owl#");
 
-	// 	// iterate through the map
-	// 	for(std::map<std::string, std::list<sg_pp::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
-	// 			m_it != this->nameToEvents_M.end(); m_it++)
-	// 	{
-	// 		// iterate through the events with the same name
-	// 		for(std::list<sg_pp::GzEvent*>::const_iterator ev_it = m_it->second.begin();
-	// 				ev_it != m_it->second.end(); ev_it++)
-	// 		{
-	// 			// create local belief state context
-	// 			beliefstate_client::Context* curr_ctx;
+        // iterate through the map
+        for(std::map<std::string, std::list<sg_pp::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
+                m_it != this->nameToEvents_M.end(); m_it++)
+        {
+            // iterate through the events with the same name
+            for(std::list<sg_pp::GzEvent*>::const_iterator ev_it = m_it->second.begin();
+                    ev_it != m_it->second.end(); ev_it++)
+            {
+                // create local belief state context
+                beliefstate_client::Context* curr_ctx;
 
-	// 			// open belief state context
-	// 			curr_ctx = new beliefstate_client::Context(this->beliefStateClient,
-	// 					(*ev_it)->GetName(), (*ev_it)->GetClassNamespace(), (*ev_it)->GetClass(), (*ev_it)->GetStartTime() + (TIME_OFFSET * this->suffixTime));
+                // open belief state context
+                curr_ctx = new beliefstate_client::Context(this->beliefStateClient,
+                        (*ev_it)->GetName(), (*ev_it)->GetClassNamespace(), (*ev_it)->GetClass(), (*ev_it)->GetStartTime() + (TIME_OFFSET * this->suffixTime));
 
-	// 			// get the objects of the event
-	// 			std::vector<GzEventObj*> curr_objects = (*ev_it)->GetObjects();
+                // get the objects of the event
+                std::vector<GzEventObj*> curr_objects = (*ev_it)->GetObjects();
 
-	// 			// iterate through the objects
-	// 			for(std::vector<GzEventObj*>::const_iterator ob_it = curr_objects.begin();
-	// 					ob_it != curr_objects.end(); ob_it++)
-	// 			{
-	// 				// add object to the context
-	// 				curr_ctx->addObject(this->nameToBsObject_M[(*ob_it)->GetName()],
-	// 						(*ev_it)->GetPropertyNamespace() + (*ev_it)->GetProperty());
-	// 			}
+                // iterate through the objects
+                for(std::vector<GzEventObj*>::const_iterator ob_it = curr_objects.begin();
+                        ob_it != curr_objects.end(); ob_it++)
+                {
+                    // add object to the context
+                    curr_ctx->addObject(this->nameToBsObject_M[(*ob_it)->GetName()],
+                            (*ev_it)->GetPropertyNamespace() + (*ev_it)->GetProperty());
+                }
 
-	// 			// end belief state context
-	// 			curr_ctx->end(true, (*ev_it)->GetEndTime() + (TIME_OFFSET * this->suffixTime));
-	// 		}
-	// 	}
+                // end belief state context
+                curr_ctx->end(true, (*ev_it)->GetEndTime() + (TIME_OFFSET * this->suffixTime));
+            }
+        }
 
-	// 	// export belief state client
-	// 	this->beliefStateClient->exportFiles(this->collName);
-	// }
+        // export belief state client
+        this->beliefStateClient->exportFiles(this->collName);
+     }
 
-	// Write to mongodb
-	if(this->logLocation == "mongo" || this->logLocation == "all")
-	{
-		// all events
-		std::vector<BSONObj> events_objs;
+    // Write to mongodb
+    if(this->logLocation == "mongo" || this->logLocation == "all")
+    {
+        // all events
+        std::vector<BSONObj> events_objs;
 
-	    // insert document object into the database, use scoped connection
-		ScopedDbConnection scoped_connection(this->connName);
+        // insert document object into the database, use scoped connection
+        ScopedDbConnection scoped_connection(this->connName);
 
-		// iterate through the map
-		for(std::map<std::string, std::list<sg_pp::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
-				m_it != this->nameToEvents_M.end(); m_it++)
-		{
-			// TODO fix the grasp issue, (grasp event map includes the actual events with the right names)
-			// iterate through the events with the same name
-			for(std::list<GzEvent*>::const_iterator ev_it = m_it->second.begin();
-					ev_it != m_it->second.end(); ev_it++)
-			{
-				// add to the time array
-				events_objs.push_back(BSON("name" << (*ev_it)->GetName()
-						<<  "start" << (*ev_it)->GetStartTime()
-						<< "end" << (*ev_it)->GetEndTime()));
-			}
-		}
+        // iterate through the map
+        for(std::map<std::string, std::list<sg_pp::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
+                m_it != this->nameToEvents_M.end(); m_it++)
+        {
+            // TODO fix the grasp issue, (grasp event map includes the actual events with the right names)
+            // iterate through the events with the same name
+            for(std::list<GzEvent*>::const_iterator ev_it = m_it->second.begin();
+                    ev_it != m_it->second.end(); ev_it++)
+            {
+                // add to the time array
+                events_objs.push_back(BSON("name" << (*ev_it)->GetName()
+                        <<  "start" << (*ev_it)->GetStartTime()
+                        << "end" << (*ev_it)->GetEndTime()));
+            }
+        }
 
-		// insert document object into the database
-		scoped_connection->insert(this->dbName + "." + this->collName + "_ev",
-				BSON("events" << events_objs));
+        // insert document object into the database
+        scoped_connection->insert(this->dbName + "." + this->collName + "_ev",
+                BSON("events" << events_objs));
 
-		// let the pool know the connection is done
-		scoped_connection.done();
-	}
+        // let the pool know the connection is done
+        scoped_connection.done();
+    }
 }
 
 //////////////////////////////////////////////////
@@ -897,59 +896,59 @@ void LogEvents::WriteTimelines()
 {
     std::cout << "*LogEvents* - Writing timelines" << std::endl;
 
-	std::ofstream timeline_file;
+    std::ofstream timeline_file;
 
-	std::stringstream ss;
+    std::stringstream ss;
 
-	ss << "timeline" << this->suffixTime << ".html";
+    ss << "timeline" << this->suffixTime << ".html";
 
-	timeline_file.open(ss.str().c_str());
+    timeline_file.open(ss.str().c_str());
 
-	timeline_file <<
-			"<html>\n"
-			"<script type=\"text/javascript\" src=\"https://www.google.com/jsapi?autoload={'modules':[{'name':'visualization',\n"
-			"       'version':'1','packages':['timeline']}]}\"></script>\n"
-			"<script type=\"text/javascript\">\n"
-			"google.setOnLoadCallback(drawChart);\n"
-			"\n"
-			"function drawChart() {\n"
-			"  var container = document.getElementById('sim_timeline_ex');\n"
-			"\n"
-			"  var chart = new google.visualization.Timeline(container);\n"
-			"\n"
-			"  var dataTable = new google.visualization.DataTable();\n"
-			"\n"
-			"  dataTable.addColumn({ type: 'string', id: 'Event' });\n"
-			"  dataTable.addColumn({ type: 'number', id: 'Start' });\n"
-			"  dataTable.addColumn({ type: 'number', id: 'End' });\n"
-			"\n"
-			"  dataTable.addRows([\n";
+    timeline_file <<
+            "<html>\n"
+            "<script type=\"text/javascript\" src=\"https://www.google.com/jsapi?autoload={'modules':[{'name':'visualization',\n"
+            "       'version':'1','packages':['timeline']}]}\"></script>\n"
+            "<script type=\"text/javascript\">\n"
+            "google.setOnLoadCallback(drawChart);\n"
+            "\n"
+            "function drawChart() {\n"
+            "  var container = document.getElementById('sim_timeline_ex');\n"
+            "\n"
+            "  var chart = new google.visualization.Timeline(container);\n"
+            "\n"
+            "  var dataTable = new google.visualization.DataTable();\n"
+            "\n"
+            "  dataTable.addColumn({ type: 'string', id: 'Event' });\n"
+            "  dataTable.addColumn({ type: 'number', id: 'Start' });\n"
+            "  dataTable.addColumn({ type: 'number', id: 'End' });\n"
+            "\n"
+            "  dataTable.addRows([\n";
 
-	// iterate through the map
-	for(std::map<std::string, std::list<sg_pp::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
-			m_it != this->nameToEvents_M.end(); m_it++)
-	{
-		// iterate through the events with the same name
-		for(std::list<GzEvent*>::const_iterator ev_it = m_it->second.begin();
-				ev_it != m_it->second.end(); ev_it++)
-		{
-			// add all events to the timeline file
-			timeline_file << "    [ '" << (*ev_it)->GetName() << "', "
-					<< (*ev_it)->GetStartTime() * 1000 << ", "
-					<< (*ev_it)->GetEndTime() * 1000 << "],\n";
-		}
-	}
+    // iterate through the map
+    for(std::map<std::string, std::list<sg_pp::GzEvent*> >::const_iterator m_it = this->nameToEvents_M.begin();
+            m_it != this->nameToEvents_M.end(); m_it++)
+    {
+        // iterate through the events with the same name
+        for(std::list<GzEvent*>::const_iterator ev_it = m_it->second.begin();
+                ev_it != m_it->second.end(); ev_it++)
+        {
+            // add all events to the timeline file
+            timeline_file << "    [ '" << (*ev_it)->GetName() << "', "
+                    << (*ev_it)->GetStartTime() * 1000 << ", "
+                    << (*ev_it)->GetEndTime() * 1000 << "],\n";
+        }
+    }
 
-	timeline_file <<
-			"  ]);\n"
-			"\n"
-			"  chart.draw(dataTable);\n"
-			"}\n"
-			"</script>\n"
-			"<div id=\"sim_timeline_ex\" style=\"width: 1300px; height: 900px;\"></div>\n"
-			"\n"
-			"</html>";
+    timeline_file <<
+            "  ]);\n"
+            "\n"
+            "  chart.draw(dataTable);\n"
+            "}\n"
+            "</script>\n"
+            "<div id=\"sim_timeline_ex\" style=\"width: 1300px; height: 900px;\"></div>\n"
+            "\n"
+            "</html>";
 
-	timeline_file.close();
+    timeline_file.close();
 }
 

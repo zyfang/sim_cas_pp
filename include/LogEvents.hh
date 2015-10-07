@@ -41,6 +41,8 @@
 #include <gazebo/physics/physics.hh>
 #include <ros/ros.h>
 #include <tf/transform_broadcaster.h>
+#include <beliefstate_client/BeliefstateClient.h>
+#include <beliefstate_client/Context.h>
 #include <libconfig.h++>
 #include "mongo/client/dbclient.h"
 #include "GzEvent.hh"
@@ -164,7 +166,7 @@ class LogEvents
 	private: std::map<std::string, std::list<sg_pp::GzEvent*> > nameToEvents_M;
 
 	// /// \brief Map of all the objects name from the simulation to beliefstate objects
-	// private: std::map<std::string, beliefstate_client::Object*> nameToBsObject_M;
+	private: std::map<std::string, beliefstate_client::Object*> nameToBsObject_M;
 
 	// TODO remove this
 	/// \brief Model names to GzEventObj map
@@ -179,8 +181,8 @@ class LogEvents
 	/// \brief Grasp flag
 	private: bool graspInit;
 
-	// /// \brief Beliefstate client
-	// private: beliefstate_client::BeliefstateClient* beliefStateClient;
+	/// \brief Beliefstate client
+	private: beliefstate_client::BeliefstateClient* beliefStateClient;
 
 	/// \brief Log location of the events
 	private: std::string logLocation;
