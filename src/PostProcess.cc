@@ -85,18 +85,26 @@ void PostProcess::Load(int _argc, char ** _argv)
     	if(std::string(_argv[i]) == "--suffix"){
             // set the next argument as the name of the db and collection
     		this->collSuffix = _argv[++i];
-    	   }
+           }
+
+        //whether or not the controller should take care of shutting down gazebo (or whether it's ran simultaneously with other processes that will shutdown gazebo once they're finished)
+         if(std::string(_argv[i]) == "-replayed"){
+             replayed = true;
+            }
+         else {
+             replayed = false;
+         }
 
     }
 
     // read config file
     PostProcess::ReadConfigFile();
 
-    //set the flag that postprocessing shouldn't start yet
+    //set the flag that postprocessing didn't start yet
     startedpostprocess = false;
     //delay post-processing
-    delay_postprocess_start_thread_ = 
-    	new boost::thread(&PostProcess::DelayPostprocessStart, this);
+    delay_postprocess_start_thread_ =
+        new boost::thread(&PostProcess::DelayPostprocessStart, this);
 }
 
 //////////////////////////////////////////////////
@@ -108,10 +116,10 @@ void PostProcess::DelayPostprocessStart()
 	{
 		usleep(1000);
 	}
-	std::cout << "starting now" << std::endl;
+    std::cout << "Starting Postprocessing now" << std::endl;
 	if(!startedpostprocess)
 	{
-			// get the event collisions, only called once, the connection is then changed
+        // get the event collisions, only called once, the connection is then changed
 	    this->eventConnection = event::Events::ConnectWorldUpdateBegin(
 	        boost::bind(&PostProcess::FirstSimulationStepInit, this));
 
@@ -132,13 +140,13 @@ void PostProcess::Init()
     this->worldCreatedConnection =  event::Events::ConnectWorldCreated(
             boost::bind(&PostProcess::InitOnWorldConnect, this));
 
- //    // get the event collisions, only called once, the connection is then changed
- //    this->eventConnection = event::Events::ConnectWorldUpdateBegin(
- //        boost::bind(&PostProcess::FirstSimulationStepInit, this));
+//     // get the event collisions, only called once, the connection is then changed
+//     this->eventConnection = event::Events::ConnectWorldUpdateBegin(
+//         boost::bind(&PostProcess::FirstSimulationStepInit, this));
 
- //    // thread for checking if the log has finished playing
-	// this->checkLogginFinishedThread =
-	// 		new boost::thread(&PostProcess::CheckLoggingFinishedWorker, this);
+//     // thread for checking if the log has finished playing
+//     this->checkLogginFinishedThread =
+//            new boost::thread(&PostProcess::CheckLoggingFinishedWorker, this);
 
 	//SELF NOTE: I'd move these threads out of init and into updateOnCallBack and then only call it once if the flag is true (set it to false after starting the processes, and then it should never be set to true again). Cannot test this without also changing the header file and everything. Test after dinner.
 }
@@ -227,6 +235,8 @@ void PostProcess::InitOnWorldConnect()
 	// if no subscription is done to the contacts topic the contact manager does not run
     this->contactSub = this->gznode->Subscribe(
             "~/physics/contacts", &PostProcess::DummyContactsCallback, this);
+
+    this->logdone_sub_ = this->gznode->Subscribe("/gazebo/log/control", &PostProcess::LogDone, this);
 
     // initialize the tf logging class
     this->tfLogger = new sg_pp::LogTF(this->world, this->dbName, this->collName, std::atoi(this->collSuffix.c_str()), connection_name);
@@ -317,42 +327,61 @@ void PostProcess::ProcessCurrentData()
 //////////////////////////////////////////////////
 void PostProcess::CheckLoggingFinishedWorker()
 {
-	// flag to stop the while loop
-	bool log_play_finished = false;
+    // flag to stop the while loop
+    log_play_finished = false;
 
-	// loop until the log has finished playing
-	while(!log_play_finished)
-	{
-		// loop sleep
-		usleep(2000000);
+    if(replayed) { //if there is no other process giving a shutdown signal, shutdown when log is finished replaying
+        // loop until the log has finished playing
+        while(!log_play_finished)
+        {
+            // loop sleep
+            usleep(2000000);
 
-		// if the world is paused
-		if(this->world && this->world->IsPaused() && !this->pauseMode)
-		{
-			// check that no manual pause happened!
-			std::string sdfString;
-			if(!util::LogPlay::Instance()->Step(sdfString))
-			{
-				log_play_finished = true;
-				std::cout << "*PostProcess* - Last recorded step at " << this->world->GetSimTime().Double()
-						<< ", terminating simulation.."<< std::endl;
-			}
-			else
-			{
-				std::cout << "*PostProcess* - Manual pause, every time this msg appears one simulation step is lost.. "  << std::endl;
-			}
-		}
-	}
+            // if the world is paused
+            if(this->world && this->world->IsPaused() && !this->pauseMode)
+            {
+                // check that no manual pause happened!
+                std::string sdfString;
+                if(!util::LogPlay::Instance()->Step(sdfString))
+                {
+                    log_play_finished = true;
+                    std::cout << "*PostProcess* - Last recorded step at " << this->world->GetSimTime().Double()
+                            << ", terminating simulation.."<< std::endl;
+                }
+                else
+                {
+                    std::cout << "*PostProcess* - Manual pause, every time this msg appears one simulation step is lost.. "  << std::endl;
+                }
+            }
+        }
+        // terminate simulation
+        std::cout << "Terminating simulation from PostProcess 1"  << std::endl;
+        PostProcess::TerminateSimulation();
+    }
+    else { //if we're going to get a message when the log has finished
+        while(!log_play_finished)
+        {
+            // loop sleep
+            usleep(2000000);
 
-	// terminate simulation
-	PostProcess::TerminateSimulation();
+        }
+        // terminate simulation
+        std::cout << "Terminating simulation from PostProcess 2"  << std::endl;
+        PostProcess::TerminateSimulation();
+    }
 }
 
 //////////////////////////////////////////////////
+void PostProcess::LogDone(ConstLogControlPtr& _msg)
+{
+    log_play_finished = _msg->stop();
+}
+
+
 void PostProcess::TerminateSimulation()
 {
 	// finish the events
-	this->eventsLogger->FiniEvents();
+    this->eventsLogger->FiniEvents();
 
 	// shutdown ros
 	ros::shutdown();

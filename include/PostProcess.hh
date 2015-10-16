@@ -90,6 +90,8 @@ class PostProcess : public gazebo::SystemPlugin
 	/// \brief Contacts callback function, just to start the contacts in the physics engine
 	private: void DummyContactsCallback(ConstContactsPtr& _msg);
 
+    private: void LogDone(ConstLogControlPtr& _msg);
+
 	/// \brief Thread for checking the end of a log
 	private: boost::thread* checkLogginFinishedThread;
 
@@ -143,6 +145,8 @@ class PostProcess : public gazebo::SystemPlugin
 	/// \brief World Pointer
 	private: gazebo::physics::WorldPtr world;
 
+    private: gazebo::transport::SubscriberPtr logdone_sub_;
+
 	/// \brief Flag used to set that initially pause mode is set, used of detecting the end of a Log
 	private: bool pauseMode;
 
@@ -163,6 +167,13 @@ class PostProcess : public gazebo::SystemPlugin
 
 	//flag to wait with postprocessing until a certain point
 	private: bool startedpostprocess;
+
+    //flag whether we're done postprocessing
+    private: bool log_play_finished;
+
+    //flag whether we're replaying or postprocessing immediately
+    private: bool replayed;
+
 };
 }
 
