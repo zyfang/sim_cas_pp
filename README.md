@@ -12,6 +12,6 @@ Make sure to set the path the installation of the C++ Client for MongoDB in the 
 
 ### Run example:
 ~~~
-gazebo -u --verbose -s libPostProcess.so -p <path>/state.log
+gazebo -u --verbose -s libPostProcess.so -p <path>/state.log --db mydb --collection mycol
 ~~~
 
