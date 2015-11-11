@@ -57,8 +57,7 @@ class LogEvents
 	public: LogEvents(const gazebo::physics::WorldPtr _world,
 			const std::string _db_name,
 			const std::string _coll_name,
-			int _suffix,
-			const std::string _connection_name);
+			int _suffix);
 
 	/// \brief Destructor
 	public: virtual ~LogEvents();
@@ -66,7 +65,7 @@ class LogEvents
 	/// \brief Initialise events
 	public: void InitEvents();
 
-	/// \brief Write semantic events to OWL files
+    /// \brief Check for semantic events
 	public: void CheckEvents();
 
 	/// \brief Finalize events
@@ -76,28 +75,34 @@ class LogEvents
 	private: void ReadConfigFile();
 
 	/// \brief Check current Grasp
-	private: bool CheckCurrentGrasp(
+    private: void CheckGraspEvent(
 			const double _timestamp_ms,
-			gazebo::physics::ModelPtr _ff_grasped_model,
-			gazebo::physics::ModelPtr _thumb_grasped_model);
+            const unsigned int _grasp_contacts_nr,
+            const std::set<std::string> &_grasped_models);
 
 	/// \brief Check current event collisions
-	private: bool CheckCurrentEventCollisions(
+    private: void CheckSurfaceEvents(
 			const double _timestamp_ms,
-			std::set<std::pair<std::string, std::string> > &_curr_ev_contact_model_pair_S);
+            const std::set<std::pair<std::string, std::string>> &_curr_surface_models_in_contact);
 
-	/// \brief Check liquid transfer event
-	private: bool CheckFluidFlowTransEvent(
-			const double _timestamp_ms,
-			int _prev_poured_particle_nr);
+    /// \brief Check translation event
+    private: void CheckTranslEvent(
+            const double _timestamp_ms,
+            const bool _transf_detect_flag);
 
-	/// \brief Join short disconnections in the events timeline
+    /// \brief Check tool event
+    private: void CheckToolEvent(
+            const double _timestamp_ms,
+            const std::string _contact_with_tool_model,
+            const std::string _tool_name);
+
+    /// \brief Merge short disconnections in the events timeline
 	private: void MergeEventDisconnections();
 
 	/// \brief End still active events
 	private: void EndActiveEvents();
 
-	/// \brief Write beliefstate (owl) contexts
+    /// \brief Write beliefstate (owl) contexts
 	private: void WriteContexts();
 
 	/// \brief Write timelines to file
@@ -106,90 +111,107 @@ class LogEvents
 	/// \brief Gazebo world
 	private: const gazebo::physics::WorldPtr world;
 
-	/// \brief Vector of the world models
-	private: gazebo::physics::Model_V models;
+    /// \brief pointer of ContactManager, for getting contacts from physics engine
+    private: gazebo::physics::ContactManager *contactManagerPtr;
 
-	/// \brief liquid model
-	private: gazebo::physics::ModelPtr liquidSpheres;
+    /// \brief Beliefstate client
+    private: beliefstate_client::BeliefstateClient* beliefStateClient;
 
-	/// \brief pointer of ContactManager, for getting contacts from physics engine
-	private: gazebo::physics::ContactManager *contactManagerPtr;
-
-	/// \brief which connection to log to
-	private: const std::string connName;
-	
 	/// \brief Database name
 	private: const std::string dbName;
 
 	/// \brief Db collection name
 	private: const std::string collName;
 
-	/// \brief Event disconnection threshold limit
-	private: double eventDiscTresh;
+    /// \brief Log location of the events
+    private: std::string logLocation;
 
-	/// \brief Set with the event contact model names
-	private: std::set<std::pair<std::string, std::string> > prevEvContactModelPair_S;
+    // TODO for adding time offset to the simulation times
+    private: int suffixTime;
 
-	// TODO remove maps
-	/// \brief map of event collisions to a set of all its contacts model names
-	private: std::map<gazebo::physics::Collision*, std::set<std::string> > prevEvCollToModelNames_S_M;
+    /// \brief Event disconnection threshold limit
+    private: double eventDiscThresh;
 
-	/// \brief map of event collisions to a set of all its particle names
-	private: std::map<gazebo::physics::Collision*, std::set<std::string> > eventCollToSetOfParticleNames_M;
+    /// \brief Transfer event duration thresh
+    private: double transfEvDurThresh;
 
-	// TODO rename all the event collisions to something like collision sensor
-	/// \brief Event no contact collision vector
-	private: std::set<gazebo::physics::Collision*> eventCollisions_S;
+    /// \brief Previous state of models being in contact with surfaces
+    /// Set with <surface model name, model in contact with>
+    private: std::set<std::pair<std::string, std::string>>
+      prevSurfaceModelsInContact;
 
-	/// \brief Hand thumb and fore finger event collision
-	private: gazebo::physics::Collision *eventCollisionForeFinger;
+    // TODO change container, vector? to have access to the next value?
+    /// \brief Map of event names to GzEvents
+    private: std::map<std::string, std::list<sg_pp::PpEvent*>> nameToEvents_M;
 
-	/// \brief Hand thumb and fore finger event collision
-	private: gazebo::physics::Collision *eventCollisionThumb;
-
-	/// \brief Mug top event collision
-	private: gazebo::physics::Collision* eventCollisionMug;
-
-	/// \brief all particle collisions
-	private: std::set<gazebo::physics::Collision*> allLiquidParticles_S;
-
-	/// \brief poured particle collisions
-	private: std::set<gazebo::physics::Collision*> totalPouredParticles_S;
-
-	/// \brief particle collisions belonging to the pancake
-	private: std::set<gazebo::physics::Collision*> pancakeCollision_S;
-
-	/// \brief name of the grasped model
-	private: gazebo::physics::ModelPtr prevGraspedModel;
-
-	/// \brief Map of event names to a stack of GzEvent
-	private: std::map<std::string, std::list<sg_pp::GzEvent*> > nameToEvents_M;
-
-	// /// \brief Map of all the objects name from the simulation to beliefstate objects
-	private: std::map<std::string, beliefstate_client::Object*> nameToBsObject_M;
+    // TODO change, needed so every object appears once for knowrob hashing
+    /// \brief Map of all the objects name from the simulation to beliefstate objects
+    private: std::map<std::string, beliefstate_client::Object*> nameToBsObject_M;
 
 	// TODO remove this
 	/// \brief Model names to GzEventObj map
-	private: std::map<std::string, sg_pp::GzEventObj*> nameToEventObj_M;
+    private: std::map<std::string, sg_pp::PpEventObj*> nameToEventObj_M;
 
-	/// \brief Grasp GzEvent
-	private: sg_pp::GzEvent* graspGzEvent;
+    /// \brief Surface collision names to check in the world
+    private: std::set<std::string> surfaceCollNames;
 
-	/// \brief Flag for when the pancake is created
-	private: bool pancakeCreated;
+    /// \brief Surface collisions to check in the world
+    private: std::set<gazebo::physics::Collision*> surfaceColls;
 
-	/// \brief Grasp flag
-	private: bool graspInit;
+    // TODO add init to avoid checking for NULl
+    /// \brief Grasp GzEvent
+    private: sg_pp::PpEvent* graspGzEvent;
 
-	/// \brief Beliefstate client
-	private: beliefstate_client::BeliefstateClient* beliefStateClient;
+    /// \brief Grasp flag
+    private: bool graspInit;
 
-	/// \brief Log location of the events
-	private: std::string logLocation;
+    /// \brief Grasp collision names to check for grasp contacts
+    private: std::set<std::string> graspCollNames;
 
-	// TODO for adding time offset to the simulation times
-	private: int suffixTime;
+    /// \brief Grasp collisions to check for grasp contacts
+    private: std::set<gazebo::physics::Collision*> graspColls;
 
+    /// \brief Container collision names to particle model names
+    private: std::map<std::string, std::set<std::string>> contCollToPNames;
+
+    /// \brief Container collisions to particle models
+    private: std::map<gazebo::physics::Collision*,
+      std::set< gazebo::physics::ModelPtr>> contCollToPModels;
+
+    /// \brief Transfered particles of the given model
+    private: std::map<gazebo::physics::ModelPtr,
+      std::map<gazebo::physics::Collision*, bool>> transferedParticles;
+
+    /// \brief Number of transfered particles of the given model
+    private: std::map<gazebo::physics::ModelPtr, unsigned int>
+      transferedPartCount;
+
+    /// \brief Timestamp of latest particle leaving the container
+    private: double transfTs;
+
+    /// \brief Pool of the transfered particles in the current transfer event
+    private: std::vector<gazebo::physics::Collision*> transfParticlePool;
+
+    // TODO works for one transfer per time (mixed particles in a bowl would not work)
+    /// \brief Transf event
+    private: sg_pp::PpEvent* transfEvent;
+
+    /// \brief Tool collision names to particle model names
+    private: std::map<std::string, std::set<std::string>> toolCollToPNames;
+
+    /// \brief Tool collisions to particle models
+    private: std::map<gazebo::physics::Collision*,
+      std::set< gazebo::physics::ModelPtr>> toolCollToPModels;
+
+    /// \brief Name of the prev contact with the tool
+    private: std::string prevContactWithToolModel;
+
+    // TODO generalize for multiple events
+    /// \brief Tool event
+    private: sg_pp::PpEvent* toolGzEvent;
+
+    /// \brief name of the grasped model
+    private: std::string prevGraspedModel;
 };
 }
 #endif

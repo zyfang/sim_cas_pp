@@ -1,17 +1,15 @@
-# sim_cas_pp catkin package for post processing data from sim_cas
+# sim_games_pp #
 
-## Installation
+Catkin package for post processing data from [sim_games](https://bitbucket.org/ahaidu/sim_games).
 
-### Prerequisites:
-Get MongoDB: http://docs.mongodb.org/manual/tutorial/install-mongodb-on-ubuntu/
+### Prerequisites ###
 
-Get C++ Client for MongoDB (branch ```26compat```): https://github.com/mongodb/mongo-cxx-driver/wiki/Download-and-Compile-the-Legacy-Driver
+ * [Gazebo](http://gazebosim.org). 
+ * ROS
+ * MongoDB
+ * [libconfig](http://www.hyperrealm.com/libconfig/)
 
-### Configuration:
-Make sure to set the path the installation of the C++ Client for MongoDB in the ```CMakeLists.txt```!
-
-### Run example:
+### Usage ###
 ~~~
-gazebo -u --verbose -s libPostProcess.so -p <path>/state.log
+gazebo -u --verbose -s libPostProcess.so -p <path>/state.log --suffix 69
 ~~~
-

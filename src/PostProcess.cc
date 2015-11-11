@@ -51,11 +51,6 @@ GZ_REGISTER_SYSTEM_PLUGIN(PostProcess)
 //////////////////////////////////////////////////
 PostProcess::PostProcess()
 {
-	// TODO init ros only if needed
-	// intialize ROS
-	int argc = 0;
-	char** argv = NULL;
-	ros::init(argc, argv, "post_process");
 }
 
 //////////////////////////////////////////////////
@@ -68,66 +63,15 @@ PostProcess::~PostProcess()
 void PostProcess::Load(int _argc, char ** _argv)
 {
     for (unsigned int i = 0; i < _argc; ++i){
-    	// look for '-db' characters
-        if(std::string(_argv[i]) == "--db"){
-            // set the next argument as the name of the db
-            this->dbName = _argv[++i];
-            }
-        
-
-        if(std::string(_argv[i]) == "--collection"){
-            // set the next argument as the name of the collection
-            this->collName = _argv[++i];
-            }
-        
-
-        // look for '--suffix' characters
+    	// look for '--suffix' characters
     	if(std::string(_argv[i]) == "--suffix"){
             // set the next argument as the name of the db and collection
     		this->collSuffix = _argv[++i];
-           }
-
-        //whether or not the controller should take care of shutting down gazebo (or whether it's ran simultaneously with other processes that will shutdown gazebo once they're finished)
-         if(std::string(_argv[i]) == "-replayed"){
-             replayed = true;
-            }
-         else {
-             replayed = false;
-         }
-
+    	}
     }
 
     // read config file
     PostProcess::ReadConfigFile();
-
-    //set the flag that postprocessing didn't start yet
-    startedpostprocess = false;
-    //delay post-processing
-    delay_postprocess_start_thread_ =
-        new boost::thread(&PostProcess::DelayPostprocessStart, this);
-}
-
-//////////////////////////////////////////////////
-
-void PostProcess::DelayPostprocessStart()
-{
-	std::cout << "Starting postprocessing when simtime exceeds 2 seconds " << std::endl;
-	while(!this->world || this->world->GetSimTime()<2.0)
-	{
-		usleep(1000);
-	}
-    std::cout << "Starting Postprocessing now" << std::endl;
-	if(!startedpostprocess)
-	{
-        // get the event collisions, only called once, the connection is then changed
-	    this->eventConnection = event::Events::ConnectWorldUpdateBegin(
-	        boost::bind(&PostProcess::FirstSimulationStepInit, this));
-
-	    // thread for checking if the log has finished playing
-		this->checkLogginFinishedThread =
-				new boost::thread(&PostProcess::CheckLoggingFinishedWorker, this);
-		startedpostprocess=true;
-	}
 }
 
 //////////////////////////////////////////////////
@@ -140,15 +84,13 @@ void PostProcess::Init()
     this->worldCreatedConnection =  event::Events::ConnectWorldCreated(
             boost::bind(&PostProcess::InitOnWorldConnect, this));
 
-//     // get the event collisions, only called once, the connection is then changed
-//     this->eventConnection = event::Events::ConnectWorldUpdateBegin(
-//         boost::bind(&PostProcess::FirstSimulationStepInit, this));
+    // get the event collisions, only called once, the connection is then changed
+    this->eventConnection = event::Events::ConnectWorldUpdateBegin(
+        boost::bind(&PostProcess::FirstSimulationStepInit, this));
 
-//     // thread for checking if the log has finished playing
-//     this->checkLogginFinishedThread =
-//            new boost::thread(&PostProcess::CheckLoggingFinishedWorker, this);
-
-	//SELF NOTE: I'd move these threads out of init and into updateOnCallBack and then only call it once if the flag is true (set it to false after starting the processes, and then it should never be set to true again). Cannot test this without also changing the header file and everything. Test after dinner.
+    // thread for checking if the log has finished playing
+	this->checkLogginFinishedThread =
+			new boost::thread(&PostProcess::CheckLoggingFinishedWorker, this);
 }
 
 //////////////////////////////////////////////////
@@ -160,7 +102,7 @@ void PostProcess::ReadConfigFile()
 	// read config file
 	try
 	{
-		cfg.readFile("config.cfg");
+        cfg.readFile("config/pancake_config.cfg");
 	}
 	catch(const libconfig::FileIOException &fioex)
 	{
@@ -173,18 +115,11 @@ void PostProcess::ReadConfigFile()
 	}
 
 	// get the variables from the config file
-
-    // if no db name has been added, use default
-    if (this->dbName.empty()){
-        this->dbName = cfg.lookup("mongo.db_name").c_str();
-    }	
+	this->dbName = cfg.lookup("mongo.db_name").c_str();
 	std::cout << "*PostProcess* - db_name: " << this->dbName << std::endl;
 
-	// if no collection name has been added, use default
-    if (this->collName.empty()){
-        this->collName = cfg.lookup("mongo.coll_name").c_str();
-    }   
-
+	// set the collection name
+	this->collName = cfg.lookup("mongo.coll_name").c_str();
 	// if a suffix has been added append it to the collection name
 	if(this->collSuffix != NULL){
 		this->collName += this->collSuffix;
@@ -194,9 +129,6 @@ void PostProcess::ReadConfigFile()
 	this->worldName = cfg.lookup("sim.world_name").c_str();
 	std::cout << "*PostProcess* - world_name: " << this->worldName << std::endl;
 
-	this->processMotionExpressions = cfg.lookup("pp.motion_expressions");
-	std::cout << "*PostProcess* - processing motion expressions: " << this->processMotionExpressions << std::endl;
-
 	this->processRaw = cfg.lookup("pp.raw");
 	std::cout << "*PostProcess* - processing raw data: " << this->processRaw << std::endl;
 
@@ -205,17 +137,11 @@ void PostProcess::ReadConfigFile()
 
 	this->processEvents = cfg.lookup("pp.events");
 	std::cout << "*PostProcess* - processing events data: " << this->processEvents << std::endl;
-
-    this->processParticle = cfg.lookup("pp.particles");
-    std::cout << "*PostProcess* - processing particle data: " << this->processParticle << std::endl;
 }
 
 //////////////////////////////////////////////////
 void PostProcess::InitOnWorldConnect()
 {
-	//specify to which port the database should be written. default ("localhost") is 27017
-	const std::string connection_name = "localhost:27019";
-
 	// get the world
 	this->world = physics::get_world(this->worldName);
 
@@ -236,22 +162,75 @@ void PostProcess::InitOnWorldConnect()
     this->contactSub = this->gznode->Subscribe(
             "~/physics/contacts", &PostProcess::DummyContactsCallback, this);
 
-    this->logdone_sub_ = this->gznode->Subscribe("/gazebo/log/control", &PostProcess::LogDone, this);
+
+	// Create scoped connection for checking if the collection already exist
+	ScopedDbConnection scoped_connection("localhost");
 
     // initialize the tf logging class
-    this->tfLogger = new sg_pp::LogTF(this->world, this->dbName, this->collName, std::atoi(this->collSuffix.c_str()), connection_name);
+	if (this->processTf)
+	{
+		// If collection already exist don't log the data
+		if (scoped_connection->exists(this->dbName + "." + this->collName + "_tf"))
+		{
+			// set flag to false
+			this->processTf = false;
+
+			std::cout << "*PostProcess* !!! Collection: " << this->dbName << "." << this->collName << "_tf"
+					<< " already exists skipping LogTF !!!" << std::endl;
+		}
+		else
+		{
+			this->eventsLogger = new sg_pp::LogEvents(this->world, this->dbName, this->collName, std::atoi(this->collSuffix.c_str()));
+		}
+		this->tfLogger = new sg_pp::LogTF(this->world, this->dbName, this->collName, std::atoi(this->collSuffix.c_str()));
+	}
 
     // initialize the events logging class
-    this->eventsLogger = new sg_pp::LogEvents(this->world, this->dbName, this->collName, std::atoi(this->collSuffix.c_str()), connection_name);
+	if (this->processEvents)
+	{
+		// If collection already exist don't log the data
+		if (scoped_connection->exists(this->dbName + "." + this->collName + "_ev"))
+		{
+			// set flag to false
+			this->processEvents = false;
 
-    // initialize the motion expressions logging class
-    this->motionExpressionsLogger = new sg_pp::LogMotionExpressions(this->world, this->dbName, this->collName,connection_name);
+			std::cout << "*PostProcess* !!! Collection: " << this->dbName << "." << this->collName << "_ev"
+					<< " already exists skipping LogEvents !!!" << std::endl;
+		}
+		else
+		{
+			this->eventsLogger = new sg_pp::LogEvents(this->world, this->dbName, this->collName, std::atoi(this->collSuffix.c_str()));
+		}
+	}
 
-    // initialize the raw logging class
-    this->rawLogger = new sg_pp::LogRaw(this->world, this->dbName, this->collName, connection_name);
+    // initialize the raw with thresholding  logging class
+	if (this->processRaw)
+	{
+		// If collection already exist don't log the data
+		if (scoped_connection->exists(this->dbName + "." + this->collName + "_raw"))
+		{
+			// set flag to false
+			this->processRaw = false;
 
-    // initialize the particle logging class
-    this->particleLogger = new sg_pp::LogParticles(this->world, this->dbName, this->collName, connection_name);
+			std::cout << "*PostProcess* !!! Collection: " << this->dbName << "." << this->collName << "_raw"
+					<< " already exists skipping LogRaw !!!" << std::endl;
+		}
+		else
+		{
+			this->rawLogger = new sg_pp::LogRaw(this->world, this->dbName, this->collName);
+		}
+	}
+
+	// if no PP is happening, shut down server
+	if(!this->processEvents && !this->processRaw && !this->processTf)
+	{
+	    std::cout << "*PostProcess* !!! No PP selected, Shutting down gzserver.. !!! " << std::endl;
+
+	    // send server control msg to terminate the server (does not apply when client is running)
+	    msgs::ServerControl server_msg;
+	    server_msg.set_stop(true);
+	    serverControlPub->Publish(server_msg);
+	}
 }
 
 //////////////////////////////////////////////////
@@ -262,11 +241,6 @@ void PostProcess::FirstSimulationStepInit()
 
     // Initialize events
     this->eventsLogger->InitEvents();
-
-    // Initialize particles
-    this->particleLogger->InitParticles();
-
-    this->motionExpressionsLogger->Init();
 
 	// Run the post processing threads once so the first step is not skipped
 	PostProcess::ProcessCurrentData();
@@ -293,7 +267,7 @@ void PostProcess::ProcessCurrentData()
 	if (this->processEvents)
 	{
 		process_thread_group.create_thread(
-				boost::bind(&sg_pp::LogEvents::CheckEvents, this->eventsLogger));
+                boost::bind(&sg_pp::LogEvents::CheckEvents, this->eventsLogger));
 	}
 
 	// raw data
@@ -302,20 +276,6 @@ void PostProcess::ProcessCurrentData()
 		process_thread_group.create_thread(
 				boost::bind(&sg_pp::LogRaw::WriteRawData, this->rawLogger));
 	}
-
-	// motion expressions
-	if (this->processMotionExpressions)
-	{
-		process_thread_group.create_thread(
-				boost::bind(&sg_pp::LogMotionExpressions::WriteRawData, this->motionExpressionsLogger));
-	}
-
-    // particles data
-    if (this->processParticle)
-    {
-        process_thread_group.create_thread(
-                boost::bind(&sg_pp::LogParticles::WriteParticleData, this->particleLogger));
-    }
 
 	// wait for all the threads to finish work
 	process_thread_group.join_all();
@@ -327,74 +287,59 @@ void PostProcess::ProcessCurrentData()
 //////////////////////////////////////////////////
 void PostProcess::CheckLoggingFinishedWorker()
 {
-    // flag to stop the while loop
-    log_play_finished = false;
+	// flag to stop the while loop
+	bool log_play_finished = false;
 
-    if(replayed) { //if there is no other process giving a shutdown signal, shutdown when log is finished replaying
-        // loop until the log has finished playing
-        while(!log_play_finished)
-        {
-            // loop sleep
-            usleep(2000000);
+	// loop until the log has finished playing
+	while(!log_play_finished)
+	{
+		// loop sleep
+		usleep(2000000);
 
-            // if the world is paused
-            if(this->world && this->world->IsPaused() && !this->pauseMode)
-            {
-                // check that no manual pause happened!
-                std::string sdfString;
-                if(!util::LogPlay::Instance()->Step(sdfString))
-                {
-                    log_play_finished = true;
-                    std::cout << "*PostProcess* - Last recorded step at " << this->world->GetSimTime().Double()
-                            << ", terminating simulation.."<< std::endl;
-                }
-                else
-                {
-                    std::cout << "*PostProcess* - Manual pause, every time this msg appears one simulation step is lost.. "  << std::endl;
-                }
-            }
-        }
-        // terminate simulation
-        std::cout << "Terminating simulation from PostProcess 1"  << std::endl;
-        PostProcess::TerminateSimulation();
-    }
-    else { //if we're going to get a message when the log has finished
-        while(!log_play_finished)
-        {
-            // loop sleep
-            usleep(2000000);
+		// if the world is paused
+		if(this->world && this->world->IsPaused() && !this->pauseMode)
+		{
+			// check that no manual pause happened!
+			std::string sdfString;
+			if(!util::LogPlay::Instance()->Step(sdfString))
+			{
+				log_play_finished = true;
+				std::cout << "*PostProcess* - Last recorded step at " << this->world->GetSimTime().Double()
+						<< ", terminating simulation.."<< std::endl;
+			}
+			else
+			{
+				std::cout << "*PostProcess* - Manual pause, every time this msg appears one simulation step is lost.. "  << std::endl;
+			}
+		}
+	}
 
-        }
-        // terminate simulation
-        std::cout << "Terminating simulation from PostProcess 2"  << std::endl;
-        PostProcess::TerminateSimulation();
-    }
+	// terminate simulation
+	PostProcess::TerminateSimulation();
 }
 
 //////////////////////////////////////////////////
-void PostProcess::LogDone(ConstLogControlPtr& _msg)
-{
-    log_play_finished = _msg->stop();
-}
-
-
 void PostProcess::TerminateSimulation()
 {
-	// finish the events
-    this->eventsLogger->FiniEvents();
+	// index the raw database
+	if (this->processRaw)
+	{
+		this->rawLogger->CreateIndex();
+	}
 
-	// shutdown ros
-	ros::shutdown();
+	// if events are processed, finish them
+	if (this->processEvents)
+	{
+		// finish the events
+		this->eventsLogger->FiniEvents();
+	}
 
-    std::cout << "Shutting down server.." << std::endl;
+    std::cout << "*PostProcess* Shutting down gzserver.." << std::endl;
 
     // send server control msg to terminate the server (does not apply when client is running)
     msgs::ServerControl server_msg;
     server_msg.set_stop(true);
     serverControlPub->Publish(server_msg);
-
-    // finish the simulation
-//	gazebo::shutdown();
 }
 
 //////////////////////////////////////////////////

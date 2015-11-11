@@ -40,19 +40,16 @@ using namespace sg_pp;
 using namespace gazebo;
 using namespace mongo;
 
-//timeoffset in miliseconds
 #define TIME_OFFSET 5000000
 
 //////////////////////////////////////////////////
 LogTF::LogTF(const gazebo::physics::WorldPtr _world,
 		const std::string _db_name,
 		const std::string _coll_name,
-		int _suffix,
-		const std::string _connection_name)
+		int _suffix)
 	: world(_world)
 	, dbName(_db_name)
 	, collName(_coll_name)
-	, connName(_connection_name)
 {
 	// get the world models
 	this->models = this->world->GetModels();
@@ -65,12 +62,20 @@ LogTF::LogTF(const gazebo::physics::WorldPtr _world,
 
 	// TODO for adding time offset to the simulation times
 	this->suffixTime = _suffix;
+
+	// init ros
+	if(this->publishTF)
+	{
+		// intialize ROS
+		int argc = 0;
+		char** argv = NULL;
+		ros::init(argc, argv, "tf_pub");
+	}
 }
 
 //////////////////////////////////////////////////
 LogTF::~LogTF()
 {
-
 }
 
 //////////////////////////////////////////////////
@@ -82,7 +87,7 @@ void LogTF::ReadConfigFile()
 	// read config file
 	try
 	{
-		cfg.readFile("config.cfg");
+        cfg.readFile("config/pancake_config.cfg");
 	}
 	catch(const libconfig::FileIOException &fioex)
 	{
@@ -96,22 +101,22 @@ void LogTF::ReadConfigFile()
 
 
 	this->publishTF = cfg.lookup("tf.publish");
-	std::cout << "LogTF - publish TF: " << this->publishTF << std::endl;
+	std::cout << "*LogTF* - publish TF: " << this->publishTF << std::endl;
 
 	this->writeAllTFTransf = cfg.lookup("tf.write_all_transf");
-	std::cout << "LogTF - write_all_transf: " << this->writeAllTFTransf << std::endl;
+	std::cout << "*LogTF* - write_all_transf: " << this->writeAllTFTransf << std::endl;
 
 	// in case thresholds are set for logging the tf
 	if (!this->writeAllTFTransf)
 	{
 		this->tfVectDistThresh = cfg.lookup("tf.dist_tresh");
-		std::cout << "LogTF - tf_dist_tresh: " << this->tfVectDistThresh << std::endl;
+		std::cout << "*LogTF* - tf_dist_tresh: " << this->tfVectDistThresh << std::endl;
 
 		this->tfAngularDistThresh = cfg.lookup("tf.angular_tresh");
-		std::cout << "LogTF - angular_tresh: " << this->tfAngularDistThresh << std::endl;
+		std::cout << "*LogTF* - angular_tresh: " << this->tfAngularDistThresh << std::endl;
 
 		this->tfDurationThresh = cfg.lookup("tf.duration_tresh");
-		std::cout << "LogTF - duration_tresh: " << this->tfDurationThresh << std::endl;
+		std::cout << "*LogTF* - duration_tresh: " << this->tfDurationThresh << std::endl;
 	}
 }
 
@@ -207,7 +212,7 @@ void LogTF::WriteTFData(const std::vector<tf::StampedTransform>& _stamped_transf
 	std::vector<BSONObj> transforms_bo;
 
 	// get the timestamp im ms and date format
-    Date_t stamp_ms = this->world->GetSimTime().nsec / 1000000.0 + this->world->GetSimTime().sec * 1000.0  + (TIME_OFFSET * this->suffixTime);
+	Date_t stamp_ms = this->world->GetSimTime().nsec / 1000000.0 + this->world->GetSimTime().sec * 1000.0  + (TIME_OFFSET * this->suffixTime);
 
 	// iterate through the stamped tranforms
 	for (std::vector<tf::StampedTransform>::const_iterator st_iter = _stamped_transforms.begin();
@@ -243,19 +248,24 @@ void LogTF::WriteTFData(const std::vector<tf::StampedTransform>& _stamped_transf
 		}
 	}
 
-	// increment the the message seq
-	this->tfSeq++;
 
-    // insert document object into the database, use scoped connection
-	ScopedDbConnection scoped_connection(this->connName);
+	// write to db only if there is at least one transform
+	if (!transforms_bo.empty())
+	{
+		// increment the the message seq
+		this->tfSeq++;
 
-	// insert document object into the database
-	scoped_connection->insert(this->dbName + "." + this->collName + "_tf", BSON("transforms" << transforms_bo
-														<< "__recorded" << stamp_ms
-														<< "__topic" << "/tf_sim"));
+		// insert document object into the database, use scoped connection
+		ScopedDbConnection scoped_connection("localhost");
 
-	// let the pool know the connection is done
-	scoped_connection.done();
+		// insert document object into the database
+		scoped_connection->insert(this->dbName + "." + this->collName + "_tf", BSON("transforms" << transforms_bo
+				<< "__recorded" << stamp_ms
+				<< "__topic" << "/tf_sim"));
+
+		// let the pool know the connection is done
+		scoped_connection.done();
+	}
 }
 
 //////////////////////////////////////////////////
@@ -308,10 +318,10 @@ bool LogTF::CheckTFThresh(const std::vector<tf::StampedTransform>::const_iterato
 						angular_dist > this->tfAngularDistThresh ||
 								duration > this->tfDurationThresh)
 				{
-					std::cout << memory_st_iter->frame_id_<< "->" <<memory_st_iter->child_frame_id_
-							<< " dist: " << vect_dist
-							<< " rot: " << angular_dist
-							<< " duration: " << duration << std::endl;
+//					std::cout << memory_st_iter->frame_id_<< "->" <<memory_st_iter->child_frame_id_
+//							<< " dist: " << vect_dist
+//							<< " rot: " << angular_dist
+//							<< " duration: " << duration << std::endl;
 
 					// one of the threshold passed, the current transformation is added to the memory
 					*(memory_st_iter) = *(_curr_st_iter);

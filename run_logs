@@ -1,24 +1,58 @@
 #!/bin/bash
 
-# roslaunch the belief state
-## TODO not working
-#roslaunch sim_cas_pp bs.launch &
+printf "Starting post processing .. \n"
 
-counter = 0;
+# loop only through folders
+#for d in logs/pf_logs/pf_push_F/*/ ; do  
+for d in /home/haidu/sandbox/ws/sim_games/logs/curr/* ; do 
+#for d in /media/haidu/hdd2TB/logs/pizza_logs_robohow/* ; do
 
-for d in logs/y/* ; do  
 
-  # incerementing the counter
-  counter=$[$counter + 1]
+  echo
+  printf "================================================================================="
+  echo
   
-  ## running the post processing using the counter as a suffix
-  echo "Processing episode: ${d##*/}, with suffix: $counter .."
-  gzserver --verbose -s libPostProcess.so -p $d/gzserver/state.log --suffix $counter  
+  # check if file state.log exists in folder
+  if [ -f $d/gzserver/state.log ];
+  then   
+    
+    # separate scope for the IFS delimitator
+    (
+      # set delimitor to '/' to get the upper folder name from the path
+      IFS='/';
 
-  
-  ## running the post processing using folder name
-  #echo "Processing episode ${d##*/}"
-  #gzserver --verbose -s libPostProcess.so -p $d/gzserver/state.log --suffix ${d##*/}
+      # get an array of the folders
+      FOLDERS=( $d ) 
+      
+      # get the last folder in the array
+      L_FOLDER=${FOLDERS[@]:(-1)}
+      
+      # set delimitor to '_' to get the suffix of the folder
+      IFS='_';
+      
+      # get the array of the folder tokens
+      TOKENS=( $L_FOLDER )
+      
+      # get the last token in the array
+      SUFFIX=${TOKENS[@]:(-1)}
+      
+      # set IFS back to the original values
+      IFS=' \t\n'    
+      
+      ## output of the pp
+      printf " *** Processing episode: ${d}, with suffix: $SUFFIX \n"
+      
+      printf "Executing command: \n"
+      printf "gzserver --verbose -s libPostProcess.so -p ${d}/gzserver/state.log --suffix $SUFFIX"
+      printf "\n"
+      
+      # run the post processing
+      gzserver --verbose -s libPostProcess.so -p ${d}/gzserver/state.log --suffix $SUFFIX
+    )
+    
+  else
+    printf " !! File gzserver/state.log does not exist in $d .. SKIPPING \n"
+  fi
 done
 
-echo "Done.."
+printf "Done.."

@@ -46,25 +46,24 @@ namespace sg_pp
 {
 
 /// \brief class GzEvent
-class GzEvent
+class PpEvent
 {
 	/// \brief Constructor
-	public: GzEvent(const std::string _name,
+	public: PpEvent(const std::string _name,
 			const std::string _class_namespace,
 			const std::string _class_type,
 			double _start_time);
 
 	/// \brief Constructor
-	public: GzEvent(const std::string _name,
+	public: PpEvent(const std::string _name,
 			const std::string _class_namespace,
 			const std::string _class_type,
 			const std::string _property_namespace,
 			const std::string _property,
 			double _start_time);
 
-
 	/// \brief Destructor
-	public: virtual ~GzEvent();
+	public: virtual ~PpEvent();
 
 	/// \brief Get the Id
 	public: int GetId();
@@ -110,11 +109,12 @@ class GzEvent
 	public: void End(double _end_time);
 
 	/// \brief Add object
-	public: void AddObject(GzEventObj *_ev_obj);
+    public: void AddObject(PpEventObj *_ev_obj);
 
 	/// \brief Get all objects
-	public: std::vector<GzEventObj*> GetObjects();
+    public: std::vector<PpEventObj*> GetObjects();
 
+    // TODO this should be static?!
 	/// \brief Unique ID of the event
 	private: int id;
 
@@ -143,7 +143,7 @@ class GzEvent
 	private: double endTime;
 
 	/// \brief Objects involved in the event
-	private: std::vector<GzEventObj*> objects;
+    private: std::vector<PpEventObj*> objects;
 };
 
 }

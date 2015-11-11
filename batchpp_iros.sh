@@ -1,0 +1,21 @@
+gzserver --verbose -s libPostProcess.so -p /media/yfang/hdd3/IROS15/pancakemaking/logs/pf_T_1/gzserver/state.log --suffix 1
+gzserver --verbose -s libPostProcess.so -p /media/yfang/hdd3/IROS15/pancakemaking/logs/pf_T_2/gzserver/state.log --suffix 2
+gzserver --verbose -s libPostProcess.so -p /media/yfang/hdd3/IROS15/pancakemaking/logs/pf_T_3/gzserver/state.log --suffix 3
+gzserver --verbose -s libPostProcess.so -p /media/yfang/hdd3/IROS15/pancakemaking/logs/pf_T_4/gzserver/state.log --suffix 4
+gzserver --verbose -s libPostProcess.so -p /media/yfang/hdd3/IROS15/pancakemaking/logs/pf_T_5/gzserver/state.log --suffix 5
+gzserver --verbose -s libPostProcess.so -p /media/yfang/hdd3/IROS15/pancakemaking/logs/pf_T_6/gzserver/state.log --suffix 6
+gzserver --verbose -s libPostProcess.so -p /media/yfang/hdd3/IROS15/pancakemaking/logs/pf_T_7/gzserver/state.log --suffix 7
+gzserver --verbose -s libPostProcess.so -p /media/yfang/hdd3/IROS15/pancakemaking/logs/pf_T_8/gzserver/state.log --suffix 8
+gzserver --verbose -s libPostProcess.so -p /media/yfang/hdd3/IROS15/pancakemaking/logs/pf_T_9/gzserver/state.log --suffix 9
+gzserver --verbose -s libPostProcess.so -p /media/yfang/hdd3/IROS15/pancakemaking/logs/pf_T_10/gzserver/state.log --suffix 10
+gzserver --verbose -s libPostProcess.so -p /media/yfang/hdd3/IROS15/pancakemaking/logs/pf_T_11/gzserver/state.log --suffix 11
+gzserver --verbose -s libPostProcess.so -p /media/yfang/hdd3/IROS15/pancakemaking/logs/pf_T_12/gzserver/state.log --suffix 12
+gzserver --verbose -s libPostProcess.so -p /media/yfang/hdd3/IROS15/pancakemaking/logs/pf_T_13/gzserver/state.log --suffix 13
+gzserver --verbose -s libPostProcess.so -p /media/yfang/hdd3/IROS15/pancakemaking/logs/pf_T_14/gzserver/state.log --suffix 14
+gzserver --verbose -s libPostProcess.so -p /media/yfang/hdd3/IROS15/pancakemaking/logs/pf_T_15/gzserver/state.log --suffix 15
+gzserver --verbose -s libPostProcess.so -p /media/yfang/hdd3/IROS15/pancakemaking/logs/pf_T_16/gzserver/state.log --suffix 16
+gzserver --verbose -s libPostProcess.so -p /media/yfang/hdd3/IROS15/pancakemaking/logs/pf_T_17/gzserver/state.log --suffix 17
+gzserver --verbose -s libPostProcess.so -p /media/yfang/hdd3/IROS15/pancakemaking/logs/pf_T_18/gzserver/state.log --suffix 18
+gzserver --verbose -s libPostProcess.so -p /media/yfang/hdd3/IROS15/pancakemaking/logs/pf_T_19/gzserver/state.log --suffix 19
+gzserver --verbose -s libPostProcess.so -p /media/yfang/hdd3/IROS15/pancakemaking/logs/pf_T_20/gzserver/state.log --suffix 20
+

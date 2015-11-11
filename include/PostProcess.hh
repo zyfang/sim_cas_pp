@@ -40,14 +40,14 @@
 
 #include <gazebo/gazebo.hh>
 #include <mongo/client/dbclient.h>
+#include <beliefstate_client/BeliefstateClient.h>
+#include <beliefstate_client/Context.h>
 #include <libconfig.h++>
 
 #include "GzEvent.hh"
 #include "LogTF.hh"
 #include "LogEvents.hh"
-#include "LogMotionExpressions.hh"
 #include "LogRaw.hh"
-#include "LogParticles.hh"
 
 namespace sg_pp
 {
@@ -65,9 +65,6 @@ class PostProcess : public gazebo::SystemPlugin
 
 	/// \brief Init plugin (Load called first, then Init)
 	protected: virtual void Init();
-
-	// Delay writing away for a specified amount of time
-	private: void DelayPostprocessStart();
 
 	/// \brief Load config file
 	private: void ReadConfigFile();
@@ -90,12 +87,8 @@ class PostProcess : public gazebo::SystemPlugin
 	/// \brief Contacts callback function, just to start the contacts in the physics engine
 	private: void DummyContactsCallback(ConstContactsPtr& _msg);
 
-    private: void LogDone(ConstLogControlPtr& _msg);
-
 	/// \brief Thread for checking the end of a log
 	private: boost::thread* checkLogginFinishedThread;
-
-	private: boost::thread* delay_postprocess_start_thread_;
 
 	/// \brief TF logger class
 	private: sg_pp::LogTF* tfLogger;
@@ -103,14 +96,8 @@ class PostProcess : public gazebo::SystemPlugin
 	/// \brief Event logger class
 	private: sg_pp::LogEvents* eventsLogger;
 
-	/// \brief Motion Expressions logger class
-	private: sg_pp::LogMotionExpressions* motionExpressionsLogger;
-
-	/// \brief Raw logger class
+	/// \brief Raw thresh logger class
 	private: sg_pp::LogRaw* rawLogger;
-
-	/// \brief Particle logger class
-	private: sg_pp::LogParticles* particleLogger;
 
 	/// \brief World name to be connected to
 	private: std::string worldName;
@@ -145,35 +132,17 @@ class PostProcess : public gazebo::SystemPlugin
 	/// \brief World Pointer
 	private: gazebo::physics::WorldPtr world;
 
-    private: gazebo::transport::SubscriberPtr logdone_sub_;
-
 	/// \brief Flag used to set that initially pause mode is set, used of detecting the end of a Log
 	private: bool pauseMode;
 
-	/// \brief Check what to process
+	/// \brief Process TF data
 	private: bool processTf;
 
-	/// \brief Check what to process
+	/// \brief Process raw data
 	private: bool processRaw;
 
-	/// \brief Check what to process
+	/// \brief Process events
 	private: bool processEvents;
-
-	/// \brief Check what to process
-	private: bool processMotionExpressions;
-
-	/// \brief Check what to process
-	private: bool processParticle;
-
-	//flag to wait with postprocessing until a certain point
-	private: bool startedpostprocess;
-
-    //flag whether we're done postprocessing
-    private: bool log_play_finished;
-
-    //flag whether we're replaying or postprocessing immediately
-    private: bool replayed;
-
 };
 }
 

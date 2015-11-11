@@ -42,13 +42,13 @@
 namespace sg_pp
 {
 /// \brief class GzEventObj
-class GzEventObj
+class PpEventObj
 {
 	/// \brief Constructor
-	public: GzEventObj(const std::string _name);
+	public: PpEventObj(const std::string _name);
 
 	/// \brief Destructor
-	public: virtual ~GzEventObj();
+	public: virtual ~PpEventObj();
 
 	/// \brief Get the Id
 	public: int GetId();
@@ -56,9 +56,11 @@ class GzEventObj
 	/// \brief Get the obj name
 	public: const std::string GetName();
 
+    // TODO static?
 	/// \brief Unique ID of the EventObj
 	private: int id;
 
+    // TODO possibility to change name
 	/// \brief EventObj name
 	private: const std::string name;
 };

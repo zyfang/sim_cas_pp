@@ -1,10 +1,12 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(sim_cas_pp)
+project(sim_games_pp)
 
 ## TODO manually added
-set(MONGOCLIENTPATH /usr/local)
-set(MONGOCLIENT_LIBRARIES ${MONGOCLIENTPATH}/lib/libmongoclient.so)
-set(MONGO_INCLUDE_DIR ${MONGOCLIENTPATH}/include)
+set(MONGOCLIENT /usr/local/lib/libmongoclient.so)
+set(MONGO_INCLUDE_DIR /usr/local/include)
+
+# enable c++11
+set(CMAKE_CXX_FLAGS "-std=c++11")
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
@@ -12,12 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   message_generation
   tf
-  giskard
   beliefstate_client
 )
-
-find_path(YAML_CPP_INCLUDE_DIRS yaml-cpp/node.h PATH_SUFFIXES yaml-cpp )
-find_library(YAML_CPP_LIBRARIES NAMES yaml-cpp )
 
 catkin_package()
 
@@ -38,6 +36,7 @@ find_package(Protobuf REQUIRED)
 include (${QT_USE_FILE})
 add_definitions(${QT_DEFINITIONS})
 
+
 include_directories(
   include
   SYSTEM
@@ -46,7 +45,6 @@ include_directories(
   ${GAZEBO_INCLUDE_DIRS}
   ${OGRE_INCLUDE_DIRS}
   ${OGRE-Terrain_INCLUDE_DIRS}
-  ${YAML_CPP_INCLUDE_DIRS}
 )
 
 link_directories(
@@ -55,6 +53,7 @@ link_directories(
   ${OGRE-Terrain_LIBRARY_DIRS}
 )
 
+
 add_library(
   PostProcess SHARED 
   src/PostProcess.cc 
@@ -62,15 +61,12 @@ add_library(
   src/GzEventObj.cc 
   src/LogTF.cc
   src/LogEvents.cc
-  src/LogMotionExpressions.cc
   src/LogRaw.cc
-  src/LogParticles.cc
 )
 
 target_link_libraries(PostProcess
   ${catkin_LIBRARIES}
-  ${MONGOCLIENT_LIBRARIES}
+  ${MONGOCLIENT}
   ${GAZEBO_LIBRARIES}
   config++
-  ${YAML_CPP_LIBRARIES}
 )
