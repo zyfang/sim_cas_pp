@@ -87,12 +87,24 @@ void PostProcess::Load(int _argc, char ** _argv)
     		this->collSuffix = _argv[++i];
            }
 
+        // look for '--delay' characters, if option given, delay postprocessing after gazebo has started until SimTime equals the given number in seconds
+        this->process_delay=0
+    	if(std::string(_argv[i]) == "--delay"){
+            // set the next argument as the name of the db and collection
+            std::string temp = _argv[++i];
+            this->process_delay = std::atoi(temp.c_str());
+            if(process_delay<0)
+            {
+            	this->process_delay=0
+            }
+        }
+
         //whether or not the controller should take care of shutting down gazebo (or whether it's ran simultaneously with other processes that will shutdown gazebo once they're finished)
-         if(std::string(_argv[i]) == "-replayed"){
-             replayed = true;
+         if(std::string(_argv[i]) == "-replaying"){
+             replaying = true;
             }
          else {
-             replayed = false;
+             replaying = false;
          }
 
     }
@@ -111,8 +123,8 @@ void PostProcess::Load(int _argc, char ** _argv)
 
 void PostProcess::DelayPostprocessStart()
 {
-	std::cout << "Starting postprocessing when simtime exceeds 2 seconds " << std::endl;
-	while(!this->world || this->world->GetSimTime()<2.0)
+	std::cout << "Starting postprocessing when simtime exceeds " << this->process_delay << " seconds" << std::endl;
+	while(!this->world || this->world->GetSimTime()<this->process_delay)
 	{
 		usleep(1000);
 	}
@@ -330,7 +342,7 @@ void PostProcess::CheckLoggingFinishedWorker()
     // flag to stop the while loop
     log_play_finished = false;
 
-    if(replayed) { //if there is no other process giving a shutdown signal, shutdown when log is finished replaying
+    if(replaying) { //if there is no other process giving a shutdown signal, shutdown when log is finished replaying
         // loop until the log has finished playing
         while(!log_play_finished)
         {

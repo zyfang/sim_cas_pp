@@ -124,6 +124,9 @@ class PostProcess : public gazebo::SystemPlugin
 	/// \brief Db collection name
 	private: std::string collSuffix;
 
+	/// \brief Delay in simtime before postprocessing starts writing out
+	private: int process_delay;
+
 	/// \brief Gazebo communication node
 	private: gazebo::transport::NodePtr gznode;
 
@@ -172,7 +175,7 @@ class PostProcess : public gazebo::SystemPlugin
     private: bool log_play_finished;
 
     //flag whether we're replaying or postprocessing immediately
-    private: bool replayed;
+    private: bool replaying;
 
 };
 }
