@@ -51,11 +51,11 @@ GZ_REGISTER_SYSTEM_PLUGIN(PostProcess)
 //////////////////////////////////////////////////
 PostProcess::PostProcess()
 {
-	// TODO init ros only if needed
+	// TODO init ros only if needed (only if LogTF active, is called from there now)
 	// intialize ROS
-	int argc = 0;
-	char** argv = NULL;
-	ros::init(argc, argv, "post_process");
+	// int argc = 0;
+	// char** argv = NULL;
+	// ros::init(argc, argv, "post_process");
 }
 
 //////////////////////////////////////////////////
@@ -79,7 +79,6 @@ void PostProcess::Load(int _argc, char ** _argv)
             // set the next argument as the name of the collection
             this->collName = _argv[++i];
             }
-        
 
         // look for '--suffix' characters
     	if(std::string(_argv[i]) == "--suffix"){
@@ -88,14 +87,14 @@ void PostProcess::Load(int _argc, char ** _argv)
            }
 
         // look for '--delay' characters, if option given, delay postprocessing after gazebo has started until SimTime equals the given number in seconds
-        this->process_delay=0
+        this->process_delay=0;
     	if(std::string(_argv[i]) == "--delay"){
             // set the next argument as the name of the db and collection
             std::string temp = _argv[++i];
             this->process_delay = std::atoi(temp.c_str());
             if(process_delay<0)
             {
-            	this->process_delay=0
+            	this->process_delay=0;
             }
         }
 
@@ -198,8 +197,8 @@ void PostProcess::ReadConfigFile()
     }   
 
 	// if a suffix has been added append it to the collection name
-	if(this->collSuffix != NULL){
-		this->collName += this->collSuffix;
+	if(string(this->collSuffix) != NULL){
+		this->collName += string(this->collSuffix);
 	}
 	std::cout << "*PostProcess* - coll_name: " << this->collName << std::endl;
 
@@ -250,20 +249,115 @@ void PostProcess::InitOnWorldConnect()
 
     this->logdone_sub_ = this->gznode->Subscribe("/gazebo/log/control", &PostProcess::LogDone, this);
 
-    // initialize the tf logging class
-    this->tfLogger = new sg_pp::LogTF(this->world, this->dbName, this->collName, std::atoi(this->collSuffix.c_str()), connection_name);
+
+    // Create scoped connection to check wehether the collection already exists
+	ScopedDbConnection scoped_connection(connection_name);
+
+	// initialize the tf logging class
+	if (this->processTf)
+	{
+		// If collection already exist don't log the data
+		if (scoped_connection->exists(this->dbName + "." + this->collName + "." + string(this->collSuffix) + "_tf"))
+		{
+			// set flag to false
+			this->processTf = false;
+			std::cout << "*PostProcess* !!! Collection: " << this->dbName << "." << this->collName << "_tf"
+					<< " already exists skipping LogTF !!!" << std::endl;
+		}
+		else
+		{
+			// initialize the tf logging class
+    		this->tfLogger = new sg_pp::LogTF(this->world, this->dbName, this->collName, std::atoi(string(this->collSuffix).c_str()), connection_name);
+		}
+    }
 
     // initialize the events logging class
-    this->eventsLogger = new sg_pp::LogEvents(this->world, this->dbName, this->collName, std::atoi(this->collSuffix.c_str()), connection_name);
+	if (this->processEvents)
+	{
+		// If collection already exist don't log the data
+		if (scoped_connection->exists(this->dbName + "." + this->collName + "." + string(this->collSuffix) + "_ev"))
+		{
+			// set flag to false
+			this->processEvents = false;
 
-    // initialize the motion expressions logging class
-    this->motionExpressionsLogger = new sg_pp::LogMotionExpressions(this->world, this->dbName, this->collName,connection_name);
+			std::cout << "*PostProcess* !!! Collection: " << this->dbName << "." << this->collName << "." << string(this->collSuffix) << "_ev"
+					<< " already exists skipping LogEvents !!!" << std::endl;
+		}
+		else
+		{
+		    // initialize the events logging class
+		    this->eventsLogger = new sg_pp::LogEvents(this->world, this->dbName, this->collName, std::atoi(string(this->collSuffix).c_str()), connection_name);
+		}
+	}
 
-    // initialize the raw logging class
-    this->rawLogger = new sg_pp::LogRaw(this->world, this->dbName, this->collName, connection_name);
+	// initialize the motion_expressions logging class
+	if (this->processMotionExpressions)
+	{
+		// If collection already exist don't log the data
+		if (scoped_connection->exists(this->dbName + "." + this->collName + "." + string(this->collSuffix) + "_motion_expressions"))
+		{
+			// set flag to false
+			this->processEvents = false;
 
-    // initialize the particle logging class
-    this->particleLogger = new sg_pp::LogParticles(this->world, this->dbName, this->collName, connection_name);
+			std::cout << "*PostProcess* !!! Collection: " << this->dbName << "." << this->collName << "." << string(this->collSuffix) << "_motion_expressions"
+					<< " already exists skipping LogMotionExpressions !!!" << std::endl;
+		}
+		else
+		{
+		    // initialize the motion expressions logging class
+    		this->motionExpressionsLogger = new sg_pp::LogMotionExpressions(this->world, this->dbName, this->collName,connection_name);
+		}
+	}
+
+    // initialize the raw with thresholding  logging class
+	if (this->processRaw)
+	{
+		// If collection already exist don't log the data
+		if (scoped_connection->exists(this->dbName + "." + this->collName + "." + string(this->collSuffix) + "_raw"))
+		{
+			// set flag to false
+			this->processRaw = false;
+
+			std::cout << "*PostProcess* !!! Collection: " << this->dbName << "." << this->collName << "." << string(this->collSuffix) << "_raw"
+					<< " already exists skipping LogRaw !!!" << std::endl;
+		}
+		else
+		{
+		    // initialize the raw logging class
+		    this->rawLogger = new sg_pp::LogRaw(this->world, this->dbName, this->collName, connection_name);
+		}
+	}
+
+	// initialize the raw with thresholding logging class
+	if (this->processParticle)
+	{
+		// If collection already exist don't log the data
+		if (scoped_connection->exists(this->dbName + "." + this->collName + "." + string(this->collSuffix) + "_particles"))
+		{
+			// set flag to false
+			this->processRaw = false;
+
+			std::cout << "*PostProcess* !!! Collection: " << this->dbName << "." << this->collName << "." << string(this->collSuffix) << "_particles"
+					<< " already exists skipping LogParticles !!!" << std::endl;
+		}
+		else
+		{
+		    // initialize the particle logging class
+    		this->particleLogger = new sg_pp::LogParticles(this->world, this->dbName, this->collName, connection_name);
+		}
+	}
+
+	// if no PP is happening, shut down server
+	if(!this->processEvents && !this->processRaw && !this->processTf && !this->processParticle && !this->processMotionExpressions)
+	{
+	    std::cout << "*PostProcess* !!! No PP selected, Shutting down gzserver.. !!! " << std::endl;
+
+	    // send server control msg to terminate the server (does not apply when client is running)
+	    msgs::ServerControl server_msg;
+	    server_msg.set_stop(true);
+	    serverControlPub->Publish(server_msg);
+	}
+    
 }
 
 //////////////////////////////////////////////////
@@ -392,11 +486,16 @@ void PostProcess::LogDone(ConstLogControlPtr& _msg)
 
 void PostProcess::TerminateSimulation()
 {
-	// finish the events
-    this->eventsLogger->FiniEvents();
+
+	// if events are processed, finish them
+	if (this->processEvents)
+	{
+		// finish the events
+		this->eventsLogger->FiniEvents();
+	}
 
 	// shutdown ros
-	ros::shutdown();
+	// ros::shutdown();
 
     std::cout << "Shutting down server.." << std::endl;
 

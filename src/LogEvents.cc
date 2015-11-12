@@ -883,7 +883,11 @@ void LogEvents::WriteContexts()
         }
 
         // insert document object into the database
-        scoped_connection->insert(this->dbName + "." + this->collName + "_ev",
+        stringstream strs;
+        strs << this->suffixTime;
+        string temp_str = strs.str();
+        const char* timechar = temp_str.c_str();
+        scoped_connection->insert(this->dbName + "." + this->collName + "." + timechar + "_ev",
                 BSON("events" << events_objs));
 
         // let the pool know the connection is done
@@ -900,7 +904,7 @@ void LogEvents::WriteTimelines()
 
     std::stringstream ss;
 
-    ss << "timeline" << this->suffixTime << ".html";
+    ss << "timeline_" << this->collName << this->suffixTime << ".html";
 
     timeline_file.open(ss.str().c_str());
 

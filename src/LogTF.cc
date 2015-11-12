@@ -65,12 +65,20 @@ LogTF::LogTF(const gazebo::physics::WorldPtr _world,
 
 	// TODO for adding time offset to the simulation times
 	this->suffixTime = _suffix;
+
+	// init ros
+	if(this->publishTF)
+	{
+		// intialize ROS
+		int argc = 0;
+		char** argv = NULL;
+		ros::init(argc, argv, "tf_pub");
+	}
 }
 
 //////////////////////////////////////////////////
 LogTF::~LogTF()
 {
-
 }
 
 //////////////////////////////////////////////////
@@ -243,19 +251,26 @@ void LogTF::WriteTFData(const std::vector<tf::StampedTransform>& _stamped_transf
 		}
 	}
 
-	// increment the the message seq
-	this->tfSeq++;
+	// write to db only if there is at least one transform
+	if (!transforms_bo.empty())
+	{
+		// increment the the message seq
+		this->tfSeq++;
 
-    // insert document object into the database, use scoped connection
-	ScopedDbConnection scoped_connection(this->connName);
+	    // insert document object into the database, use scoped connection
+		ScopedDbConnection scoped_connection(this->connName);
+		stringstream strs;
+	  	strs << this->suffixTime;
+	  	string temp_str = strs.str();
+		const char* timechar = temp_str.c_str();
+		// insert document object into the database
+		scoped_connection->insert(this->dbName + "." + this->collName + "." + timechar + "_tf", BSON("transforms" << transforms_bo
+															<< "__recorded" << stamp_ms
+															<< "__topic" << "/tf_sim"));
 
-	// insert document object into the database
-	scoped_connection->insert(this->dbName + "." + this->collName + "_tf", BSON("transforms" << transforms_bo
-														<< "__recorded" << stamp_ms
-														<< "__topic" << "/tf_sim"));
-
-	// let the pool know the connection is done
-	scoped_connection.done();
+		// let the pool know the connection is done
+		scoped_connection.done();
+	}
 }
 
 //////////////////////////////////////////////////
@@ -308,10 +323,10 @@ bool LogTF::CheckTFThresh(const std::vector<tf::StampedTransform>::const_iterato
 						angular_dist > this->tfAngularDistThresh ||
 								duration > this->tfDurationThresh)
 				{
-					std::cout << memory_st_iter->frame_id_<< "->" <<memory_st_iter->child_frame_id_
-							<< " dist: " << vect_dist
-							<< " rot: " << angular_dist
-							<< " duration: " << duration << std::endl;
+					// std::cout << memory_st_iter->frame_id_<< "->" <<memory_st_iter->child_frame_id_
+					// 		<< " dist: " << vect_dist
+					// 		<< " rot: " << angular_dist
+					// 		<< " duration: " << duration << std::endl;
 
 					// one of the threshold passed, the current transformation is added to the memory
 					*(memory_st_iter) = *(_curr_st_iter);
