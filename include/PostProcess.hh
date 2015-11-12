@@ -122,10 +122,10 @@ class PostProcess : public gazebo::SystemPlugin
 	private: std::string collName;
 
 	/// \brief Db collection name
-	private: std::string collSuffix;
+	private: std::string collSuffix="0";
 
 	/// \brief Delay in simtime before postprocessing starts writing out
-	private: int process_delay;
+	private: int process_delay=0;
 
 	/// \brief Gazebo communication node
 	private: gazebo::transport::NodePtr gznode;

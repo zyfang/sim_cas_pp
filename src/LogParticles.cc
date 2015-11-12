@@ -40,13 +40,19 @@ using namespace sg_pp;
 using namespace gazebo;
 using namespace mongo;
 
+//timeoffset in miliseconds
+#define TIME_OFFSET 5000
 
 //////////////////////////////////////////////////
 LogParticles::LogParticles(const gazebo::physics::WorldPtr _world,
-		const std::string _db_name, const std::string _coll_name, const std::string _connection_name)
+		const std::string _db_name, 
+        const std::string _coll_name, 
+        int _suffix,
+        const std::string _connection_name)
 	: world(_world)
 	, dbName(_db_name)
 	, collName(_coll_name)
+    , suffixTime(_suffix)
     , connName(_connection_name)
 {
 	// get the world models
@@ -163,8 +169,8 @@ void LogParticles::WriteParticleData()
     bool diff_detected = false;
 
     // compute simulation time in milliseconds
-    // const double timestamp_ms = this->world->GetSimTime().Double();
-    const double timestamp_ms = this->world->GetSimTime().nsec / 1000000.0 + this->world->GetSimTime().sec * 1000.0;
+    const double timestamp_ms = this->world->GetSimTime().Double() + (TIME_OFFSET * this->suffixTime);
+    // const double timestamp_ms = this->world->GetSimTime().nsec / 1000000.0 + this->world->GetSimTime().sec * 1000.0;
 
     // get all the contacts from the physics engine
     const std::vector<physics::Contact*> _contacts = this->contactManagerPtr->GetContacts();

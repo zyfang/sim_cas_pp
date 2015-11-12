@@ -40,15 +40,19 @@ using namespace sg_pp;
 using namespace gazebo;
 using namespace mongo;
 
+//timeoffset in miliseconds
+#define TIME_OFFSET 5000
 
 //////////////////////////////////////////////////
 LogRaw::LogRaw(const gazebo::physics::WorldPtr _world, 
 		const std::string _db_name,
 		const std::string _coll_name,
+		int _suffix,
 		const std::string _connection_name)
 	: world(_world)
 	, dbName(_db_name)
 	, collName(_coll_name)
+	, suffixTime(_suffix)
 	, connName(_connection_name)
 {
 	// get the world models
@@ -88,10 +92,18 @@ void LogRaw::ReadConfigFile()
 		            		  << " - " << pex.getError() << std::endl;
 	}
 
+	this->writeAll = cfg.lookup("raw.write_all");
+	std::cout << "*LogRaw* - write_all_transf: " << this->writeAll << std::endl;
 
-//	this->publishTF = cfg.lookup("tf.publish");
-//	std::cout << "LogRaw - publish TF: " << this->publishTF << std::endl;
+	// in case thresholds are set for logging the tf
+	if (!this->writeAll)
+	{
+		this->distTh = cfg.lookup("raw.dist_th");
+		std::cout << "*LogRaw* - dist_th: " << this->distTh << std::endl;
 
+		this->angleTh = cfg.lookup("raw.angular_th");
+		std::cout << "*LogRaw* - angular_th: " << this->angleTh << std::endl;
+	}
 
 }
 
@@ -99,8 +111,8 @@ void LogRaw::ReadConfigFile()
 void LogRaw::WriteRawData()
 {
     // compute simulation time in milliseconds
-    // const double timestamp_ms = this->world->GetSimTime().Double()*1000;
-    const double timestamp_ms = this->world->GetSimTime().nsec / 1000000.0 + this->world->GetSimTime().sec * 1000.0;
+    const double timestamp_ms = this->world->GetSimTime().Double() + (TIME_OFFSET * this->suffixTime);
+    // const double timestamp_ms = this->world->GetSimTime().nsec / 1000000.0 + this->world->GetSimTime().sec * 1000.0;
 
     // get all the contacts from the physics engine
     const std::vector<physics::Contact*> _contacts = this->contactManagerPtr->GetContacts();
@@ -112,112 +124,173 @@ void LogRaw::WriteRawData()
     BSONArrayBuilder _bson_model_arr_builder;
 
     //////////////////////////////////////////////////
-    // loop trough all the models
-    for (unsigned int i = 0; i < this->models.size(); i++ )
-    {
-        // get the links vector from the current model
-        const physics::Link_V _links = this->models.at(i)->GetLinks();
+	// loop trough all the models
+	for (unsigned int i = 0; i < this->models.size(); i++ )
+	{
+		// check if model needs to be written to the db
+		if(LogRaw::CheckThreshold(this->models.at(i)))
+		{
+			// get the links vector from the current model
+			const physics::Link_V _links = this->models.at(i)->GetLinks();
 
-        // bson array builder
-        BSONArrayBuilder _link_arr_builder;
+			// bson array builder
+			BSONArrayBuilder _link_arr_builder;
 
-        //////////////////////////////////////////////////
-        // loop through the links
-        for (unsigned int j = 0; j < _links.size(); j++)
-        {
-            // get the collisions of the current link
-            const physics::Collision_V _collisions = _links.at(j)->GetCollisions();
+			//////////////////////////////////////////////////
+			// loop through the links
+			for (unsigned int j = 0; j < _links.size(); j++)
+			{
+				// get the collisions of the current link
+				const physics::Collision_V _collisions = _links.at(j)->GetCollisions();
 
-            // bson array builder
-            BSONArrayBuilder _collision_arr_builder;
+				// bson array builder
+				BSONArrayBuilder _collision_arr_builder;
 
 
-            //////////////////////////////////////////////////
-            // loop through the collisions
-            for (unsigned int k = 0; k < _collisions.size(); k++)
-            {
-                // bson array builder
-                BSONArrayBuilder _contacts_arr_builder;
 
-                //////////////////////////////////////////////////
-                // loop through all the global contacts to check if they match the collision
-                // TODO not the most effective way?
-                for (unsigned int l = 0; l < _contacts.size(); l++)
-                {
-                    //std::cout << "\t" << _contacts.at(l)->collision1->GetName() << " --> "
-                    //		<< _contacts.at(l)->collision2->GetName() << std::endl;
+				//////////////////////////////////////////////////
+				// loop through the collisions
+				for (unsigned int k = 0; k < _collisions.size(); k++)
+				{
+					// bson array builder
+					BSONArrayBuilder _contacts_arr_builder;
 
-                    // check if the current collision equals the contact collision1
-                    if (_collisions.at(k)->GetName() ==
-                            _contacts.at(l)->collision1->GetName())
-                    {
-                        // create BSON contact object with opposite coll: collision2
-                        BSONObj _contact_bo = LogRaw::CreateBSONContactObject(
-                                _contacts.at(l), _contacts.at(l)->collision2);
+					// TODO weird contact detection errors when running rawTh and raw threads concurently
+					// contacts get shifted around in the world, currently leaving contacts out
+					// try using contact manager only from PP ?, or not running concurently?
 
-                        // append collision obj to array
-                        _contacts_arr_builder.append(_contact_bo);
+					//////////////////////////////////////////////////
+					// loop through all the global contacts to check if they match the collision
+					// TODO not the most effective way?
+//					for (unsigned int l = 0; l < _contacts.size(); l++)
+//					{
+//						//std::cout << "\t" << _contacts.at(l)->collision1->GetName() << " --> "
+//						//		<< _contacts.at(l)->collision2->GetName() << std::endl;
+//
+//						// check if the current collision equals the contact collision1
+//						if (_collisions.at(k)->GetName() ==
+//								_contacts.at(l)->collision1->GetName())
+//						{
+//							// create BSON contact object with opposite coll: collision2
+//							BSONObj _contact_bo = LogRaw::CreateBSONContactObject(
+//									_contacts.at(l), _contacts.at(l)->collision2);
+//
+//							// append collision obj to array
+//							_contacts_arr_builder.append(_contact_bo);
+//
+//						}
+//						// if the current collision equals the contact collision2
+//						else if(_collisions.at(k)->GetName() ==
+//								_contacts.at(l)->collision2->GetName())
+//						{
+//							// create BSON contact object with the opposite coll: collision1
+//							BSONObj _contact_bo = LogRaw::CreateBSONContactObject(
+//									_contacts.at(l), _contacts.at(l)->collision1);
+//
+//							// append collision obj to array
+//							_contacts_arr_builder.append(_contact_bo);
+//						}
+//
+//					}
 
-                    }
-                    // if the current collision equals the contact collision2
-                    else if(_collisions.at(k)->GetName() ==
-                            _contacts.at(l)->collision2->GetName())
-                    {
-                        // create BSON contact object with the opposite coll: collision1
-                        BSONObj _contact_bo = LogRaw::CreateBSONContactObject(
-                                _contacts.at(l), _contacts.at(l)->collision1);
+					// create the bson contacts array
+					BSONArray _contact_arr = _contacts_arr_builder.arr();
 
-                        // append collision obj to array
-                        _contacts_arr_builder.append(_contact_bo);
-                    }
+					// collision bson obj
+					BSONObj _collision_bo = LogRaw::CreateBSONCollisionObject(_collisions.at(k), _contact_arr);
 
-                }
+					// append collision obj to array
+					_collision_arr_builder.append(_collision_bo);
+				}
 
-                // create the bson contacts array
-                BSONArray _contact_arr = _contacts_arr_builder.arr();
+				// bson array
+				BSONArray _collision_arr = _collision_arr_builder.arr();
 
-                // collision bson obj
-                BSONObj _collision_bo = LogRaw::CreateBSONCollisionObject(_collisions.at(k), _contact_arr);
+				// link bson object
+				BSONObj _link_bo = LogRaw::CreateBSONLinkObject(_links.at(j), _collision_arr);
 
-                // append collision obj to array
-                _collision_arr_builder.append(_collision_bo);
-            }
+				// append link object to array
+				_link_arr_builder.append(_link_bo);
+			}
 
-            // bson array
-            BSONArray _collision_arr = _collision_arr_builder.arr();
+			// create the bson link array
+			BSONArray _link_arr = _link_arr_builder.arr();
 
-            // link bson object
-            BSONObj _link_bo = LogRaw::CreateBSONLinkObject(_links.at(j), _collision_arr);
+			// model bson object
+			BSONObj _model_bo = LogRaw::CreateBSONModelObject(this->models.at(i), _link_arr);
 
-            // append link object to array
-            _link_arr_builder.append(_link_bo);
-        }
-
-        // create the bson link array
-        BSONArray _link_arr = _link_arr_builder.arr();
-
-        // model bson object
-        BSONObj _model_bo = LogRaw::CreateBSONModelObject(this->models.at(i), _link_arr);
-
-        // append model object to array
-        _bson_model_arr_builder.append(_model_bo);
-    }
+			// append model object to array
+			_bson_model_arr_builder.append(_model_bo);
+		}
+	}
 
 
     // create the bson model array
     BSONArray _bson_model_arr = _bson_model_arr_builder.arr();
 
-    // create the document object
-    _doc_bo = BSON("models" << _bson_model_arr << "timestamp" << timestamp_ms);
+    // write to db only if at least one model is present
+	if (!_bson_model_arr.isEmpty())
+	{
+	    // create the document object
+	    _doc_bo = BSON("models" << _bson_model_arr << "timestamp" << timestamp_ms);
 
-	// Create scoped connection
-	ScopedDbConnection scoped_connection(this->connName);
+		// Create scoped connection
+		ScopedDbConnection scoped_connection(this->connName);
 
-	// insert document object into the database
-	scoped_connection->insert(this->dbName + "." + this->collName + "_raw",	_doc_bo);
+		// insert document object into the database
+		scoped_connection->insert(this->dbName + "." + this->collName + "_raw",	_doc_bo);
 
-	// let the pool know the connection is done
-	scoped_connection.done();
+		// let the pool know the connection is done
+		scoped_connection.done();
+	}
+}
+
+//////////////////////////////////////////////////
+bool LogRaw::CheckThreshold(const gazebo::physics::ModelPtr _model)
+{
+	// ignore thresholds
+	if(this->writeAll)
+	{
+		// add data to db
+		return true;
+	}
+
+	// if the model is not yet in the memory, add it and save it's initial data to the db
+	if(!modelPoseMemoryMap.count(_model))
+	{
+		// add pose to the memory
+		this->modelPoseMemoryMap[_model] = _model->GetWorldPose();
+
+		// add data to db
+		return true;
+	}
+
+
+	// get the current and memory pose of the model
+	const math::Pose curr_pose = _model->GetWorldPose();
+	const math::Pose memory_pose = this->modelPoseMemoryMap[_model];
+
+	// check for dist thresh
+	if (memory_pose.pos.Distance(curr_pose.pos) >= this->distTh)
+	{
+		// add new pose to the memory
+		this->modelPoseMemoryMap[_model] = _model->GetWorldPose();
+
+		// add data to db
+		return true;
+	}
+	// check for angular thresh
+	else if (memory_pose.rot.GetAsEuler().Distance(curr_pose.rot.GetAsEuler()) >= this->angleTh)
+	{
+		// add new pose to the memory
+		this->modelPoseMemoryMap[_model] = _model->GetWorldPose();
+
+		// add data to db
+		return true;
+	}
+
+	// don't write to db
+	return false;
 }
 
 

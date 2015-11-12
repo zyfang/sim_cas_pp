@@ -52,6 +52,7 @@ class LogRaw
 	public: LogRaw(const gazebo::physics::WorldPtr _world,
 			const std::string _db_name,
 			const std::string _coll_name,
+			int suffix,
 			const std::string _connection_name);
 
 	/// \brief Destructor
@@ -63,6 +64,9 @@ class LogRaw
 	/// \brief Load config file
 	private: void ReadConfigFile();
 
+	/// \brief Check treshold in order to write data
+	public: bool CheckThreshold(const gazebo::physics::ModelPtr _model);
+	
     /// \brief Return a contact bson object
 	private: mongo::BSONObj CreateBSONContactObject(
 			const gazebo::physics::Contact* _contact,
@@ -100,7 +104,21 @@ class LogRaw
 
 	/// \brief pointer of ContactManager, for getting contacts from physics engine
 	private: gazebo::physics::ContactManager *contactManagerPtr;
+	
+	// for adding time offset to the simulation times
+	private: int suffixTime;
 
+	/// \brief Flag to write all logs
+	private: bool writeAll;
+
+	/// \brief Distance tresh between the entities
+	private: double distTh;
+
+	/// \brief Angle tresh between the entities
+	private: double angleTh;
+
+	/// \brief Prev pose of all the models
+	private: std::map<gazebo::physics::ModelPtr, gazebo::math::Pose> modelPoseMemoryMap;
 
 };
 }

@@ -39,7 +39,7 @@
 using namespace sg_pp;
 
 //////////////////////////////////////////////////
-GzEventObj::GzEventObj(const std::string _name) :
+PpEventObj::PpEventObj(const std::string _name) :
 		name(_name)
 {
 	// add id to the event;
@@ -47,18 +47,18 @@ GzEventObj::GzEventObj(const std::string _name) :
 }
 
 //////////////////////////////////////////////////
-GzEventObj::~GzEventObj()
+PpEventObj::~PpEventObj()
 {
 }
 
 //////////////////////////////////////////////////
-int GzEventObj::GetId()
+int PpEventObj::GetId()
 {
 	return id;
 }
 
 //////////////////////////////////////////////////
-const std::string GzEventObj::GetName()
+const std::string PpEventObj::GetName()
 {
 	return this->name;
 }

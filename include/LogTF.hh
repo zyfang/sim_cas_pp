@@ -108,7 +108,7 @@ class LogTF
 	/// \brief Duration threshold between tf transformation in order to be logged or not
 	private: int tfDurationThresh;
 
-	// TODO for adding time offset to the simulation times
+	// for adding time offset to the simulation times
 	private: int suffixTime;
 };
 }

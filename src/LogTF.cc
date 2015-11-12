@@ -41,7 +41,7 @@ using namespace gazebo;
 using namespace mongo;
 
 //timeoffset in miliseconds
-#define TIME_OFFSET 5000000
+#define TIME_OFFSET 5000
 
 //////////////////////////////////////////////////
 LogTF::LogTF(const gazebo::physics::WorldPtr _world,
@@ -52,6 +52,7 @@ LogTF::LogTF(const gazebo::physics::WorldPtr _world,
 	: world(_world)
 	, dbName(_db_name)
 	, collName(_coll_name)
+	, suffixTime(_suffix)
 	, connName(_connection_name)
 {
 	// get the world models
@@ -62,9 +63,6 @@ LogTF::LogTF(const gazebo::physics::WorldPtr _world,
 
 	// get values from the config file
 	LogTF::ReadConfigFile();
-
-	// TODO for adding time offset to the simulation times
-	this->suffixTime = _suffix;
 
 	// init ros
 	if(this->publishTF)
@@ -259,12 +257,12 @@ void LogTF::WriteTFData(const std::vector<tf::StampedTransform>& _stamped_transf
 
 	    // insert document object into the database, use scoped connection
 		ScopedDbConnection scoped_connection(this->connName);
-		stringstream strs;
-	  	strs << this->suffixTime;
-	  	string temp_str = strs.str();
-		const char* timechar = temp_str.c_str();
+		// stringstream strs;
+	 //  	strs << this->suffixTime;
+	 //  	string temp_str = strs.str();
+		// const char* timechar = temp_str.c_str();
 		// insert document object into the database
-		scoped_connection->insert(this->dbName + "." + this->collName + "." + timechar + "_tf", BSON("transforms" << transforms_bo
+		scoped_connection->insert(this->dbName + "." + this->collName + "_tf", BSON("transforms" << transforms_bo
 															<< "__recorded" << stamp_ms
 															<< "__topic" << "/tf_sim"));
 

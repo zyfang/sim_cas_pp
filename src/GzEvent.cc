@@ -33,21 +33,22 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
-
+//TODO rename PpEvent.hh ?
 #include "GzEvent.hh"
 
 using namespace sg_pp;
 
 //////////////////////////////////////////////////
-GzEvent::GzEvent(const std::string _name,
-		const std::string _class_namespace,
-		const std::string _class_type,
-		double _start_time) :
+PpEvent::PpEvent(const std::string _name,
+        const std::string _class_namespace,
+        const std::string _class_type,
+        double _start_time) :
 		name(_name),
 		classNamespace(_class_namespace),
 		classType(_class_type)
 {
-	// add id to the event;
+    // add id to the event
+    // TODO this should be static?!
 	id++;
 
 	// set the start time;
@@ -55,7 +56,7 @@ GzEvent::GzEvent(const std::string _name,
 }
 
 //////////////////////////////////////////////////
-GzEvent::GzEvent(const std::string _name,
+PpEvent::PpEvent(const std::string _name,
 		const std::string _class_namespace,
 		const std::string _class_type,
 		const std::string _property_namespace,
@@ -75,79 +76,79 @@ GzEvent::GzEvent(const std::string _name,
 }
 
 //////////////////////////////////////////////////
-GzEvent::~GzEvent()
+PpEvent::~PpEvent()
 {
 }
 
 //////////////////////////////////////////////////
-int GzEvent::GetId()
+int PpEvent::GetId()
 {
 	return id;
 }
 
 //////////////////////////////////////////////////
-const std::string GzEvent::GetName()
+const std::string PpEvent::GetName()
 {
 	return this->name;
 }
 
 //////////////////////////////////////////////////
-const std::string GzEvent::GetClassNamespace()
+const std::string PpEvent::GetClassNamespace()
 {
 	return this->classNamespace;
 }
 
 
 //////////////////////////////////////////////////
-const std::string GzEvent::GetClass()
+const std::string PpEvent::GetClass()
 {
 	return this->classType;
 }
 
 //////////////////////////////////////////////////
-const std::string GzEvent::GetPropertyNamespace()
+const std::string PpEvent::GetPropertyNamespace()
 {
 	return this->propertyNamespace;
 }
 
 //////////////////////////////////////////////////
-const std::string GzEvent::GetProperty()
+const std::string PpEvent::GetProperty()
 {
 	return this->property;
 }
 
 //////////////////////////////////////////////////
-bool GzEvent::IsOpen()
+bool PpEvent::IsOpen()
 {
 	return this->isOpen;
 }
 
 //////////////////////////////////////////////////
-double GzEvent::GetStartTime()
+double PpEvent::GetStartTime()
 {
 	return this->startTime;
 }
 
 //////////////////////////////////////////////////
-void GzEvent::SetStartTime(double _start_time)
+void PpEvent::SetStartTime(double _start_time)
 {
 	this->startTime = _start_time;
 }
 
 //////////////////////////////////////////////////
-double GzEvent::GetEndTime()
+double PpEvent::GetEndTime()
 {
 	return this->endTime;
 }
 
 //////////////////////////////////////////////////
-void GzEvent::SetEndTime(double _end_time)
+void PpEvent::SetEndTime(double _end_time)
 {
 	this->endTime = _end_time;
 }
 
 //////////////////////////////////////////////////
-double GzEvent::GetDuration()
+double PpEvent::GetDuration()
 {
 	if(!this->isOpen)
 	{
@@ -161,7 +162,7 @@ double GzEvent::GetDuration()
 }
 
 //////////////////////////////////////////////////
-void GzEvent::Start(double _start_time)
+void PpEvent::Start(double _start_time)
 {
 	// close the event
 	this->isOpen = true;
@@ -171,7 +172,7 @@ void GzEvent::Start(double _start_time)
 }
 
 //////////////////////////////////////////////////
-void GzEvent::End(double _end_time)
+void PpEvent::End(double _end_time)
 {
 	// close the event
 	this->isOpen = false;
@@ -181,13 +182,13 @@ void GzEvent::End(double _end_time)
 }
 
 //////////////////////////////////////////////////
-void GzEvent::AddObject(GzEventObj* _ev_obj)
+void PpEvent::AddObject(PpEventObj* _ev_obj)
 {
 	this->objects.push_back(_ev_obj);
 }
 
 //////////////////////////////////////////////////
-std::vector<GzEventObj*> GzEvent::GetObjects()
+std::vector<PpEventObj*> PpEvent::GetObjects()
 {
 	return this->objects;
 }

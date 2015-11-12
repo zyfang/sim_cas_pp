@@ -57,6 +57,7 @@ class LogParticles
 	public: LogParticles(const gazebo::physics::WorldPtr _world,
 			const std::string _db_name,
 			const std::string _coll_name,
+			int _suffix,
 			const std::string _connection_name);
 
 	/// \brief Destructor
@@ -118,6 +119,9 @@ class LogParticles
 
     /// \brief flag for when the pancake is created
     private: bool pancakeCreated;
+
+    // for adding time offset to the simulation times
+	private: int suffixTime;
 };
 }
 #endif
