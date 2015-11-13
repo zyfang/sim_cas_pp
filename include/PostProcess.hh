@@ -95,6 +95,10 @@ class PostProcess : public gazebo::SystemPlugin
 
     private: void LogDone(ConstLogControlPtr& _msg);
 
+    /* Helpfunction for checking whether the intended collection already exists in the given connection, if it already exists, sets logflag to false so it will not be overwritten.
+    */
+    private: bool CheckShouldLog(bool &logflag, mongo::ScopedDbConnection &scoped_connection, std::string loggingname, std::string postid);
+
 	/// \brief Thread for checking the end of a log
 	private: boost::thread* checkLogginFinishedThread;
 

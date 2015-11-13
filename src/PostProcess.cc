@@ -224,6 +224,31 @@ void PostProcess::ReadConfigFile()
 }
 
 //////////////////////////////////////////////////
+bool PostProcess::CheckShouldLog(bool &logflag, ScopedDbConnection &scoped_connection, std::string loggingname, std::string postid)
+{
+	if(logflag)
+	{
+        // If collection already exist don't log the data
+        if (scoped_connection->exists(this->dbName + "." + this->collName + "_" + postid))
+		{
+			// set flag to false
+			logflag= false;
+            std::cout << "*PostProcess* !!! Collection: " << this->dbName << "." << this->collName << "_" << postid
+					<< " already exists skipping " << loggingname << std::endl;
+			return false;
+		}
+		else
+		{
+			return true;
+		}
+	}
+	else
+	{
+		return false;
+	}
+}
+
+//////////////////////////////////////////////////
 void PostProcess::InitOnWorldConnect()
 {
 	//specify to which port the database should be written. default ("localhost") is 27017
@@ -252,101 +277,42 @@ void PostProcess::InitOnWorldConnect()
     this->logdone_sub_ = this->gznode->Subscribe("/gazebo/log/control", &PostProcess::LogDone, this);
 
 
-    // Create scoped connection to check wehether the collection already exists
+    // Create scoped connection to check whether the collection already exists
 	ScopedDbConnection scoped_connection(connection_name);
 
 	// initialize the tf logging class
-	if (this->processTf)
-	{
-		// If collection already exist don't log the data
-		if (scoped_connection->exists(this->dbName + "." + this->collName + "_" + string(this->offsetMultiplier) + "_tf"))
-		{
-			// set flag to false
-			this->processTf = false;
-			std::cout << "*PostProcess* !!! Collection: " << this->dbName << "." << this->collName << "_tf"
-					<< " already exists skipping LogTF !!!" << std::endl;
-		}
-		else
-		{
-			// initialize the tf logging class
-            this->tfLogger = new sg_pp::LogTF(this->world, this->dbName, this->collName, connection_name, this->timeOffset);
-		}
+    if (PostProcess::CheckShouldLog(this->processTf, scoped_connection, "LogTF","tf"))
+    {
+        // initialize the tf logging class
+        this->tfLogger = new sg_pp::LogTF(this->world, this->dbName, this->collName, connection_name, this->timeOffset);
     }
 
-    // initialize the events logging class
-	if (this->processEvents)
-	{
-		// If collection already exist don't log the data
-		if (scoped_connection->exists(this->dbName + "." + this->collName + "_" + string(this->offsetMultiplier) + "_ev"))
-		{
-			// set flag to false
-			this->processEvents = false;
-
-			std::cout << "*PostProcess* !!! Collection: " << this->dbName << "." << this->collName << "." << string(this->offsetMultiplier) << "_ev"
-					<< " already exists skipping LogEvents !!!" << std::endl;
-		}
-		else
-		{
-		    // initialize the events logging class
-            this->eventsLogger = new sg_pp::LogEvents(this->world, this->dbName, this->collName, connection_name, this->timeOffset);
-		}
-	}
+    // initialize the event logging class
+    if (PostProcess::CheckShouldLog(this->processEvents, scoped_connection, "LogEvents","ev"))
+    {
+        // initialize the events logging class
+        this->eventsLogger = new sg_pp::LogEvents(this->world, this->dbName, this->collName, connection_name, this->timeOffset);
+    }
 
 	// initialize the motion_expressions logging class
-	if (this->processMotionExpressions)
-	{
-		// If collection already exist don't log the data
-		if (scoped_connection->exists(this->dbName + "." + this->collName + "_" + string(this->offsetMultiplier) + "_motion_expressions"))
-		{
-			// set flag to false
-			this->processMotionExpressions = false;
-
-			std::cout << "*PostProcess* !!! Collection: " << this->dbName << "." << this->collName << "." << string(this->offsetMultiplier) << "_motion_expressions"
-					<< " already exists skipping LogMotionExpressions !!!" << std::endl;
-		}
-		else
-		{
+    if (PostProcess::CheckShouldLog(this->processMotionExpressions, scoped_connection, "LogMotionExpressions","motion_expressions"))
+    {
 		    // initialize the motion expressions logging class
             this->motionExpressionsLogger = new sg_pp::LogMotionExpressions(this->world, this->dbName, this->collName, connection_name, this->timeOffset);
-		}
-	}
+    }
 
     // initialize the raw with thresholding  logging class
-	if (this->processRaw)
-	{
-		// If collection already exist don't log the data
-		if (scoped_connection->exists(this->dbName + "." + this->collName + "_" + string(this->offsetMultiplier) + "_raw"))
-		{
-			// set flag to false
-			this->processRaw = false;
-
-			std::cout << "*PostProcess* !!! Collection: " << this->dbName << "." << this->collName << "." << string(this->offsetMultiplier) << "_raw"
-					<< " already exists skipping LogRaw !!!" << std::endl;
-		}
-		else
-		{
+    if (PostProcess::CheckShouldLog(this->processRaw, scoped_connection, "LogRaw","raw"))
+    {
 		    // initialize the raw logging class
             this->rawLogger = new sg_pp::LogRaw(this->world, this->dbName, this->collName, connection_name, this->timeOffset);
-		}
 	}
 
 	// initialize the raw with thresholding logging class
-	if (this->processParticle)
-	{
-		// If collection already exist don't log the data
-		if (scoped_connection->exists(this->dbName + "." + this->collName + "_" + string(this->offsetMultiplier) + "_particles"))
-		{
-			// set flag to false
-			this->processRaw = false;
-
-			std::cout << "*PostProcess* !!! Collection: " << this->dbName << "." << this->collName << "." << string(this->offsetMultiplier) << "_particles"
-					<< " already exists skipping LogParticles !!!" << std::endl;
-		}
-		else
-		{
+    if (PostProcess::CheckShouldLog(this->processParticle, scoped_connection, "LogParticle","particles"))
+    {
 		    // initialize the particle logging class
             this->particleLogger = new sg_pp::LogParticles(this->world, this->dbName, this->collName, connection_name, this->timeOffset);
-		}
 	}
 
 	// if no PP is happening, shut down server
@@ -383,7 +349,7 @@ void PostProcess::FirstSimulationStepInit()
 	{
     	this->motionExpressionsLogger->Init();
     }
-    
+
 	// Run the post processing threads once so the first step is not skipped
 	PostProcess::ProcessCurrentData();
 
