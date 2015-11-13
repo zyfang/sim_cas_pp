@@ -47,8 +47,11 @@ namespace sg_pp
   class LogMotionExpressions
   {
     public:
-      LogMotionExpressions(const gazebo::physics::WorldPtr& world, const std::string& db_name,
-          const std::string& coll_name, int suffix, const std::string connection_name);
+      LogMotionExpressions(const gazebo::physics::WorldPtr& world,
+          const std::string& db_name,
+          const std::string& coll_name,
+          const std::string connection_name,
+          const int _timeoffset);
 
       void Init();
   
@@ -70,8 +73,8 @@ namespace sg_pp
       std::vector< KDL::Expression<double>::Ptr > expressions_;
       std::vector<double> expression_values_;
 
-      // for adding time offset to the simulation times
-      private: int suffixTime;
+      /// \brief storing absolute timeoffset
+      private: const int TIME_OFFSET;
   };
 
   //

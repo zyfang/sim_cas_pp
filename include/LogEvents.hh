@@ -56,9 +56,9 @@ class LogEvents
 	/// \brief Constructor
 	public: LogEvents(const gazebo::physics::WorldPtr _world,
 			const std::string _db_name,
-			const std::string _coll_name,
-			int _suffix,
-			const std::string _connection_name);
+            const std::string _coll_name,
+            const std::string _connection_name,
+            const int _timeoffset);
 
 	/// \brief Destructor
 	public: virtual ~LogEvents();
@@ -127,11 +127,11 @@ class LogEvents
 	/// \brief Db collection name
 	private: const std::string collName;
 
+    /// \brief storing absolute timeoffset
+    private: const int TIME_OFFSET;
+
 	/// \brief Log location of the events
     private: std::string logLocation;
-
-	// TODO for adding time offset to the simulation times
-    private: int suffixTime;
 
     /// \brief Event disconnection threshold limit
     private: double eventDiscThresh;

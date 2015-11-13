@@ -51,6 +51,9 @@
 
 namespace sg_pp
 {
+
+	const int TIME_OFFSET = 3000;
+
 /// \brief class PostProcess
 class PostProcess : public gazebo::SystemPlugin
 {
@@ -121,8 +124,11 @@ class PostProcess : public gazebo::SystemPlugin
 	/// \brief Db collection name
 	private: std::string collName;
 
-	/// \brief Db collection name
-	private: std::string collSuffix="0";
+    /// \brief timeoffset multiplier
+	private: std::string offsetMultiplier="0";
+
+    /// \brief storing absolute timeoffset
+    private: int timeOffset = 0;
 
 	/// \brief Delay in simtime before postprocessing starts writing out
 	private: int process_delay=0;

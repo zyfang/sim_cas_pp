@@ -40,20 +40,17 @@ using namespace sg_pp;
 using namespace gazebo;
 using namespace mongo;
 
-//timeoffset in miliseconds
-#define TIME_OFFSET 5000
-
 //////////////////////////////////////////////////
 LogRaw::LogRaw(const gazebo::physics::WorldPtr _world, 
 		const std::string _db_name,
-		const std::string _coll_name,
-		int _suffix,
-		const std::string _connection_name)
+        const std::string _coll_name,
+        const std::string _connection_name,
+        const int _timeoffset)
 	: world(_world)
 	, dbName(_db_name)
-	, collName(_coll_name)
-	, suffixTime(_suffix)
+    , collName(_coll_name)
 	, connName(_connection_name)
+    , TIME_OFFSET(_timeoffset)
 {
 	// get the world models
 	this->models = this->world->GetModels();
@@ -111,7 +108,7 @@ void LogRaw::ReadConfigFile()
 void LogRaw::WriteRawData()
 {
     // compute simulation time in milliseconds
-    const double timestamp_ms = this->world->GetSimTime().Double() + (TIME_OFFSET * this->suffixTime);
+    const double timestamp_ms = this->world->GetSimTime().Double() +TIME_OFFSET;
     // const double timestamp_ms = this->world->GetSimTime().nsec / 1000000.0 + this->world->GetSimTime().sec * 1000.0;
 
     // get all the contacts from the physics engine

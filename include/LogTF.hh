@@ -53,9 +53,9 @@ class LogTF
 	/// \brief Constructor
 	public: LogTF(const gazebo::physics::WorldPtr _world,
 			const std::string _db_name,
-			const std::string _coll_name,
-			int _suffix,
-			const std::string _connection_name);
+            const std::string _coll_name,
+            const std::string _connection_name,
+            const int _timeoffset);
 
 	/// \brief Destructor
 	public: virtual ~LogTF();
@@ -87,6 +87,9 @@ class LogTF
 	/// \brief Db collection name
 	private: const std::string collName;
 
+    /// \brief storing absolute timeoffset
+    private: const int TIME_OFFSET;
+
 	/// \brief Current tf seq nr
 	private: long long int tfSeq;
 
@@ -108,8 +111,6 @@ class LogTF
 	/// \brief Duration threshold between tf transformation in order to be logged or not
 	private: int tfDurationThresh;
 
-	// for adding time offset to the simulation times
-	private: int suffixTime;
 };
 }
 #endif

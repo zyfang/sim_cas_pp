@@ -40,19 +40,16 @@ using namespace sg_pp;
 using namespace gazebo;
 using namespace mongo;
 
-//timeoffset in miliseconds
-#define TIME_OFFSET 5000
-
 LogMotionExpressions::LogMotionExpressions(const gazebo::physics::WorldPtr& world, 
     const std::string& db_name, 
-    const std::string& coll_name, 
-    int _suffix,
-    const std::string connection_name) 
+    const std::string& coll_name,
+    const std::string connection_name,
+    const int _timeoffset)
     : world_( world ), 
     db_name_( db_name ), 
-    coll_name_( coll_name ), 
-    suffixTime(_suffix),
-    conn_name_( connection_name)
+    coll_name_( coll_name ),
+    conn_name_( connection_name),
+    TIME_OFFSET(_timeoffset)
 {
   expression_names_.clear();
   expression_names_.push_back("mug-bottom-behind-maker");
@@ -129,7 +126,7 @@ void LogMotionExpressions::ReadMotionExpressions()
 
 double LogMotionExpressions::GetTimestamp()
 {
-  return world_->GetSimTime().Double()+(TIME_OFFSET * this->suffixTime);
+  return world_->GetSimTime().Double()+TIME_OFFSET;
   // return world_->GetSimTime().nsec / 1000000.0 + this->world_->GetSimTime().sec * 1000.0;
 
 }

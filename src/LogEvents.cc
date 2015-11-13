@@ -40,19 +40,17 @@ using namespace sg_pp;
 using namespace gazebo;
 using namespace mongo;
 
-#define TIME_OFFSET 5000
-
 //////////////////////////////////////////////////
 LogEvents::LogEvents(const gazebo::physics::WorldPtr _world,
         const std::string _db_name,
         const std::string _coll_name,
-        int _suffix,
-        const std::string _connection_name)
+        const std::string _connection_name,
+        const int _timeoffset)
     : world(_world)
     , dbName(_db_name)
     , collName(_coll_name)
-    , suffixTime(_suffix)
     , connName(_connection_name)
+    , TIME_OFFSET(_timeoffset)
 {
     // get the world models
     this->contactManagerPtr = this->world->GetPhysicsEngine()->GetContactManager();
@@ -62,9 +60,6 @@ LogEvents::LogEvents(const gazebo::physics::WorldPtr _world,
 
     // set the grasp init flag to false
     this->graspInit = false;
-
-    // adding time offset to the simulation times
-    this->suffixTime = _suffix;
 
     // if events are exported as owl  init ros
     if(this->logLocation == "owl" || this->logLocation == "all")
@@ -194,10 +189,10 @@ void LogEvents::ReadConfigFile()
 //////////////////////////////////////////////////
 void LogEvents::InitEvents()
 {
-    std::cout << "*LogEvents* - Sim start: " << this->world->GetSimTime().Double() << std::endl;
+    std::cout << "*LogEvents* - Sim start: " << this->world->GetSimTime().Double() << " + timeoffset " << TIME_OFFSET << std::endl;
 
     // init ts for transfer event
-    this->transfTs = this->world->GetSimTime().Double();
+    this->transfTs = this->world->GetSimTime().Double()+TIME_OFFSET;
 
     // TODO add events init
     this->transfEvent = NULL;
@@ -208,7 +203,7 @@ void LogEvents::InitEvents()
 
     // open the main GzEvent
     this->nameToEvents_M["Main"].push_back( //TODO generalise episode name
-            new PpEvent("Main","&knowrob_sim;", "KitchenEpisode", this->world->GetSimTime().Double()));
+            new PpEvent("Main","&knowrob_sim;", "KitchenEpisode", this->world->GetSimTime().Double()+TIME_OFFSET));
 
     // Look up the no contact collisions (sensors)
     // interate through all the models to see which have event collisions
@@ -318,7 +313,7 @@ void LogEvents::InitEvents()
 void LogEvents::CheckEvents()
 {
     // compute simulation time in milliseconds
-    const double timestamp_ms = this->world->GetSimTime().Double();
+    const double timestamp_ms = this->world->GetSimTime().Double()+TIME_OFFSET;
     // double timestamp_ms = this->world->GetSimTime().nsec / 1000000.0 + this->world->GetSimTime().sec * 1000.0;
 
     // state of models being in contact with surfaces
@@ -547,7 +542,7 @@ void LogEvents::CheckEvents()
 void LogEvents::FiniEvents()
 {
     // close main GzEvent
-    this->nameToEvents_M["Main"].back()->End(this->world->GetSimTime().Double());
+    this->nameToEvents_M["Main"].back()->End(this->world->GetSimTime().Double()+TIME_OFFSET);
 
     // close all open events
     LogEvents::EndActiveEvents();
@@ -861,10 +856,10 @@ void LogEvents::EndActiveEvents()
             // if event still open end it at the end time
             if((*ev_it)->IsOpen())
             {
-                (*ev_it)->End(this->world->GetSimTime().Double());
+                (*ev_it)->End(this->world->GetSimTime().Double()+TIME_OFFSET);
 
                 std::cout << "*LogEvents* - End - \t" << (*ev_it)->GetName() << "\t\t at "
-                          << this->world->GetSimTime().Double() << std::endl;
+                          << this->world->GetSimTime().Double() << " + timeoffset " << TIME_OFFSET << std::endl;
             }
         }
     }
@@ -952,7 +947,7 @@ void LogEvents::WriteContexts()
                 // open belief state context
                 curr_ctx = new beliefstate_client::Context(this->beliefStateClient,
                         (*ev_it)->GetName(), (*ev_it)->GetClassNamespace(),
-                        (*ev_it)->GetClass(), (*ev_it)->GetStartTime() + (TIME_OFFSET * this->suffixTime));
+                        (*ev_it)->GetClass(), (*ev_it)->GetStartTime());
 
                 // get the objects of the event
                 std::vector<PpEventObj*> curr_objects = (*ev_it)->GetObjects();
@@ -986,7 +981,7 @@ void LogEvents::WriteContexts()
                 }
 
                 // end belief state context
-                curr_ctx->end(true, (*ev_it)->GetEndTime() + (TIME_OFFSET * this->suffixTime));
+                curr_ctx->end(true, (*ev_it)->GetEndTime());
             }
         }
 

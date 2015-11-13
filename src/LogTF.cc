@@ -40,20 +40,17 @@ using namespace sg_pp;
 using namespace gazebo;
 using namespace mongo;
 
-//timeoffset in miliseconds
-#define TIME_OFFSET 5000
-
 //////////////////////////////////////////////////
 LogTF::LogTF(const gazebo::physics::WorldPtr _world,
 		const std::string _db_name,
-		const std::string _coll_name,
-		int _suffix,
-		const std::string _connection_name)
+        const std::string _coll_name,
+        const std::string _connection_name,
+        const int _timeoffset)
 	: world(_world)
 	, dbName(_db_name)
-	, collName(_coll_name)
-	, suffixTime(_suffix)
+    , collName(_coll_name)
 	, connName(_connection_name)
+    , TIME_OFFSET(_timeoffset)
 {
 	// get the world models
 	this->models = this->world->GetModels();
@@ -213,7 +210,7 @@ void LogTF::WriteTFData(const std::vector<tf::StampedTransform>& _stamped_transf
 	std::vector<BSONObj> transforms_bo;
 
 	// get the timestamp im ms and date format
-    Date_t stamp_ms = this->world->GetSimTime().nsec / 1000000.0 + this->world->GetSimTime().sec * 1000.0  + (TIME_OFFSET * this->suffixTime);
+    Date_t stamp_ms = this->world->GetSimTime().nsec / 1000000.0 + this->world->GetSimTime().sec * 1000.0  + TIME_OFFSET;
 
 	// iterate through the stamped tranforms
 	for (std::vector<tf::StampedTransform>::const_iterator st_iter = _stamped_transforms.begin();

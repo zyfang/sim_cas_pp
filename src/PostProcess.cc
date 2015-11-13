@@ -55,7 +55,8 @@ PostProcess::PostProcess()
 	// intialize ROS
 	// int argc = 0;
 	// char** argv = NULL;
-	// ros::init(argc, argv, "post_process");
+    // ros::init(argc, argv, "post_process");
+
 }
 
 //////////////////////////////////////////////////
@@ -82,8 +83,9 @@ void PostProcess::Load(int _argc, char ** _argv)
 
         // look for '--suffix' characters
     	if(std::string(_argv[i]) == "--suffix"){
-            // set the next argument as the name of the db and collection
-    		this->collSuffix = _argv[++i];
+            // append to collection name and use as multiplier for timeoffset
+    		this->offsetMultiplier = _argv[++i];
+            this->timeOffset = std::atoi(string(this->offsetMultiplier).c_str())*sg_pp::TIME_OFFSET;
            }
 
         // look for '--delay' characters, if option given, delay postprocessing after gazebo has started until SimTime equals the given number in seconds
@@ -198,7 +200,7 @@ void PostProcess::ReadConfigFile()
     }   
 
 	// suffix append to the collection name
-	this->collName += "_" + this->collSuffix;
+	this->collName += "_" + this->offsetMultiplier;
 
 	std::cout << "*PostProcess* - coll_name: " << this->collName << std::endl;
 
@@ -257,7 +259,7 @@ void PostProcess::InitOnWorldConnect()
 	if (this->processTf)
 	{
 		// If collection already exist don't log the data
-		if (scoped_connection->exists(this->dbName + "." + this->collName + "_" + string(this->collSuffix) + "_tf"))
+		if (scoped_connection->exists(this->dbName + "." + this->collName + "_" + string(this->offsetMultiplier) + "_tf"))
 		{
 			// set flag to false
 			this->processTf = false;
@@ -267,7 +269,7 @@ void PostProcess::InitOnWorldConnect()
 		else
 		{
 			// initialize the tf logging class
-    		this->tfLogger = new sg_pp::LogTF(this->world, this->dbName, this->collName, std::atoi(string(this->collSuffix).c_str()), connection_name);
+            this->tfLogger = new sg_pp::LogTF(this->world, this->dbName, this->collName, connection_name, this->timeOffset);
 		}
     }
 
@@ -275,18 +277,18 @@ void PostProcess::InitOnWorldConnect()
 	if (this->processEvents)
 	{
 		// If collection already exist don't log the data
-		if (scoped_connection->exists(this->dbName + "." + this->collName + "_" + string(this->collSuffix) + "_ev"))
+		if (scoped_connection->exists(this->dbName + "." + this->collName + "_" + string(this->offsetMultiplier) + "_ev"))
 		{
 			// set flag to false
 			this->processEvents = false;
 
-			std::cout << "*PostProcess* !!! Collection: " << this->dbName << "." << this->collName << "." << string(this->collSuffix) << "_ev"
+			std::cout << "*PostProcess* !!! Collection: " << this->dbName << "." << this->collName << "." << string(this->offsetMultiplier) << "_ev"
 					<< " already exists skipping LogEvents !!!" << std::endl;
 		}
 		else
 		{
 		    // initialize the events logging class
-		    this->eventsLogger = new sg_pp::LogEvents(this->world, this->dbName, this->collName, std::atoi(string(this->collSuffix).c_str()), connection_name);
+            this->eventsLogger = new sg_pp::LogEvents(this->world, this->dbName, this->collName, connection_name, this->timeOffset);
 		}
 	}
 
@@ -294,18 +296,18 @@ void PostProcess::InitOnWorldConnect()
 	if (this->processMotionExpressions)
 	{
 		// If collection already exist don't log the data
-		if (scoped_connection->exists(this->dbName + "." + this->collName + "_" + string(this->collSuffix) + "_motion_expressions"))
+		if (scoped_connection->exists(this->dbName + "." + this->collName + "_" + string(this->offsetMultiplier) + "_motion_expressions"))
 		{
 			// set flag to false
-			this->processEvents = false;
+			this->processMotionExpressions = false;
 
-			std::cout << "*PostProcess* !!! Collection: " << this->dbName << "." << this->collName << "." << string(this->collSuffix) << "_motion_expressions"
+			std::cout << "*PostProcess* !!! Collection: " << this->dbName << "." << this->collName << "." << string(this->offsetMultiplier) << "_motion_expressions"
 					<< " already exists skipping LogMotionExpressions !!!" << std::endl;
 		}
 		else
 		{
 		    // initialize the motion expressions logging class
-    		this->motionExpressionsLogger = new sg_pp::LogMotionExpressions(this->world, this->dbName, this->collName, std::atoi(this->collSuffix.c_str()), connection_name);
+            this->motionExpressionsLogger = new sg_pp::LogMotionExpressions(this->world, this->dbName, this->collName, connection_name, this->timeOffset);
 		}
 	}
 
@@ -313,18 +315,18 @@ void PostProcess::InitOnWorldConnect()
 	if (this->processRaw)
 	{
 		// If collection already exist don't log the data
-		if (scoped_connection->exists(this->dbName + "." + this->collName + "_" + string(this->collSuffix) + "_raw"))
+		if (scoped_connection->exists(this->dbName + "." + this->collName + "_" + string(this->offsetMultiplier) + "_raw"))
 		{
 			// set flag to false
 			this->processRaw = false;
 
-			std::cout << "*PostProcess* !!! Collection: " << this->dbName << "." << this->collName << "." << string(this->collSuffix) << "_raw"
+			std::cout << "*PostProcess* !!! Collection: " << this->dbName << "." << this->collName << "." << string(this->offsetMultiplier) << "_raw"
 					<< " already exists skipping LogRaw !!!" << std::endl;
 		}
 		else
 		{
 		    // initialize the raw logging class
-		    this->rawLogger = new sg_pp::LogRaw(this->world, this->dbName, this->collName, std::atoi(this->collSuffix.c_str()), connection_name);
+            this->rawLogger = new sg_pp::LogRaw(this->world, this->dbName, this->collName, connection_name, this->timeOffset);
 		}
 	}
 
@@ -332,18 +334,18 @@ void PostProcess::InitOnWorldConnect()
 	if (this->processParticle)
 	{
 		// If collection already exist don't log the data
-		if (scoped_connection->exists(this->dbName + "." + this->collName + "_" + string(this->collSuffix) + "_particles"))
+		if (scoped_connection->exists(this->dbName + "." + this->collName + "_" + string(this->offsetMultiplier) + "_particles"))
 		{
 			// set flag to false
 			this->processRaw = false;
 
-			std::cout << "*PostProcess* !!! Collection: " << this->dbName << "." << this->collName << "." << string(this->collSuffix) << "_particles"
+			std::cout << "*PostProcess* !!! Collection: " << this->dbName << "." << this->collName << "." << string(this->offsetMultiplier) << "_particles"
 					<< " already exists skipping LogParticles !!!" << std::endl;
 		}
 		else
 		{
 		    // initialize the particle logging class
-    		this->particleLogger = new sg_pp::LogParticles(this->world, this->dbName, this->collName, std::atoi(this->collSuffix.c_str()), connection_name);
+            this->particleLogger = new sg_pp::LogParticles(this->world, this->dbName, this->collName, connection_name, this->timeOffset);
 		}
 	}
 
@@ -367,13 +369,21 @@ void PostProcess::FirstSimulationStepInit()
     this->pauseMode = false;
 
     // Initialize events
-    this->eventsLogger->InitEvents();
-
+    if (this->processEvents)
+	{
+    	this->eventsLogger->InitEvents();
+	}
     // Initialize particles
-    this->particleLogger->InitParticles();
+    if(this->processParticle)
+    {
+    	this->particleLogger->InitParticles();
+	}
 
-    this->motionExpressionsLogger->Init();
-
+	if(this->processMotionExpressions)
+	{
+    	this->motionExpressionsLogger->Init();
+    }
+    
 	// Run the post processing threads once so the first step is not skipped
 	PostProcess::ProcessCurrentData();
 

@@ -41,6 +41,7 @@
 
 namespace sg_pp
 {
+
 /// \brief class GzEventObj
 class PpEventObj
 {

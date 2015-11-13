@@ -56,9 +56,9 @@ class LogParticles
 	/// \brief Constructor
 	public: LogParticles(const gazebo::physics::WorldPtr _world,
 			const std::string _db_name,
-			const std::string _coll_name,
-			int _suffix,
-			const std::string _connection_name);
+            const std::string _coll_name,
+            const std::string _connection_name,
+            const int _timeoffset);
 
 	/// \brief Destructor
 	public: virtual ~LogParticles();
@@ -86,6 +86,9 @@ class LogParticles
 
 	/// \brief Db collection name
 	private: const std::string collName;
+
+    /// \brief storing absolute timeoffset
+    private: const int TIME_OFFSET;
 
 	/// \brief pointer of ContactManager, for getting contacts from physics engine
 	private: gazebo::physics::ContactManager *contactManagerPtr;
@@ -119,9 +122,6 @@ class LogParticles
 
     /// \brief flag for when the pancake is created
     private: bool pancakeCreated;
-
-    // for adding time offset to the simulation times
-	private: int suffixTime;
 };
 }
 #endif
