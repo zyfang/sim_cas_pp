@@ -375,24 +375,32 @@ void LogEvents::CheckEvents()
         /// if the contact nr = nr sensors, and all models in contact with = 1, then we have a grasp
 
         // check any of the collisions pair is in contact with a grasping 'sensor'
+        //if one of them is the grasping sensor, the other one would be the grasp model
+        //to prevent self-collision, check that the other model is not the same as the collision model checked
         if (this->graspColls.find(c_coll1) != this->graspColls.end())
         {
-            // increase the current number of grasp contacts
-            grasp_contacts_nr++;
+            if(c_coll2->GetParentModel()->GetName()!=c_coll1->GetParentModel()->GetName())
+            {
+                // increase the current number of grasp contacts
+                grasp_contacts_nr++;
 
-            // add model to the grasped objects
-            // notice the model is the opposite from the checked collision
-            grasped_models.insert(c_coll2->GetParentModel()->GetName());
+                // add model to the grasped objects
+                // notice the model is the opposite from the checked collision
+                grasped_models.insert(c_coll2->GetParentModel()->GetName());
+            }
 
         }
         else if(this->graspColls.find(c_coll2) != this->graspColls.end())
         {
-            // increase the current number of grasp contacts
-            grasp_contacts_nr++;
+            if(c_coll2->GetParentModel()->GetName()!=c_coll1->GetParentModel()->GetName())
+            {
+                // increase the current number of grasp contacts
+                grasp_contacts_nr++;
 
-            // add model to the grasped objects
-            // notice the model is the opposite from the checked collision
-            grasped_models.insert(c_coll1->GetParentModel()->GetName());
+                // add model to the grasped objects
+                // notice the model is the opposite from the checked collision
+                grasped_models.insert(c_coll1->GetParentModel()->GetName());
+            }
         }
 
 
@@ -563,6 +571,7 @@ void LogEvents::CheckGraspEvent(
         const unsigned int _grasp_contacts_nr,
         const std::set<std::string> &_grasped_models)
 {
+
     // current grasped model
     std::string curr_grasped_model;
 
@@ -584,35 +593,18 @@ void LogEvents::CheckGraspEvent(
             // the name of the grasping event
             std::string grasp_ev_name = "Grasp-" + curr_grasped_model;
 
-            // TODO why is if needed here? the two parts seem similar
-            // check if the grasp event has been initialized
-            if(this->graspGzEvent != NULL)
-            {
-                // create the contact GzEvent
-                this->graspGzEvent = new PpEvent(
-                        grasp_ev_name, "&knowrob;", "GraspingSomething",
-                        "knowrob:", "objectActedOn", _timestamp_ms);
 
-                // add grasped object
-                this->graspGzEvent->AddObject(
-                            this->nameToEventObj_M[curr_grasped_model]);
+            // create the contact GzEvent
+            this->graspGzEvent = new PpEvent(
+                    grasp_ev_name, "&knowrob;", "GraspingSomething",
+                    "knowrob:", "objectActedOn", _timestamp_ms);
 
-                std::cout << "*LogEvents* - Start - \t" << grasp_ev_name << "\t\t\t at " << _timestamp_ms  << std::endl;
-            }
-            // init first grasp
-            else
-            {
-                // create first grasp GzEvent
-                this->graspGzEvent = new PpEvent(
-                        grasp_ev_name, "&knowrob;", "GraspingSomething",
-                        "knowrob:", "objectActedOn", _timestamp_ms);
+            // add grasped object
+            this->graspGzEvent->AddObject(
+                        this->nameToEventObj_M[curr_grasped_model]);
 
-                // add grasped object
-                this->graspGzEvent->AddObject(
-                            this->nameToEventObj_M[curr_grasped_model]);
+            std::cout << "*LogEvents* - Start - \t" << grasp_ev_name << "\t\t\t at " << _timestamp_ms  << std::endl;
 
-                std::cout << "*LogEvents* - Init - \t" << grasp_ev_name << "\t\t\t at " << _timestamp_ms  << std::endl;
-            }
         }
         else
         {
