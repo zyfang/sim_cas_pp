@@ -125,7 +125,7 @@ void LogTF::WriteAndPublishTF()
 	std::vector<tf::StampedTransform> stamped_transforms;
 
 	// set ros time with the simulation time
-	ros::Time tf_time = ros::Time(this->world->GetSimTime().sec, this->world->GetSimTime().nsec);
+	ros::Time tf_time = ros::Time(this->world->GetSimTime().sec+TIME_OFFSET, this->world->GetSimTime().nsec);
 
 	// create a local transformation
 	tf::Transform transform;
@@ -210,7 +210,7 @@ void LogTF::WriteTFData(const std::vector<tf::StampedTransform>& _stamped_transf
 	std::vector<BSONObj> transforms_bo;
 
 	// get the timestamp im ms and date format
-    Date_t stamp_ms = this->world->GetSimTime().nsec / 1000000.0 + this->world->GetSimTime().sec * 1000.0  + TIME_OFFSET;
+    Date_t stamp_ms = this->world->GetSimTime().nsec / 1000000.0 + this->world->GetSimTime().sec * 1000.0  + TIME_OFFSET * 1000;
 
 	// iterate through the stamped tranforms
 	for (std::vector<tf::StampedTransform>::const_iterator st_iter = _stamped_transforms.begin();
