@@ -128,6 +128,9 @@ class PostProcess : public gazebo::SystemPlugin
 	/// \brief Db collection name
 	private: std::string collName;
 
+	/// \brief Db port
+	private: std::string dbPort;
+
     /// \brief timeoffset multiplier
 	private: std::string offsetMultiplier="0";
 

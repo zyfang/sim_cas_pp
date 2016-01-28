@@ -199,6 +199,9 @@ void PostProcess::ReadConfigFile()
         this->collName = cfg.lookup("mongo.coll_name").c_str();
     }   
 
+    //get port which data should be written out to
+    this->dbPort = cfg.lookup("mongo.port").c_str();//to string because connectionname is string
+
 	// suffix append to the collection name
 	this->collName += "_" + this->offsetMultiplier;
 
@@ -252,7 +255,7 @@ bool PostProcess::CheckShouldLog(bool &logflag, ScopedDbConnection &scoped_conne
 void PostProcess::InitOnWorldConnect()
 {
 	//specify to which port the database should be written. default ("localhost") is 27017
-	const std::string connection_name = "localhost:27019";
+	const std::string connection_name = "localhost:"+ dbPort;
 
 	// get the world
 	this->world = physics::get_world(this->worldName);
