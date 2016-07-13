@@ -22,7 +22,7 @@
 
 
 ### Run example:
-- Make sure to have a running mongo server. For example: `mongod --port 27018 --dbpath /home/test/mymongo/var/lib/mongodb/`
+*Make sure to have a running mongo server. For example: `mongod --port 27018 --dbpath /home/test/mymongo/var/lib/mongodb/`*
 
 ~~~
 gazebo -u --verbose -s libPostProcess.so -p <path>/state.log --db mydb --collection mycol --suffix 2 --delay 2
