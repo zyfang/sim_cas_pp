@@ -8,7 +8,21 @@ Get MongoDB: http://docs.mongodb.org/manual/tutorial/install-mongodb-on-ubuntu/
 Get C++ Client for MongoDB (branch ```26compat```): https://github.com/mongodb/mongo-cxx-driver/wiki/Download-and-Compile-the-Legacy-Driver
 
 ### Configuration:
-Make sure to set the path the installation of the C++ Client for MongoDB in the ```CMakeLists.txt```!
+- Make sure to set the path the installation of the C++ Client for MongoDB in the ```CMakeLists.txt```!
+
+- A range of options is available in config.cfg:
+	- *mongo*: 
+		- "port" sets the mongodb port the data will be written to
+		- "db_name" and "coll_name" are the default values that will be used if they are not set in the call (see Run example)
+	- *LogTF*:
+		Set variables that control the logging behavior of the logger. Set the logging thresholds (changes below the threshold will not be recorded) and whether it should publish to a topic. 
+	- *LogRaw*:
+		Set whether want to apply logging thresholds and if so, what they should be.
+	- *LogEvents*:
+		Identify which collisions are of which type (e.g. supporting faces vs tools) and how long events should be before they're concatenated (to get rid of "flickering").
+	- *LogMotionExpression*:
+		Which file to use to extract the motion constraints/expressions that should be recorded and indicate which is the controlled and which the observed (target) model.
+
 
 ### Run example:
 ~~~
