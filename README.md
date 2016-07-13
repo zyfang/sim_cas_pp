@@ -21,9 +21,9 @@
 		Which file to use to extract the motion constraints/expressions that should be recorded and indicate which is the controlled and which the observed (target) model.
 
 
-### Run example:
-*Make sure to have a running mongo server. For example: `mongod --port 27018 --dbpath /home/test/mymongo/var/lib/mongodb/`*
-
+### Running the postprocessing:
+1. Have running mongo server. For example: `mongod --port 27018 --dbpath /home/test/mymongo/var/lib/mongodb/`
+2. Run post processing:
 ~~~
 gazebo -u --verbose -s libPostProcess.so -p <path>/state.log --db mydb --collection mycol --suffix 2 --delay 2
 ~~~
