@@ -1,7 +1,5 @@
 # sim_cas_pp catkin package for post processing data from sim_cas
 
-## Installation
-
 ### Prerequisites:
 Get MongoDB: http://docs.mongodb.org/manual/tutorial/install-mongodb-on-ubuntu/
 
