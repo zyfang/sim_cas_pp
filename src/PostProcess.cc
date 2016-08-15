@@ -69,7 +69,13 @@ PostProcess::~PostProcess()
 void PostProcess::Load(int _argc, char ** _argv)
 {
     for (unsigned int i = 0; i < _argc; ++i){
-    	// look for '-db' characters
+        // look for '--config' characters
+        if(std::string(_argv[i]) == "--config"){
+            // set the next argument as the name of the db
+            this->cfgFilename = _argv[++i];
+            }
+
+    	// look for '--db' characters
         if(std::string(_argv[i]) == "--db"){
             // set the next argument as the name of the db
             this->dbName = _argv[++i];
@@ -174,7 +180,15 @@ void PostProcess::ReadConfigFile()
 	// read config file
 	try
 	{
-		cfg.readFile("config.cfg");
+        if (this->cfgFilename.empty())
+        {
+            cfg.readFile("config.cfg");
+        }
+        else
+        {
+            std::cout << "Reading " << ("config/"+this->cfgFilename) << std::endl;
+            cfg.readFile(("config/"+this->cfgFilename).c_str());
+        }
 	}
 	catch(const libconfig::FileIOException &fioex)
 	{
@@ -287,35 +301,35 @@ void PostProcess::InitOnWorldConnect()
     if (PostProcess::CheckShouldLog(this->processTf, scoped_connection, "LogTF","tf"))
     {
         // initialize the tf logging class
-        this->tfLogger = new sg_pp::LogTF(this->world, this->dbName, this->collName, connection_name, this->timeOffset);
+        this->tfLogger = new sg_pp::LogTF(this->world, this->dbName, this->collName, connection_name, this->timeOffset, this->cfgFilename);
     }
 
     // initialize the event logging class
     if (PostProcess::CheckShouldLog(this->processEvents, scoped_connection, "LogEvents","ev"))
     {
         // initialize the events logging class
-        this->eventsLogger = new sg_pp::LogEvents(this->world, this->dbName, this->collName, connection_name, this->timeOffset);
+        this->eventsLogger = new sg_pp::LogEvents(this->world, this->dbName, this->collName, connection_name, this->timeOffset, this->cfgFilename);
     }
 
 	// initialize the motion_expressions logging class
     if (PostProcess::CheckShouldLog(this->processMotionExpressions, scoped_connection, "LogMotionExpressions","motion_expressions"))
     {
 		    // initialize the motion expressions logging class
-            this->motionExpressionsLogger = new sg_pp::LogMotionExpressions(this->world, this->dbName, this->collName, connection_name, this->timeOffset);
+            this->motionExpressionsLogger = new sg_pp::LogMotionExpressions(this->world, this->dbName, this->collName, connection_name, this->timeOffset, this->cfgFilename);
     }
 
     // initialize the raw with thresholding  logging class
     if (PostProcess::CheckShouldLog(this->processRaw, scoped_connection, "LogRaw","raw"))
     {
 		    // initialize the raw logging class
-            this->rawLogger = new sg_pp::LogRaw(this->world, this->dbName, this->collName, connection_name, this->timeOffset);
+            this->rawLogger = new sg_pp::LogRaw(this->world, this->dbName, this->collName, connection_name, this->timeOffset, this->cfgFilename);
 	}
 
 	// initialize the raw with thresholding logging class
     if (PostProcess::CheckShouldLog(this->processParticle, scoped_connection, "LogParticle","particles"))
     {
 		    // initialize the particle logging class
-            this->particleLogger = new sg_pp::LogParticles(this->world, this->dbName, this->collName, connection_name, this->timeOffset);
+            this->particleLogger = new sg_pp::LogParticles(this->world, this->dbName, this->collName, connection_name, this->timeOffset, this->cfgFilename);
 	}
 
 	// if no PP is happening, shut down server

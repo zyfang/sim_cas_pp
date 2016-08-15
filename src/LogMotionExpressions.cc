@@ -44,12 +44,14 @@ LogMotionExpressions::LogMotionExpressions(const gazebo::physics::WorldPtr& worl
     const std::string& db_name, 
     const std::string& coll_name,
     const std::string connection_name,
-    const int _timeoffset)
+    const int _timeoffset,
+    const std::string _cfg_file)
     : world_( world ), 
     db_name_( db_name ), 
     coll_name_( coll_name ),
     conn_name_( connection_name),
-    TIME_OFFSET(_timeoffset)
+    TIME_OFFSET(_timeoffset), 
+    cfgFilename(_cfg_file)
 {
   expression_names_.clear();
   expression_names_.push_back("mug-bottom-behind-maker");
@@ -63,6 +65,8 @@ LogMotionExpressions::LogMotionExpressions(const gazebo::physics::WorldPtr& worl
   expression_names_.push_back("mug-above-itself");
 
   expression_values_.resize(expression_names_.size());
+
+  std::cout << this->cfgFilename << std::endl;
 }
 
 void LogMotionExpressions::Init()
@@ -82,10 +86,16 @@ void LogMotionExpressions::WriteRawData()
 void LogMotionExpressions::ReadConfigFile()
 {
   libconfig::Config cfg;
-  
   try
   {
-    cfg.readFile("config.cfg");
+    if (this->cfgFilename.empty())
+    {
+      cfg.readFile("config.cfg");
+    }
+    else
+    {
+      cfg.readFile(("config/"+this->cfgFilename).c_str());
+    }
   }
   catch(const libconfig::FileIOException &fioex)
   {

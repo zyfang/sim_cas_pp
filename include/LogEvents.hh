@@ -58,7 +58,8 @@ class LogEvents
 			const std::string _db_name,
             const std::string _coll_name,
             const std::string _connection_name,
-            const int _timeoffset);
+            const int _timeoffset,
+            const std::string _cfg_file);
 
 	/// \brief Destructor
 	public: virtual ~LogEvents();
@@ -121,6 +122,9 @@ class LogEvents
 	/// \brief which connection to log to
 	private: const std::string connName;
 	
+    /// \brief Config file name
+    private: const std::string cfgFilename;
+    
 	/// \brief Database name
 	private: const std::string dbName;
 

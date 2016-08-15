@@ -45,19 +45,21 @@ LogRaw::LogRaw(const gazebo::physics::WorldPtr _world,
 		const std::string _db_name,
         const std::string _coll_name,
         const std::string _connection_name,
-        const int _timeoffset)
+        const int _timeoffset,
+        const std::string _cfg_file)
 	: world(_world)
 	, dbName(_db_name)
     , collName(_coll_name)
 	, connName(_connection_name)
     , TIME_OFFSET(_timeoffset)
+    , cfgFilename(_cfg_file)
 {
 	// get the world models
 	this->models = this->world->GetModels();
 
 	// get the world models
 	this->contactManagerPtr = this->world->GetPhysicsEngine()->GetContactManager();
-
+	
 	// get values from the config file
 	LogRaw::ReadConfigFile();
 }
@@ -77,7 +79,15 @@ void LogRaw::ReadConfigFile()
 	// read config file
 	try
 	{
-		cfg.readFile("config.cfg");
+        if (this->cfgFilename.empty())
+        {
+            cfg.readFile("config.cfg");
+        }
+        else
+        {
+            std::cout << "Reading " << ("config/"+this->cfgFilename) << std::endl;
+            cfg.readFile(("config/"+this->cfgFilename).c_str());
+        }
 	}
 	catch(const libconfig::FileIOException &fioex)
 	{

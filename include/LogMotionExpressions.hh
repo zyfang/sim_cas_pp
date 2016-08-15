@@ -51,7 +51,8 @@ namespace sg_pp
           const std::string& db_name,
           const std::string& coll_name,
           const std::string connection_name,
-          const int _timeoffset);
+          const int _timeoffset,
+          const std::string _cfg_file);
 
       void Init();
   
@@ -72,7 +73,8 @@ namespace sg_pp
       std::vector<std::string> expression_names_;
       std::vector< KDL::Expression<double>::Ptr > expressions_;
       std::vector<double> expression_values_;
-
+      /// \brief Config file name
+      private: const std::string cfgFilename;
       /// \brief storing absolute timeoffset
       private: const int TIME_OFFSET;
   };

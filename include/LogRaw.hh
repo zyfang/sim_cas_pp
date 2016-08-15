@@ -45,81 +45,86 @@
 /// \brief Post Processing classes namespace
 namespace sg_pp
 {
-/// \brief class LogRaw
-class LogRaw
-{
-	/// \brief Constructor
-	public: LogRaw(const gazebo::physics::WorldPtr _world,
-			const std::string _db_name,
-            const std::string _coll_name,
-            const std::string _connection_name,
-            const int _timeoffset);
+	/// \brief class LogRaw
+	class LogRaw
+	{
+		/// \brief Constructor
+		public: 
+			LogRaw(const gazebo::physics::WorldPtr _world,
+				const std::string _db_name,
+	            const std::string _coll_name,
+	            const std::string _connection_name,
+	            const int _timeoffset,
+	            const std::string _cfg_file);
 
-	/// \brief Destructor
-	public: virtual ~LogRaw();
+		/// \brief Destructor
+		public: virtual ~LogRaw();
 
-    /// \brief Write raw data to mongodb
-    public: void WriteRawData();
+	    /// \brief Write raw data to mongodb
+	    public: void WriteRawData();
 
-	/// \brief Load config file
-	private: void ReadConfigFile();
+		/// \brief Load config file
+		private: void ReadConfigFile();
 
-	/// \brief Check treshold in order to write data
-	public: bool CheckThreshold(const gazebo::physics::ModelPtr _model);
-	
-    /// \brief Return a contact bson object
-	private: mongo::BSONObj CreateBSONContactObject(
-			const gazebo::physics::Contact* _contact,
-			const gazebo::physics::Collision* _collision);
+		/// \brief Check treshold in order to write data
+		public: bool CheckThreshold(const gazebo::physics::ModelPtr _model);
+		
+	    /// \brief Return a contact bson object
+		private: mongo::BSONObj CreateBSONContactObject(
+				const gazebo::physics::Contact* _contact,
+				const gazebo::physics::Collision* _collision);
 
-	/// \brief Return a collision bson object
-	private: mongo::BSONObj CreateBSONCollisionObject(
-			const gazebo::physics::CollisionPtr _collision,
-			const mongo::BSONArray _contact_arr);
+		/// \brief Return a collision bson object
+		private: mongo::BSONObj CreateBSONCollisionObject(
+				const gazebo::physics::CollisionPtr _collision,
+				const mongo::BSONArray _contact_arr);
 
-	/// \brief Return a link bson object
-	private: mongo::BSONObj CreateBSONLinkObject(
-			const gazebo::physics::LinkPtr _link,
-			const mongo::BSONArray _collision_arr);
+		/// \brief Return a link bson object
+		private: mongo::BSONObj CreateBSONLinkObject(
+				const gazebo::physics::LinkPtr _link,
+				const mongo::BSONArray _collision_arr);
 
-	/// \brief Return a link bson object
-	private: mongo::BSONObj CreateBSONModelObject(
-			const gazebo::physics::ModelPtr _model,
-			const mongo::BSONArray _link_arr);
+		/// \brief Return a link bson object
+		private: mongo::BSONObj CreateBSONModelObject(
+				const gazebo::physics::ModelPtr _model,
+				const mongo::BSONArray _link_arr);
 
-	/// \brief Gazebo world
-	private: const gazebo::physics::WorldPtr world;
+		/// \brief Gazebo world
+		private: const gazebo::physics::WorldPtr world;
 
-	/// \brief Vector of the world models
-	private: gazebo::physics::Model_V models;
+		/// \brief Vector of the world models
+		private: gazebo::physics::Model_V models;
 
-	/// \brief which connection to log to
-	private: const std::string connName;
+		/// \brief which connection to log to
+		private: const std::string connName;
 
-	/// \brief Database name
-	private: const std::string dbName;
+		/// \brief Config file name
+		private: const std::string cfgFilename;
 
-	/// \brief Db collection name
-	private: const std::string collName;
+		/// \brief Database name
+		private: const std::string dbName;
 
-    /// \brief storing absolute timeoffset
-    private: const int TIME_OFFSET;
+		/// \brief Db collection name
+		private: const std::string collName;
 
-	/// \brief pointer of ContactManager, for getting contacts from physics engine
-	private: gazebo::physics::ContactManager *contactManagerPtr;
+	    /// \brief storing absolute timeoffset
+	    private: const int TIME_OFFSET;
 
-	/// \brief Flag to write all logs
-	private: bool writeAll;
+		/// \brief pointer of ContactManager, for getting contacts from physics engine
+		private: gazebo::physics::ContactManager *contactManagerPtr;
 
-	/// \brief Distance tresh between the entities
-	private: double distTh;
+		/// \brief Flag to write all logs
+		private: bool writeAll;
 
-	/// \brief Angle tresh between the entities
-	private: double angleTh;
+		/// \brief Distance tresh between the entities
+		private: double distTh;
 
-	/// \brief Prev pose of all the models
-	private: std::map<gazebo::physics::ModelPtr, gazebo::math::Pose> modelPoseMemoryMap;
+		/// \brief Angle tresh between the entities
+		private: double angleTh;
 
-};
+		/// \brief Prev pose of all the models
+		private: std::map<gazebo::physics::ModelPtr, gazebo::math::Pose> modelPoseMemoryMap;
+
+	};
 }
 #endif

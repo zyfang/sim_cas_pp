@@ -122,6 +122,9 @@ class PostProcess : public gazebo::SystemPlugin
 	/// \brief World name to be connected to
 	private: std::string worldName;
 
+	/// \brief Config file name
+	private: std::string cfgFilename;
+
 	/// \brief Database name
 	private: std::string dbName;
 
