@@ -140,11 +140,11 @@ void LogParticles::InitParticles()
                     {
                         this->eventCollisionMug = c_iter->get();
                     }
-                    else if (c_iter->get()->GetName() == "r_gripper_r_finger_tip_grasp_event_collision")
+                    else if (c_iter->get()->GetName() == "r_gripper_r_finger_tip_event_collision")
                     {
                         this->eventCollisionForeFinger = c_iter->get();
                     }
-                    else if (c_iter->get()->GetName() == "r_gripper_l_finger_tip_grasp_event_collision")
+                    else if (c_iter->get()->GetName() == "r_gripper_l_finger_tip_event_collision")
                     {
                         this->eventCollisionThumb = c_iter->get();
                     }
@@ -155,13 +155,6 @@ void LogParticles::InitParticles()
 
                         // init the event collision with an empty set (models that are in collision with)
                         this->eventCollToSetOfModelNames_M[c_iter->get()] = std::set<std::string>();
-
-                        std::cout << "State ";
-                        for(auto elem : this->eventCollToSetOfModelNames_M)
-                        {
-                           std::cout << elem.first->GetParentModel()->GetName() << " - ";
-                        }
-                        std::cout << std::endl;
 
                         // init the event coll to particle names map with empty sets of strings
                         this->eventCollToSetOfParticleNames_M[c_iter->get()] = std::set<std::string>();
@@ -227,15 +220,6 @@ void LogParticles::WriteParticleData()
         physics::Collision* coll1 = _contacts.at(i)->collision1;
         physics::Collision* coll2 = _contacts.at(i)->collision2;
 
-        // if(coll2->GetParentModel()->GetName()=="PR2RGripper")
-        // {
-        //     std::cout << "detected gripper contact2: " << coll1->GetName() << " and " << coll2->GetName() << std::endl;
-        // }
-        // else if (coll1->GetParentModel()->GetName()=="PR2RGripper")
-        // {
-        //     std::cout << "detected gripper contact1: " << coll1->GetName() << " and " << coll2->GetName() << std::endl;
-        // }
-
 
         ////////////// Supporting Collisions
         // check if collision 1 belongs to the event collision set
@@ -243,31 +227,17 @@ void LogParticles::WriteParticleData()
         {
             // insert contact model name into the set
             event_coll_to_set_of_model_names_M[coll1].insert(coll2->GetParentModel()->GetName());
-            std::cout << "Adding0 " << coll2->GetParentModel()->GetName() << " to coll1" << std::endl;
-            // if(coll1->GetParentModel()->GetName()=="PR2RGripper")
-            // {
-            //     std::cout << "Inserting gripper  contact1: " << std::endl;
-            // }
         }
         // check if collision 2 belongs to the event collision set
         else if(this->eventCollisions_S.find(coll2) != this->eventCollisions_S.end())
         {
             // insert contact model name into the set
             event_coll_to_set_of_model_names_M[coll2].insert(coll1->GetParentModel()->GetName());
-            std::cout << "Adding0 " << coll2->GetParentModel()->GetName() << " to coll2" << std::endl;
-            // if(coll2->GetParentModel()->GetName()=="PR2RGripper")
-            // {
-            //     std::cout << "Inserting gripper  contact2: " << std::endl;
-            // }
         }
 
         // TODO use else if ?
         /////////////// Grasping
         // check grasping with both fingers, this might fail if the sensor is in contact with multiple models
-        // if(coll1->GetParentModel()->GetName() != "LiquidTangibleThing" and coll2->GetParentModel()->GetName() != "LiquidTangibleThing")
-        // {
-        //  std::cout << "******* collision: " << coll1->GetName() << " and " << coll2->GetName() << std::endl;
-        // }
         if (coll1 == this->eventCollisionForeFinger && coll2->GetParentModel()->GetName()!="PR2RGripper" || coll2 == this->eventCollisionForeFinger && coll1->GetParentModel()->GetName()!="PR2RGripper")
         {
             // if one of the collisions is the fore finger, set contact flag to true, and save both collisions
@@ -310,7 +280,6 @@ void LogParticles::WriteParticleData()
                     this->eventCollisions_S.find(coll2) != this->eventCollisions_S.end())
             {
                 // add the model name to the set coll2's set
-                std::cout << "Adding " << coll1->GetModel()->GetName() << " to coll2" << std::endl;
                 event_coll_to_set_of_model_names_M[coll2].insert(coll1->GetModel()->GetName());
 
                 // add the particle collision name to the coll2's set
@@ -319,7 +288,6 @@ void LogParticles::WriteParticleData()
             else if(this->pouredLiquidCollisions_S.find(coll2) != this->pouredLiquidCollisions_S.end() &&
                     this->eventCollisions_S.find(coll1) != this->eventCollisions_S.end())
             {
-                std::cout << "Adding " << coll1->GetModel()->GetName() << " to coll1" << std::endl;
                 // add the model name to the set coll1's set
                 event_coll_to_set_of_model_names_M[coll1].insert(coll2->GetModel()->GetName());
 
@@ -337,7 +305,6 @@ void LogParticles::WriteParticleData()
             if(this->pancakeCollision_S.find(coll1) != this->pancakeCollision_S.end() &&
                     this->eventCollisions_S.find(coll2) != this->eventCollisions_S.end())
             {
-                std::cout << "Adding2 " << coll1->GetModel()->GetName() << " to coll2" << std::endl;
                 // add the model name to the set coll2's set
                 event_coll_to_set_of_model_names_M[coll2].insert(coll1->GetModel()->GetName());
 
@@ -347,7 +314,6 @@ void LogParticles::WriteParticleData()
             else if(this->pancakeCollision_S.find(coll2) != this->pancakeCollision_S.end() &&
                     this->eventCollisions_S.find(coll1) != this->eventCollisions_S.end())
             {
-                std::cout << "Adding2 " << coll1->GetModel()->GetName() << " to coll1" << std::endl;
                 // add the model name to the set coll1's set
                 event_coll_to_set_of_model_names_M[coll1].insert(coll2->GetModel()->GetName());
 
@@ -386,19 +352,7 @@ void LogParticles::WriteParticleData()
     if (event_coll_to_set_of_model_names_M != this->eventCollToSetOfModelNames_M)
     {
         diff_detected = true;;
-        std::cout << "Before state ";
-        for(auto elem : this->eventCollToSetOfModelNames_M)
-        {
-           std::cout << elem.first->GetParentModel()->GetName() << " - ";
-        }
-        std::cout << std::endl;
         this->eventCollToSetOfModelNames_M = event_coll_to_set_of_model_names_M;
-        std::cout << "After state ";
-        for(auto elem : this->eventCollToSetOfModelNames_M)
-        {
-           std::cout << elem.first->GetParentModel()->GetName() << " - ";
-        }
-        std::cout << std::endl;
     }
 
     // TODO Pour Pancake events
@@ -460,7 +414,7 @@ void LogParticles::WriteParticleData()
         {
             BSONArrayBuilder support_arr_builder;
 
-            std::cout << m_iter->first->GetParentModel()->GetName() << " --> ";
+            // std::cout << m_iter->first->GetParentModel()->GetName() << " --> ";
             for(std::set<std::string>::const_iterator s_iter = m_iter->second.begin();
                 s_iter != m_iter->second.end(); s_iter++)
             {
@@ -592,8 +546,5 @@ void LogParticles::WriteParticleData()
 
         // let the pool know the connection is done
         scoped_connection.done();
-
-        std::cout << std::endl << "============================" << std::endl;
-
     }
 }
