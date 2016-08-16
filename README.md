@@ -25,7 +25,7 @@
 1. Have running mongo server. For example: `mongod --port 27018 --dbpath /home/test/mymongo/var/lib/mongodb/`
 2. Run post processing:
 ~~~
-gazebo -u --verbose -s libPostProcess.so -p <path>/state.log --db mydb --collection mycol --suffix 2 --delay 2 --replaying
+gazebo -u --verbose -s libPostProcess.so -p <path>/state.log --db mydb --collection mycol --suffix 2 --delay 2 -replaying
 ~~~
 - --db: name of the database in which the data is stored
 - --collection: name of the collections in which the data is stored (type of collection is concatenated to the name, e.g. mycol_tf)
