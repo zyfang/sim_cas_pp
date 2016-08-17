@@ -289,17 +289,16 @@ void LogParticles::WriteParticleData()
             }
             else if(coll1 == this->eventCollisionGoal || coll2 == this->eventCollisionGoal)
             {
-                std::cout << "detected contact with cup event collision " << std::endl;
                 // check if coll1 or 2 belongs to the liquid
                 if (coll1->GetModel()->GetName() == "LiquidTangibleThing")
                 {
-                    std::cout << coll1->GetName() << endl;
+                    // std::cout << coll1->GetName() << endl;
                     // add to poured set, which also checks for duplicates
                     this->goalLiquidCollisions_S.insert(coll1);
                 }
                 else if (coll2->GetModel()->GetName() == "LiquidTangibleThing")
                 {
-                    std::cout << coll2->GetName() << endl;
+                    // std::cout << coll2->GetName() << endl;
                     // add to poured set, which also checks for duplicates
                     this->goalLiquidCollisions_S.insert(coll2);
                 }
