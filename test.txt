@@ -1,0 +1,2062 @@
+Reading config/config_drink.cfg
+*PostProcess* - db_name: testdb1
+*PostProcess* - coll_name: testcol3_0
+*PostProcess* - world_name: kitchen_world
+*PostProcess* - processing motion expressions: 1
+*PostProcess* - processing raw data: 1
+*PostProcess* - processing tf data: 1
+*PostProcess* - processing events data: 1
+*PostProcess* - processing particle data: 1
+Starting postprocessing when simtime exceeds 2 seconds
+[1;32m[Msg] [0m[1;32mWaiting for master.[0m[1;32m
+[0m[1;32m[0m[1;32m[Msg] [0m[1;32mConnected to gazebo master @ [0m[1;32mhttp://127.0.0.1:11345[0m[1;32m
+[0m[1;32m[0m[1;32m[Msg] [0m[1;32mPublicized address: [0m[1;32m192.168.101.18[0m[1;32m
+[0m[1;32m[0m[1;32m[Msg] [0m[1;32m
+Log playback:
+[0m[1;32m  Log Version: [0m[1;32m1.0[0m[1;32m
+[0m[1;32m  Gazebo Version: [0m[1;32m5.3.0[0m[1;32m
+[0m[1;32m  Random Seed: [0m[1;32m22997[0m[1;32m
+[0mStarting Postprocessing now
+LogTF - publish TF: 0
+LogTF - write_all_transf: 0
+LogTF - tf_dist_tresh: 0.001
+LogTF - angular_tresh: 0.1
+LogTF - duration_tresh: 1000
+*LogEvents* - log_location: all
+*LogEvents* - transf_ev_dur_thresh: 0.5
+*LogEvents* - ev_disc_thresh: 1.1
+*LogEvents* - grasp_colls: 
+	r_gripper_r_finger_tip_event_collision
+	r_gripper_l_finger_tip_event_collision
+*LogEvents* - surface_colls: 
+	kitchen_floor_event_collision
+	table_top_event_collision
+	cup_event_collision
+*LogEvents* - transl_colls: 
+	bottle_event_collision -> LiquidTangibleThing; 
+*LogEvents* - tool_colls: 
+config_drink.cfg
+Reading config/config_drink.cfg
+*LogRaw* - write_all_transf: 1
+2016-08-17T14:45:30.200+0200 scoped connection to localhost:27018 not being returned to the pool
+*LogEvents* - Sim start: 1.799 + timeoffset 0
+*LogParticles* - Sim start: 1.799
+kitchen_floor_event_collision
+======================
+State KitchenFloor - 
+table_top_event_collision
+======================
+State TableLab - KitchenFloor - 
+Detected cup collision
+*LogMotionExpressions* - motion file: motions/pouring-expressions-drink_ecocup1.yaml
+*LogMotionExpressions* - controlled model: SiggBottle
+*LogMotionExpressions* - observed model: EcoCup
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - Start - 	Contact-TableLab-EcoCup		 at 1.803
+*LogEvents* - Start - 	Contact-TableLab-SiggBottle		 at 1.803
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - Start - 	Grasp-SiggBottle			 at 3.99
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - End - 	Contact-TableLab-SiggBottle		 at 4.276
+*LogEvents* - End - 	Grasp-SiggBottle			 at 4.963
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - Start - 	ParticleTranslation-LiquidTangibleThing [LiquidTangibleThing]		 at 5.166
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 5.292
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> *LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 5.295
+
+============================
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 5.302
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 5.307
+*LogEvents* - Start - 	Grasp-SiggBottle			 at 5.309
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 5.317
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - End - 	Grasp-SiggBottle			 at 5.319
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 5.324
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 5.329
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - Start - 	Grasp-SiggBottle			 at 5.336
+detected contact with cup event collision 
+*LogEvents* - Start - 	Contact-TableLab-LiquidTangibleThing		 at 5.337
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 5.351
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 5.353
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 5.361
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 5.364
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 5.374
+detected contact with cup event collision 
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 5.375
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 5.377
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 5.382
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 5.391
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 5.407
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 5.42
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 5.425
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 5.441
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 5.444
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 5.467
+detected contact with cup event collision 
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 5.468
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 5.49
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at detected contact with cup event collision 
+5.502
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 5.51
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 5.526
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 5.573
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 5.587
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 5.626
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 5.641
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 5.65
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 5.653
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 5.681
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 5.692
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 5.701
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 5.713
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 5.722
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 5.73
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 5.739
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 5.769
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 5.784
+detected contact with cup event collision 
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 5.791
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 5.8
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 5.821
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 5.841
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 5.85
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 5.873
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 5.888
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 5.892
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 5.92
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 6.03
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 6.057
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 6.072
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 6.094
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 6.108
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 6.157
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 6.17
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 6.176
+detected contact with cup event collision 
+*LogEvents* - Start - 	Contact-KitchenFloor-LiquidTangibleThing		 at 6.177
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 6.19
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 6.22
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 6.233
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 6.254
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 6.267
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 6.306
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 6.326
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 6.347
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 6.36
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 6.395
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 6.407
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 6.429
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 6.44
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 6.464
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 6.477
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 6.516
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 6.528
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 6.588
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 6.599
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 6.721
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+TableLab --> KitchenFloor --> 
+============================
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 6.732
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - Start - 	Contact-EcoCup-LiquidTangibleThing		 at 6.895
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+detected contact with cup event collision 
+*LogEvents* - End - 	Contact-EcoCup-LiquidTangibleThing		 at 6.9
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - Start - 	Contact-TableLab-SiggBottle		 at 7.145
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - End - 	Grasp-SiggBottle			 at 7.275
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+*LogEvents* - End - 	ParticleTranslation-LiquidTangibleThing [88]		 at 6.788
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+TableLab --> KitchenFloor --> 
+============================
+*PostProcess* - Last recorded step at 8.469, terminating simulation..
+Terminating simulation from PostProcess 1
+*LogEvents* - End - 	Contact-KitchenFloor-LiquidTangibleThing		 at 8.469 + timeoffset 0
+*LogEvents* - End - 	Contact-TableLab-EcoCup		 at 8.469 + timeoffset 0
+*LogEvents* - End - 	Contact-TableLab-LiquidTangibleThing		 at 8.469 + timeoffset 0
+*LogEvents* - End - 	Contact-TableLab-SiggBottle		 at 8.469 + timeoffset 0
+*LogEvents* - Merging event disconnections
+	 merging Contact-EcoCup-LiquidTangibleThing	5.295 --><-- 5.302
+	 merging Contact-EcoCup-LiquidTangibleThing	5.307 --><-- 5.317
+	 merging Contact-EcoCup-LiquidTangibleThing	5.324 --><-- 5.329
+	 merging Contact-EcoCup-LiquidTangibleThing	5.351 --><-- 5.353
+	 merging Contact-EcoCup-LiquidTangibleThing	5.361 --><-- 5.364
+	 merging Contact-EcoCup-LiquidTangibleThing	5.374 --><-- 5.375
+	 merging Contact-EcoCup-LiquidTangibleThing	5.377 --><-- 5.382
+	 merging Contact-EcoCup-LiquidTangibleThing	5.391 --><-- 5.407
+	 merging Contact-EcoCup-LiquidTangibleThing	5.42 --><-- 5.425
+	 merging Contact-EcoCup-LiquidTangibleThing	5.441 --><-- 5.444
+	 merging Contact-EcoCup-LiquidTangibleThing	5.467 --><-- 5.468
+	 merging Contact-EcoCup-LiquidTangibleThing	5.49 --><-- 5.502
+	 merging Contact-EcoCup-LiquidTangibleThing	5.51 --><-- 5.526
+	 merging Contact-EcoCup-LiquidTangibleThing	5.573 --><-- 5.587
+	 merging Contact-EcoCup-LiquidTangibleThing	5.626 --><-- 5.641
+	 merging Contact-EcoCup-LiquidTangibleThing	5.65 --><-- 5.653
+	 merging Contact-EcoCup-LiquidTangibleThing	5.681 --><-- 5.692
+	 merging Contact-EcoCup-LiquidTangibleThing	5.701 --><-- 5.713
+	 merging Contact-EcoCup-LiquidTangibleThing	5.722 --><-- 5.73
+	 merging Contact-EcoCup-LiquidTangibleThing	5.739 --><-- 5.769
+	 merging Contact-EcoCup-LiquidTangibleThing	5.784 --><-- 5.791
+	 merging Contact-EcoCup-LiquidTangibleThing	5.8 --><-- 5.821
+	 merging Contact-EcoCup-LiquidTangibleThing	5.841 --><-- 5.85
+	 merging Contact-EcoCup-LiquidTangibleThing	5.873 --><-- 5.888
+	 merging Contact-EcoCup-LiquidTangibleThing	5.892 --><-- 5.92
+	 merging Contact-EcoCup-LiquidTangibleThing	6.03 --><-- 6.057
+	 merging Contact-EcoCup-LiquidTangibleThing	6.072 --><-- 6.094
+	 merging Contact-EcoCup-LiquidTangibleThing	6.108 --><-- 6.157
+	 merging Contact-EcoCup-LiquidTangibleThing	6.17 --><-- 6.176
+	 merging Contact-EcoCup-LiquidTangibleThing	6.19 --><-- 6.22
+	 merging Contact-EcoCup-LiquidTangibleThing	6.233 --><-- 6.254
+	 merging Contact-EcoCup-LiquidTangibleThing	6.267 --><-- 6.306
+	 merging Contact-EcoCup-LiquidTangibleThing	6.326 --><-- 6.347
+	 merging Contact-EcoCup-LiquidTangibleThing	6.36 --><-- 6.395
+	 merging Contact-EcoCup-LiquidTangibleThing	6.407 --><-- 6.429
+	 merging Contact-EcoCup-LiquidTangibleThing	6.44 --><-- 6.464
+	 merging Contact-EcoCup-LiquidTangibleThing	6.477 --><-- 6.516
+	 merging Contact-EcoCup-LiquidTangibleThing	6.528 --><-- 6.588
+	 merging Contact-EcoCup-LiquidTangibleThing	6.599 --><-- 6.721
+	 merging Contact-EcoCup-LiquidTangibleThing	6.732 --><-- 6.895
+	 merging Grasp-SiggBottle	4.963 --><-- 5.309
+	 merging Grasp-SiggBottle	5.319 --><-- 5.336
+*LogEvents* - Writing contexts
+*LogEvents* - Writing timelines
+Shutting down server..
+[1;36m[0m[1;32m[0m
