@@ -118,9 +118,6 @@ class LogParticles
     /// \brief poured particle collisions that reached goal
     private: std::set<gazebo::physics::Collision*> goalLiquidCollisions_S;
 
-    /// \brief particle collisions belonging to the pancake
-    private: std::set<gazebo::physics::Collision*> pancakeCollision_S;
-
 	/// \brief map of event collisions to a set of all its contacts model names
     private: std::map<gazebo::physics::Collision*, std::set<std::string> > eventCollToSetOfModelNames_M;
 
