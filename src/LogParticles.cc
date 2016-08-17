@@ -138,7 +138,12 @@ void LogParticles::InitParticles()
                     // specific no-contact collision
                     if (c_iter->get()->GetName() == "bottle_event_collision")
                     {
-                        this->eventCollisionMug = c_iter->get();
+                        this->eventCollisionContainer = c_iter->get();
+                    }
+                    else if (c_iter->get()->GetName() == "cup_event_collision")
+                    {
+                        std::cout << "Detected cup collision" << std::endl;
+                        this->eventCollisionGoal = c_iter->get();
                     }
                     else if (c_iter->get()->GetName() == "r_gripper_r_finger_tip_event_collision")
                     {
@@ -217,6 +222,7 @@ void LogParticles::WriteParticleData()
     // TODO check until the pouring is finished
     // curr poured particles
     int prev_poured_particles_nr = this->pouredLiquidCollisions_S.size();
+    int particles_in_goal = this->goalLiquidCollisions_S.size();
 
     // current grasped model name
     std::string grasped_model_name;
@@ -288,7 +294,7 @@ void LogParticles::WriteParticleData()
         if(!this->pancakeCreated)
         {
             // check for the currently poured particles
-            if (coll1 == this->eventCollisionMug || coll2 == this->eventCollisionMug)
+            if (coll1 == this->eventCollisionContainer || coll2 == this->eventCollisionContainer)
             {
                 // check if coll1 or 2 belongs to the liquid
                 if (coll1->GetModel()->GetName() == "LiquidTangibleThing")
@@ -302,10 +308,24 @@ void LogParticles::WriteParticleData()
                     this->pouredLiquidCollisions_S.insert(coll2);
                 }
             }
-
+            else if(coll1 == this->eventCollisionGoal || coll2 == this->eventCollisionGoal)
+            {
+                std::cout << "detected contact with cup event collision " << std::endl;
+                // check if coll1 or 2 belongs to the liquid
+                if (coll1->GetModel()->GetName() == "LiquidTangibleThing")
+                {
+                    // add to poured set, which also checks for duplicates
+                    this->goalLiquidCollisions_S.insert(coll1);
+                }
+                else if (coll2->GetModel()->GetName() == "LiquidTangibleThing")
+                {
+                    // add to poured set, which also checks for duplicates
+                    this->goalLiquidCollisions_S.insert(coll2);
+                }
+            }
             ////////////// Poured Particles Collisions
             // check if one collision is a poured particle and the other belongs to the eventCollisions
-            if(this->pouredLiquidCollisions_S.find(coll1) != this->pouredLiquidCollisions_S.end() &&
+            else if(this->pouredLiquidCollisions_S.find(coll1) != this->pouredLiquidCollisions_S.end() &&
                     this->eventCollisions_S.find(coll2) != this->eventCollisions_S.end())
             {
                 // add the model name to the set coll2's set
@@ -421,6 +441,8 @@ void LogParticles::WriteParticleData()
         pour_builder.append("total particles", (int) this->allLiquidCollisions_S.size());
 
         pour_builder.append("poured particles", (int) this->pouredLiquidCollisions_S.size());
+
+        pour_builder.append("goal particles", (int) this->goalLiquidCollisions_S.size());
 
         ////////////////////////////
         // Pancake size
