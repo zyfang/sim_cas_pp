@@ -391,7 +391,7 @@ void LogParticles::WriteParticleData()
         {
             BSONArrayBuilder support_arr_builder;
 
-            std::cout << m_iter->first->GetParentModel()->GetName() << " --> ";
+            // std::cout << m_iter->first->GetParentModel()->GetName() << " --> ";
             for(std::set<std::string>::const_iterator s_iter = m_iter->second.begin();
                 s_iter != m_iter->second.end(); s_iter++)
             {
