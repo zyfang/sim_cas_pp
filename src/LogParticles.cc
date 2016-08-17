@@ -416,33 +416,11 @@ void LogParticles::WriteParticleData()
 
         BSONObjBuilder pour_builder;
 
-        BSONObjBuilder pancake_builder;
-
         pour_builder.append("total particles", (int) this->allLiquidCollisions_S.size());
 
         pour_builder.append("poured particles", (int) this->pouredLiquidCollisions_S.size());
 
         pour_builder.append("goal particles", (int) this->goalLiquidCollisions_S.size());
-
-        ////////////////////////////
-        // Pancake size
-        // std::cout << "pancake size --> " << this->pancakeCollision_S.size() << " particles" << std::endl;
-
-        pancake_builder.append("nr pancake particles", (int) this->pancakeCollision_S.size());
-
-        BSONArrayBuilder pancake_arr_builder;
-
-        // TODO change all interators to const iterator?
-        for (std::set<physics::Collision*>::const_iterator c_iter = this->pancakeCollision_S.begin();
-             c_iter != this->pancakeCollision_S.end(); c_iter++)
-        {
-            //TODO why is the copy required?
-            physics::Collision* c = *c_iter;
-
-            pancake_arr_builder.append(c->GetName());
-        }
-
-        pancake_builder.append("particle names",pancake_arr_builder.arr());
 
         ////////////////////////////
         // Pouring Info before pancake created
@@ -478,7 +456,6 @@ void LogParticles::WriteParticleData()
 
     // TODO Pour Pancake events
         doc_bo_builder.append("pour", pour_builder.obj());
-        doc_bo_builder.append("pancake", pancake_builder.obj());
 
         // create the document object
         doc_bo_builder.append("timestamp", timestamp_ms);
