@@ -252,22 +252,12 @@ void LogParticles::WriteParticleData()
         {
             // insert contact model name into the set
             event_coll_to_set_of_model_names_M[coll1].insert(coll2->GetParentModel()->GetName());
-            std::cout << "Adding0 " << coll2->GetParentModel()->GetName() << " to coll1" << std::endl;
-            // if(coll1->GetParentModel()->GetName()=="PR2RGripper")
-            // {
-            //     std::cout << "Inserting gripper  contact1: " << std::endl;
-            // }
         }
         // check if collision 2 belongs to the event collision set
         else if(this->eventCollisions_S.find(coll2) != this->eventCollisions_S.end())
         {
             // insert contact model name into the set
             event_coll_to_set_of_model_names_M[coll2].insert(coll1->GetParentModel()->GetName());
-            std::cout << "Adding0 " << coll2->GetParentModel()->GetName() << " to coll2" << std::endl;
-            // if(coll2->GetParentModel()->GetName()=="PR2RGripper")
-            // {
-            //     std::cout << "Inserting gripper  contact2: " << std::endl;
-            // }
         }
 
         // TODO use else if ?
@@ -319,7 +309,6 @@ void LogParticles::WriteParticleData()
                     this->eventCollisions_S.find(coll2) != this->eventCollisions_S.end())
             {
                 // add the model name to the set coll2's set
-                std::cout << "Adding " << coll1->GetModel()->GetName() << " to coll2" << std::endl;
                 event_coll_to_set_of_model_names_M[coll2].insert(coll1->GetModel()->GetName());
 
                 // add the particle collision name to the coll2's set
@@ -328,7 +317,6 @@ void LogParticles::WriteParticleData()
             else if(this->pouredLiquidCollisions_S.find(coll2) != this->pouredLiquidCollisions_S.end() &&
                     this->eventCollisions_S.find(coll1) != this->eventCollisions_S.end())
             {
-                std::cout << "Adding " << coll1->GetModel()->GetName() << " to coll1" << std::endl;
                 // add the model name to the set coll1's set
                 event_coll_to_set_of_model_names_M[coll1].insert(coll2->GetModel()->GetName());
 
@@ -367,19 +355,7 @@ void LogParticles::WriteParticleData()
     if (event_coll_to_set_of_model_names_M != this->eventCollToSetOfModelNames_M)
     {
         diff_detected = true;;
-        std::cout << "Before state ";
-        for(auto elem : this->eventCollToSetOfModelNames_M)
-        {
-           std::cout << elem.first->GetParentModel()->GetName() << " - ";
-        }
-        std::cout << std::endl;
         this->eventCollToSetOfModelNames_M = event_coll_to_set_of_model_names_M;
-        std::cout << "After state ";
-        for(auto elem : this->eventCollToSetOfModelNames_M)
-        {
-           std::cout << elem.first->GetParentModel()->GetName() << " - ";
-        }
-        std::cout << std::endl;
     }
 
     // TODO Pour Pancake events
