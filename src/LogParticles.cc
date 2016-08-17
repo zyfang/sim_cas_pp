@@ -140,11 +140,19 @@ void LogParticles::InitParticles()
                     {
                         this->eventCollisionMug = c_iter->get();
                     }
-                    else if (c_iter->get()->GetName() == "r_gripper_r_finger_tip_grasp_event_collision")
+                    else if (c_iter->get()->GetName() == "r_gripper_r_finger_tip_event_collision")
                     {
                         this->eventCollisionForeFinger = c_iter->get();
                     }
+                    else if (c_iter->get()->GetName() == "r_gripper_r_finger_tip_grasp_event_collision")
+                    {
+                        continue;
+                    }
                     else if (c_iter->get()->GetName() == "r_gripper_l_finger_tip_grasp_event_collision")
+                    {
+                        continue;
+                    }
+                    else if (c_iter->get()->GetName() == "r_gripper_l_finger_tip_event_collision")
                     {
                         this->eventCollisionThumb = c_iter->get();
                     }
@@ -152,7 +160,8 @@ void LogParticles::InitParticles()
                     {
                         // insert collision into set
                         this->eventCollisions_S.insert(c_iter->get());
-
+                        std::cout << c_iter->get()->GetName() << std::endl;
+                        std::cout << "======================" << std::endl;
                         // init the event collision with an empty set (models that are in collision with)
                         this->eventCollToSetOfModelNames_M[c_iter->get()] = std::set<std::string>();
 
@@ -327,34 +336,6 @@ void LogParticles::WriteParticleData()
                 event_coll_to_set_of_particle_names_M[coll1].insert(coll2->GetName());
             }
         }
-
-        ////////////// Flipping Action
-        // create pancake when the Spatula is grasped, save all particles belonging to the pancake
-        else if(this->pancakeCreated)
-        {
-            ////////////// Pancake Particles Collisions
-            // check if one collision is a poured particle and the other belongs to the eventCollisions
-            if(this->pancakeCollision_S.find(coll1) != this->pancakeCollision_S.end() &&
-                    this->eventCollisions_S.find(coll2) != this->eventCollisions_S.end())
-            {
-                std::cout << "Adding2 " << coll1->GetModel()->GetName() << " to coll2" << std::endl;
-                // add the model name to the set coll2's set
-                event_coll_to_set_of_model_names_M[coll2].insert(coll1->GetModel()->GetName());
-
-                // add the particle collision name to the coll2's set
-                event_coll_to_set_of_particle_names_M[coll2].insert(coll1->GetName());
-            }
-            else if(this->pancakeCollision_S.find(coll2) != this->pancakeCollision_S.end() &&
-                    this->eventCollisions_S.find(coll1) != this->eventCollisions_S.end())
-            {
-                std::cout << "Adding2 " << coll1->GetModel()->GetName() << " to coll1" << std::endl;
-                // add the model name to the set coll1's set
-                event_coll_to_set_of_model_names_M[coll1].insert(coll2->GetModel()->GetName());
-
-                // add the particle collision name to the coll1's set
-                event_coll_to_set_of_particle_names_M[coll1].insert(coll2->GetName());
-            }
-        }
     }
 
 
@@ -413,33 +394,6 @@ void LogParticles::WriteParticleData()
     {
         diff_detected = true;;
         this->eventCollToSetOfParticleNames_M = event_coll_to_set_of_particle_names_M;
-    }
-
-    // save the particles belonging to the pancake
-    if (!this->pancakeCreated && grasped_model_name == "Spatula")
-    {
-        ////////////// Loop through all the contacts
-        for (unsigned int i = 0; i < _contacts.size(); i++)
-        {
-            // collision 1 and 2 of the contact
-            physics::Collision* coll1 = _contacts.at(i)->collision1;
-            physics::Collision* coll2 = _contacts.at(i)->collision2;
-
-            // save the particles belonging to the pancake
-            if ((coll1->GetName() == "cup_event_collision")
-                    && (coll2->GetModel()->GetName() == "LiquidTangibleThing"))
-            {
-                this->pancakeCollision_S.insert(coll2);
-            }
-            else if((coll2->GetName() == "cup_event_collision")
-                    && (coll1->GetModel()->GetName() == "LiquidTangibleThing"))
-            {
-                this->pancakeCollision_S.insert(coll1);
-            }
-        }
-
-        diff_detected = true;
-        this->pancakeCreated = true;
     }
 
 
@@ -542,35 +496,6 @@ void LogParticles::WriteParticleData()
             pour_builder.append("pour supports", pour_support_builder.obj());
         }
 
-        ////////////////////////////
-        // Pancake Info
-        else if(this->pancakeCreated)
-        {
-            BSONObjBuilder pancake_support_builder;
-
-            // Pancake particles supported by
-            for(std::map<physics::Collision*, std::set<std::string> >::const_iterator m_iter = event_coll_to_set_of_particle_names_M.begin();
-                m_iter != event_coll_to_set_of_particle_names_M.end(); m_iter++)
-            {
-                BSONArrayBuilder pancake_arr_builder;
-
-                // std::cout << "\t" << m_iter->first->GetParentModel()->GetName() << " --> ";
-
-                // Write only nr of particles at the moment
-                // std::cout << m_iter->second.size() << " pancake particles;" <<std::endl;
-                for(std::set<std::string>::const_iterator s_iter = m_iter->second.begin();
-                    s_iter != m_iter->second.end(); s_iter++)
-                {
-                    pancake_arr_builder.append(*s_iter);
-                    //std::cout << *s_iter << "; ";
-                }
-                //std::cout << std::endl;
-
-                pancake_support_builder.append(m_iter->first->GetParentModel()->GetName(), pancake_arr_builder.arr());
-            }
-
-            pancake_builder.append("pancake supports", pancake_support_builder.obj());
-        }
         // std::cout <<"-------------------------------------------------------------------ts: "<< timestamp_ms << std::endl;
 
     // TODO Pour Pancake events
