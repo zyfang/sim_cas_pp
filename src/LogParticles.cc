@@ -472,8 +472,6 @@ void LogParticles::WriteParticleData()
 
         // let the pool know the connection is done
         scoped_connection.done();
-
-        std::cout << std::endl << "============================" << std::endl;
-
     }
+    std::cout << std::endl << "============================" << std::endl;
 }
