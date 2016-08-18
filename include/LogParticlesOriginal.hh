@@ -97,11 +97,8 @@ class LogParticles
 	/// \brief pointer of ContactManager, for getting contacts from physics engine
 	private: gazebo::physics::ContactManager *contactManagerPtr;
 
-	/// \brief Container from which liquid is poured, top event collision
-    private: gazebo::physics::Collision* eventCollisionContainer;
-
-    /// \brief Target onto which liquid is poured, top event collision
-    private: gazebo::physics::Collision* eventCollisionGoal;
+	/// \brief Mug top event collision
+    private: gazebo::physics::Collision* eventCollisionMug;
 
     /// \brief Hit hand thumb and fore finger event collision
     private: gazebo::physics::Collision *eventCollisionForeFinger, *eventCollisionThumb;
@@ -115,8 +112,8 @@ class LogParticles
     /// \brief poured particle collisions
     private: std::set<gazebo::physics::Collision*> pouredLiquidCollisions_S;
 
-    /// \brief poured particle collisions that reached goal
-    private: std::set<gazebo::physics::Collision*> goalLiquidCollisions_S;
+    /// \brief particle collisions belonging to the pancake
+    private: std::set<gazebo::physics::Collision*> pancakeCollision_S;
 
 	/// \brief map of event collisions to a set of all its contacts model names
     private: std::map<gazebo::physics::Collision*, std::set<std::string> > eventCollToSetOfModelNames_M;
