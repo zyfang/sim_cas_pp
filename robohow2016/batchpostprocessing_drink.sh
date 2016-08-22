@@ -1,5 +1,5 @@
 RUN_NAME="A_yf1"
-EXP_NAME="yf_test2"
+EXP_NAME="param_test"
 DATA_IN_DIR_FULLPATH="/media/yfang/hdd3/HumanData/Robohow1/logs_drink/"$EXP_NAME"/"
 
 echo $RUN_NAME
@@ -12,6 +12,6 @@ do
 
 		collectionname=${BASH_REMATCH[1]};
 		# echo $filepath" to "$collectionname
-		gzserver --verbose -s libPostProcess.so -p $filepath --config config_drink.cfg --db $EXP_NAME$RUN_NAME --collection $collectionname --suffix 0 --delay 2 -replaying 
+		gzserver --verbose -s libPostProcess.so -p $filepath --config config_drink.cfg --db $EXP_NAME\_$RUN_NAME --collection $collectionname --suffix 0 --delay 2 -replaying 
 	fi	
 done
